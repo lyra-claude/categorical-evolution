@@ -31,6 +31,7 @@ module Evolution.Examples.BitString
   , runTarget
   ) where
 
+import Control.Monad (replicateM)
 import System.Random
 
 import Evolution.Category

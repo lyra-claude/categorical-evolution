@@ -34,6 +34,7 @@ module Evolution.Category
   , runOp
   ) where
 
+import Control.Monad ((>=>))
 import Prelude hiding (id, (.))
 
 -- | A scored individual: an individual paired with its fitness value.
@@ -69,9 +70,6 @@ idOp = GeneticOp return
 -- | Right-to-left composition (like '.' for functions).
 composeOp :: Monad m => GeneticOp m b c -> GeneticOp m a b -> GeneticOp m a c
 composeOp (GeneticOp f) (GeneticOp g) = GeneticOp (g >=> f)
-  where
-    (>=>) :: Monad m => (a' -> m b') -> (b' -> m c') -> (a' -> m c')
-    h >=> k = \x -> h x >>= k
 
 -- | Left-to-right composition (like '>>>' for arrows).
 -- More natural for pipelines: @evaluate >>>: select >>>: breed >>>: mutate@
