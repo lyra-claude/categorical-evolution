@@ -1,0 +1,127 @@
+# categorical-evolution
+
+**Category-theoretic genetic algorithms using MTL effects.**
+
+A Haskell library that composes genetic operators (selection, mutation, crossover) as morphisms in a Kleisli category, with MTL monad transformers providing the effect context.
+
+## The Idea
+
+### category-printf: composing format specs
+
+[`category-printf`](https://github.com/cgibbard/category-printf) uses the co-Kleisli category for the comonad `(->) m` (functions from a monoid) to build type-safe format specifications:
+
+```haskell
+type Format m = Cokleisli ((->) m)
+
+-- Composition accumulates argument types:
+"Hello, " . i . "! You are " . s . " years old."
+-- :: Format String String (String -> Int -> String)
+```
+
+Each format spec is a morphism. Composition (`.`) in the co-Kleisli category accumulates the arguments that `sprintf` will demand. The monoid `m` (String, Text, etc.) is the "output medium."
+
+### categorical-evolution: composing genetic operators
+
+We use the Kleisli category for the evolution monad `EvoM` to compose genetic operators:
+
+```haskell
+newtype GeneticOp m a b = GeneticOp { runOp :: [a] -> m [b] }
+
+-- Composition accumulates effects:
+evaluate fitnessFunc
+  >>>: elitistSelect
+  >>>: onePointCrossover
+  >>>: pointMutate bitFlip
+-- :: GeneticOp EvoM [Bool] (Scored [Bool])
+```
+
+Each operator is a morphism. Composition (`>>>:`) in the Kleisli category accumulates the monadic effects that `runEvoM` will resolve. The monad `EvoM` (randomness, config, logging) is the "effect medium."
+
+### The parallel
+
+| | **category-printf** | **categorical-evolution** |
+|---|---|---|
+| **Category** | Co-Kleisli `((->) m)` | Kleisli `EvoM` |
+| **Morphisms** | Format specifications | Genetic operators |
+| **Composition** | Accumulates argument types | Accumulates monadic effects |
+| **"Medium"** | Monoid (String, Text) | Monad (Reader, State, Writer) |
+| **Runner** | `sprintf`, `printfWith` | `runEvoM`, `evolve` |
+
+Both libraries share the insight that **interesting computations can be decomposed into composable pieces within a category**, where the categorical structure handles the bookkeeping (argument threading vs. effect propagation).
+
+## The MTL Connection
+
+The evolution monad uses a standard MTL transformer stack:
+
+```haskell
+type EvoM = ReaderT GAConfig (StateT StdGen (Writer GALog))
+```
+
+Each layer maps to a GA concern:
+
+- **`MonadReader GAConfig`** — GA parameters (population size, mutation rate, tournament size). Operators read config without threading it manually.
+- **`MonadState StdGen`** — Randomness. Mutation, selection, and crossover all need random numbers; the PRNG state threads through automatically.
+- **`MonadWriter GALog`** — Evolutionary history. Each generation logs its statistics (best/avg/worst fitness, diversity). History accumulates monoidal.
+
+### MonadSelect as fitness-based selection
+
+[`sjshuck/mtl`](https://github.com/sjshuck/mtl) adds `MonadSelect r`:
+
+```haskell
+class MonadSelect r m | m -> r where
+  select :: ((a -> r) -> a) -> m a
+```
+
+This says: "given a ranking function `(a -> r)`, pick the best `a`." Tournament selection in a GA does exactly this — rank individuals by fitness, pick the winner. Our `tournamentSelect` is the concrete instantiation of this abstract pattern.
+
+### MonadAccum as evolutionary history
+
+`MonadAccum w` provides `look` (see accumulated state) and `add` (append to it). Evolutionary history is exactly this: each generation appends its statistics to a monoidal log. Our `logGeneration` operator uses `MonadWriter` (a close relative of `MonadAccum`) to accumulate `GALog` entries.
+
+## Usage
+
+```haskell
+import Evolution.Category
+import Evolution.Effects
+import Evolution.Operators
+import Evolution.Pipeline
+import Evolution.Examples.BitString
+
+-- Run OneMax: evolve bitstrings to maximize number of 1-bits
+main :: IO ()
+main = runOneMax 20
+```
+
+### Custom pipelines
+
+```haskell
+-- Build a custom evolutionary pipeline by composing operators:
+myPipeline :: (a -> Double) -> (a -> EvoM a) -> Int -> GeneticOp EvoM [a] [a]
+myPipeline fitFunc mutFunc gen =
+  evaluate fitFunc
+    >>>: logGeneration gen
+    >>>: tournamentSelect        -- or: rouletteSelect, elitistSelect
+    >>>: onePointCrossover       -- or: uniformCrossover
+    >>>: pointMutate mutFunc
+    >>>: pointwise individual    -- unwrap Scored
+```
+
+Each `>>>:` is Kleisli composition. The pipeline reads left-to-right, like prose: "evaluate, then log, then select, then cross over, then mutate."
+
+## Building
+
+```bash
+cabal build
+cabal test
+cabal run    # (if you add an executable)
+```
+
+## Acknowledgements
+
+- [Cale Gibbard](https://github.com/cgibbard) for `category-printf` — the co-Kleisli composition trick
+- [Sam Shuck](https://github.com/sjshuck) for the `mtl` fork with `MonadSelect` and `MonadAccum`
+- The conceptual bridge: categories are everywhere, and the same compositional patterns that make format strings elegant also make evolutionary algorithms elegant
+
+## License
+
+BSD-3-Clause
