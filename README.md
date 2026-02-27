@@ -148,6 +148,54 @@ This is the same structure as arena tournaments in morphological evolution:
 creatures don't have intrinsic fitness, only relative fitness against opponents.
 Intransitive dynamics emerge naturally.
 
+### Strategy composition
+
+Compose entire evolutionary algorithms the same way you compose operators:
+
+```haskell
+import Evolution.Strategy
+
+-- Race a generational GA against a steady-state GA
+let strat = race
+      (generationalGA oneMaxFitness bitFlip (AfterGens 50))
+      (steadyStateGA oneMaxFitness bitFlip (AfterGens 50))
+
+-- Adaptive: try short run, fall back if not converged
+let strat = adaptive
+      (\r -> fitness (resultBest r) >= 18.0)
+      (generationalGA fitFunc mutFunc (AfterGens 10))
+      (steadyStateGA fitFunc mutFunc (AfterGens 40))
+
+-- Sequential: explore broadly, then refine
+let strat = sequential
+      (generationalGA fitFunc mutFunc (AfterGens 25))
+      (generationalGA fitFunc mutFunc (Plateau 10))
+```
+
+Strategies form a monoid under `sequential` with `idStrategy` as identity.
+Termination conditions (`StopWhen`) form a Boolean algebra via `StopOr`/`StopAnd`.
+
+### Landscape analysis
+
+Characterize a fitness landscape, then auto-select the best strategy:
+
+```haskell
+import Evolution.Landscape
+
+-- Analyze via random walk
+let mutGenome = singlePointMutation bitFlip
+profile <- analyzeLandscape fitFunc mutGenome startPoint 500
+
+-- ruggedness profile ==> 0.06 (smooth)
+-- correlationLen profile ==> 16.8 (long-range correlation)
+
+-- Auto-select strategy based on landscape
+let strat = recommendStrategy profile fitFunc mutFunc (AfterGens 50)
+```
+
+Smooth landscapes get generational GA. Rugged landscapes get race(gen, steady-state).
+Neutral landscapes get steady-state for sustained exploration.
+
 ## Modules
 
 | Module | Description |
@@ -158,7 +206,10 @@ Intransitive dynamics emerge naturally.
 | `Evolution.Pipeline` | High-level `evolve` / `evolveN`, `generationStep` |
 | `Evolution.Island` | Island model with ring/fully-connected migration |
 | `Evolution.Coevolution` | Competitive coevolution with sample-based evaluation |
+| `Evolution.Strategy` | Composable evolutionary strategies with combinators |
+| `Evolution.Landscape` | Fitness landscape analysis and auto-strategy selection |
 | `Evolution.Examples.BitString` | OneMax and target-matching examples |
+| `Evolution.Examples.SymbolicRegression` | Genetic programming with expression trees |
 
 ## Building
 
