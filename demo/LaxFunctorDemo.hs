@@ -107,14 +107,76 @@ main = do
     ) frequencies
 
   putStrLn ""
+
+  -- Part 2: Boundary position sweep (Claudius's Bernoulli trial prediction)
+  putStrLn "=== Part 2: Boundary Position Sweep ==="
+  putStrLn ""
+  putStrLn "Fixed freq=5, total=40 gens. Vary composition boundary from 15 to 25."
+  putStrLn "Migration events for single 40-gen run: {5,10,15,20,25,30,35}"
+  putStrLn "Claudius predicts: divergence clusters near zero (boundary misses migration)"
+  putStrLn "or jumps to characteristic magnitude (boundary hits migration)."
+  putStrLn ""
+  putStrLn "Boundary | Hits mig? | Sched diff | Pop divergence | Hamming div"
+  putStrLn "-------- | --------- | ---------- | -------------- | -----------"
+
+  let boundaries = [15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25]
+      fixedFreq = 5
+
+  mapM_ (\boundary -> do
+    let iConfig = IslandConfig
+          { islandCount    = 4
+          , islandMigRate  = 0.1
+          , islandMigFreq  = fixedFreq
+          , islandTopology = IslandRing
+          }
+        totalG = 40
+        -- Single run
+        single = islandStrategy iConfig (gaStep oneMaxFitness bitFlip) (AfterGens totalG)
+        -- Composed: boundary gens + (totalG - boundary) gens
+        composed = sequential
+          (islandStrategy iConfig (gaStep oneMaxFitness bitFlip) (AfterGens boundary))
+          (islandStrategy iConfig (gaStep oneMaxFitness bitFlip) (AfterGens (totalG - boundary)))
+
+        (rSingle, _, _)   = runEvoM config (mkStdGen 42) (runStrategy single initPop)
+        (rComposed, _, _) = runEvoM config (mkStdGen 42) (runStrategy composed initPop)
+
+        sortByGenome = sortBy (comparing individual)
+        singlePop   = map individual (sortByGenome (resultPop rSingle))
+        composedPop = map individual (sortByGenome (resultPop rComposed))
+
+        divergence = fromIntegral (length (filter id (zipWith (/=) singlePop composedPop)))
+                   / fromIntegral (length singlePop) :: Double
+
+        hammingDiv = if null singlePop then 0 else
+          let dists = zipWith (\a b -> fromIntegral (length (filter id (zipWith (/=) a b)))
+                                      / fromIntegral genomeLen :: Double)
+                              singlePop composedPop
+          in sum dists / fromIntegral (length dists)
+
+        -- Schedule analysis
+        singleMigs = [g | g <- [1..totalG-1], g `mod` fixedFreq == 0]
+        comp1Migs  = [g | g <- [1..boundary-1], g `mod` fixedFreq == 0]
+        comp2Migs  = [boundary + g | g <- [1..totalG-boundary-1], g `mod` fixedFreq == 0]
+        composedMigs = comp1Migs ++ comp2Migs
+        missingMigs = length [g | g <- singleMigs, g `notElem` composedMigs]
+        extraMigs   = length [g | g <- composedMigs, g `notElem` singleMigs]
+        schedDiff = missingMigs + extraMigs
+
+        hitsM = boundary `mod` fixedFreq == 0
+
+    putStrLn $ padL 8 (show boundary)
+            ++ " | " ++ padL 9 (if hitsM then "YES" else "no")
+            ++ " | " ++ padL 10 (show schedDiff)
+            ++ " | " ++ padL 14 (showF divergence)
+            ++ " | " ++ padL 11 (showF hammingDiv)
+    ) boundaries
+
+  putStrLn ""
   putStrLn "Key observations:"
-  putStrLn "  - At freq=40 (no migration events): STRICT functor — populations identical"
-  putStrLn "  - At all other frequencies: LAX functor — populations diverge"
-  putStrLn "  - 'Sched diff' counts migration events that differ between single vs composed"
-  putStrLn "  - The laxator is the natural transformation accounting for the schedule shift"
-  putStrLn "  - Even one missing migration event cascades through stochastic dynamics"
-  putStrLn "  - The laxator has periodic structure: trivial iff composition_length mod freq == 0"
-  putStrLn "    AND no migration events are swallowed by the boundary"
+  putStrLn "  Part 1: At freq=40 (no migration): STRICT functor — populations identical"
+  putStrLn "          At all other frequencies: LAX functor — populations diverge"
+  putStrLn "  Part 2: Bernoulli trial structure — divergence depends on whether"
+  putStrLn "          the composition boundary hits a migration event"
 
 showF :: Double -> String
 showF d
