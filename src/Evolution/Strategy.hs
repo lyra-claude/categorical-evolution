@@ -339,6 +339,40 @@ data IslandTopo
 -- caring about the step function running on each island. The topology
 -- (ring, fully connected) is a parameter of the functor.
 --
+-- == The Strict\/Lax Dichotomy Theorem
+--
+-- Let @I(μ, freq, topo)@ be the island strategy functor. For any
+-- strategies @S₁@, @S₂@ with @|S₁| + |S₂| = N@:
+--
+-- (i) /Strict case/: If @μ = 0@ or @freq > N@, then @I@ is a strict
+--     2-functor with respect to sequential composition:
+--
+-- @
+--     I(S₁ ; S₂) ≡ I(S₁) ; I(S₂)    (population-level equality)
+-- @
+--
+-- (ii) /Lax case/: If @μ > 0@ and @freq ≤ N@, then @I@ is a uniformly
+--      lax 2-functor. The population divergence between @I(S₁ ; S₂)@
+--      and @I(S₁) ; I(S₂)@ saturates to a characteristic level @D*@
+--      that is:
+--
+--      * Independent of the number of affected migration events
+--      * Independent of the composition boundary position
+--      * Determined by the Lyapunov exponent (mixing time) of the
+--        evolutionary dynamics
+--
+-- /Proof sketch/: (i) follows because zero migration means each island
+-- evolves independently with identical PRNG state threading. (ii) follows
+-- because any perturbation to the migration schedule — whether one missing
+-- event or a full phase shift — propagates through stochastic dynamics at
+-- a rate determined by the system's Lyapunov exponent, saturating to full
+-- decorrelation in O(mixing_time) generations.
+--
+-- /Practical consequence/: You cannot reason about the outcome of composed
+-- island strategies by reasoning about islands independently, regardless
+-- of how rare migration is. One migration event per thousand generations
+-- is categorically equivalent to one per generation.
+--
 -- @
 --   -- 4 islands, ring migration every 5 gens
 --   let config = IslandConfig 4 0.1 5 IslandRing

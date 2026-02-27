@@ -26,6 +26,9 @@ runTests = do
     , test "island strategy improves fitness"    testIslandStrategy
     , test "island strategy beats single pop"    testIslandBeatsSingle
     , test "island functor law breaks at boundary" testIslandFunctorLaw
+    , test "dichotomy: strict when no migration"   testDichotomyStrict
+    , test "dichotomy: lax when migration exists"   testDichotomyLax
+    , test "dichotomy: lax magnitude is uniform"    testDichotomyUniform
     ]
   return (sum failures)
 
@@ -41,16 +44,20 @@ mkScoredPop seed popSize genomeLen =
       (rawPop, _, _) = runEvoM config g (randomPopulation popSize genomeLen)
   in map (\genome -> Scored genome (oneMaxFitness genome)) rawPop
 
+-- Helper: build config for a given population
+runStratConfig :: [Scored [Bool]] -> GAConfig
+runStratConfig pop = defaultConfig
+  { populationSize = length pop
+  , mutationRate   = 0.05
+  , crossoverRate  = 0.7
+  , tournamentSize = 3
+  , eliteCount     = 2
+  }
+
 -- Helper: run a strategy and return the result
 runStrat :: Strategy [Bool] -> [Scored [Bool]] -> StrategyResult [Bool]
 runStrat s pop =
-  let config = defaultConfig
-        { populationSize = length pop
-        , mutationRate   = 0.05
-        , crossoverRate  = 0.7
-        , tournamentSize = 3
-        , eliteCount     = 2
-        }
+  let config = runStratConfig pop
       g = mkStdGen 42
       (result, _, _) = runEvoM config g (runStrategy s pop)
   in result
@@ -259,3 +266,87 @@ testIslandFunctorLaw =
   in singlePop /= composedPop
      && fitness (resultBest rSingle) > 10
      && fitness (resultBest rComposed) > 10
+
+-- | Dichotomy Theorem part (i): when migration frequency exceeds total
+-- generations, no migration occurs, so the island functor is STRICT.
+-- I(S1;S2) = I(S1);I(S2) at the population level.
+testDichotomyStrict :: Bool
+testDichotomyStrict =
+  let pop = mkScoredPop 1300 40 20
+      -- freq=100 > total gens (40), so no migration ever happens
+      iConfig = IslandConfig
+        { islandCount    = 4
+        , islandMigRate  = 0.1
+        , islandMigFreq  = 100  -- never migrates in 40 gens
+        , islandTopology = IslandRing
+        }
+      single = islandStrategy iConfig (gaStep oneMaxFitness bitFlip) (AfterGens 40)
+      composed = sequential
+        (islandStrategy iConfig (gaStep oneMaxFitness bitFlip) (AfterGens 20))
+        (islandStrategy iConfig (gaStep oneMaxFitness bitFlip) (AfterGens 20))
+      (rSingle, _, _)   = runEvoM (runStratConfig pop) (mkStdGen 42) (runStrategy single pop)
+      (rComposed, _, _) = runEvoM (runStratConfig pop) (mkStdGen 42) (runStrategy composed pop)
+      sortByGenome = sortBy (comparing individual)
+      singlePop   = map individual (sortByGenome (resultPop rSingle))
+      composedPop = map individual (sortByGenome (resultPop rComposed))
+  -- STRICT: populations must be identical
+  in singlePop == composedPop
+
+-- | Dichotomy Theorem part (ii): when migration exists, the functor is LAX.
+-- Even with migration frequency = 20 (one event in 40 gens at most),
+-- populations diverge.
+testDichotomyLax :: Bool
+testDichotomyLax =
+  let pop = mkScoredPop 1400 40 20
+      iConfig = IslandConfig
+        { islandCount    = 4
+        , islandMigRate  = 0.1
+        , islandMigFreq  = 20   -- migrates once (at gen 20) in single run
+        , islandTopology = IslandRing
+        }
+      single = islandStrategy iConfig (gaStep oneMaxFitness bitFlip) (AfterGens 40)
+      composed = sequential
+        (islandStrategy iConfig (gaStep oneMaxFitness bitFlip) (AfterGens 20))
+        (islandStrategy iConfig (gaStep oneMaxFitness bitFlip) (AfterGens 20))
+      (rSingle, _, _)   = runEvoM (runStratConfig pop) (mkStdGen 42) (runStrategy single pop)
+      (rComposed, _, _) = runEvoM (runStratConfig pop) (mkStdGen 42) (runStrategy composed pop)
+      sortByGenome = sortBy (comparing individual)
+      singlePop   = map individual (sortByGenome (resultPop rSingle))
+      composedPop = map individual (sortByGenome (resultPop rComposed))
+  -- LAX: populations must differ
+  in singlePop /= composedPop
+
+-- | Dichotomy Theorem uniformity: the population divergence is approximately
+-- the same regardless of how many migration events are affected.
+-- Compare freq=2 (many affected events) vs freq=20 (one affected event).
+-- Both should produce similar divergence levels.
+testDichotomyUniform :: Bool
+testDichotomyUniform =
+  let pop = mkScoredPop 1500 40 20
+      genomeLen = 20 :: Int
+      testFreq freq =
+        let iConfig = IslandConfig
+              { islandCount    = 4
+              , islandMigRate  = 0.1
+              , islandMigFreq  = freq
+              , islandTopology = IslandRing
+              }
+            single = islandStrategy iConfig (gaStep oneMaxFitness bitFlip) (AfterGens 40)
+            composed = sequential
+              (islandStrategy iConfig (gaStep oneMaxFitness bitFlip) (AfterGens 20))
+              (islandStrategy iConfig (gaStep oneMaxFitness bitFlip) (AfterGens 20))
+            (rSingle, _, _)   = runEvoM (runStratConfig pop) (mkStdGen 42) (runStrategy single pop)
+            (rComposed, _, _) = runEvoM (runStratConfig pop) (mkStdGen 42) (runStrategy composed pop)
+            sortByGenome = sortBy (comparing individual)
+            singlePop   = map individual (sortByGenome (resultPop rSingle))
+            composedPop = map individual (sortByGenome (resultPop rComposed))
+            -- Hamming divergence
+            dists = zipWith (\a b -> fromIntegral (length (filter id (zipWith (/=) a b)))
+                                    / fromIntegral genomeLen :: Double) singlePop composedPop
+        in sum dists / fromIntegral (length dists)
+      divFreq2  = testFreq 2   -- many affected migration events
+      divFreq20 = testFreq 20  -- one affected migration event
+  -- Divergence should be within 2x of each other (uniform saturation)
+  in divFreq2 > 0 && divFreq20 > 0
+     && divFreq2 / divFreq20 < 2.0
+     && divFreq20 / divFreq2 < 2.0
