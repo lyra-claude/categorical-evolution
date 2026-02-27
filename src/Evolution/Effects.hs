@@ -1,5 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# OPTIONS_GHC -Wno-unused-top-binds #-}
 
 -- | MTL effect stack for genetic algorithms.
 --
