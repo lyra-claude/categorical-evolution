@@ -108,6 +108,58 @@ myPipeline fitFunc mutFunc gen =
 
 Each `>>>:` is Kleisli composition. The pipeline reads left-to-right, like prose: "evaluate, then log, then select, then cross over, then mutate."
 
+### Island model
+
+Run multiple populations in parallel with periodic migration:
+
+```haskell
+import Evolution.Island
+
+let model = IslandModel
+      { numIslands    = 4
+      , migrationRate = 0.1   -- 10% of population migrates
+      , migrationFreq = 10    -- every 10 generations
+      , topology      = Ring  -- or FullyConnected
+      }
+    islands = uniformIslands oneMaxFitness bitFlip populations
+    result = evolveIslands model oneMaxFitness config gen islands
+```
+
+Migration is a natural transformation between population functors — it moves
+individuals between islands without caring about each island's pipeline.
+
+### Competitive coevolution
+
+Two populations evaluate against each other, creating an evolutionary arms race:
+
+```haskell
+import Evolution.Coevolution
+
+-- Population A tries to match B, B tries to differ from A
+let matchScore a b = fromIntegral $ length $ filter id $ zipWith (==) a b
+    differScore b a = fromIntegral $ length $ filter id $ zipWith (/=) b a
+    result = coevolve matchScore differScore
+                      bitFlip bitFlip
+                      defaultCoevoConfig config gen
+                      populationA populationB
+```
+
+This is the same structure as arena tournaments in morphological evolution:
+creatures don't have intrinsic fitness, only relative fitness against opponents.
+Intransitive dynamics emerge naturally.
+
+## Modules
+
+| Module | Description |
+|---|---|
+| `Evolution.Category` | Core types: `GeneticOp`, `Scored`, composition operators |
+| `Evolution.Effects` | `EvoM` monad stack, random utilities, configuration |
+| `Evolution.Operators` | Selection, crossover, mutation as categorical morphisms |
+| `Evolution.Pipeline` | High-level `evolve` / `evolveN`, `generationStep` |
+| `Evolution.Island` | Island model with ring/fully-connected migration |
+| `Evolution.Coevolution` | Competitive coevolution with sample-based evaluation |
+| `Evolution.Examples.BitString` | OneMax and target-matching examples |
+
 ## Building
 
 ```bash
