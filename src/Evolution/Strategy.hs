@@ -352,21 +352,23 @@ data IslandTopo
 -- @
 --
 -- (ii) /Lax case/: If @μ > 0@ and @freq ≤ N@, then @I@ is a uniformly
---      lax 2-functor. The population divergence between @I(S₁ ; S₂)@
---      and @I(S₁) ; I(S₂)@ saturates to a characteristic level @D*@
---      that is:
+--      lax 2-functor. Given sufficient generations after the composition
+--      boundary, the population divergence between @I(S₁ ; S₂)@ and
+--      @I(S₁) ; I(S₂)@ saturates to a characteristic level @D*@ that is:
 --
 --      * Independent of the number of affected migration events
 --      * Independent of the composition boundary position
---      * Determined by the Lyapunov exponent (mixing time) of the
---        evolutionary dynamics
+--      * Dependent on @μ@ and @freq@ (higher coupling → larger @D*@)
+--      * Determined asymptotically by the mixing time (spectral gap)
+--        of the evolutionary Markov chain
 --
 -- /Proof sketch/: (i) follows because zero migration means each island
 -- evolves independently with identical PRNG state threading. (ii) follows
 -- because any perturbation to the migration schedule — whether one missing
--- event or a full phase shift — propagates through stochastic dynamics at
--- a rate determined by the system's Lyapunov exponent, saturating to full
--- decorrelation in O(mixing_time) generations.
+-- event or a full phase shift — propagates through the population Markov
+-- chain at a rate governed by its spectral gap (second eigenvalue).
+-- Saturation to @D*@ occurs in @O(1/gap)@ generations, where @gap@ is
+-- the spectral gap of the coupled selection-mutation-migration process.
 --
 -- /Practical consequence/: You cannot reason about the outcome of composed
 -- island strategies by reasoning about islands independently, regardless
