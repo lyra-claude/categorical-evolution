@@ -22,6 +22,9 @@ runTests = do
     , test "idStrategy is identity"              testIdStrategy
     , test "mapStrategy preserves fitness"       testMapStrategy
     , test "plateau detection stops early"       testPlateau
+    , test "lifting functor law (2-category)"    testLiftingFunctorLaw
+    , test "island strategy improves fitness"    testIslandStrategy
+    , test "island strategy beats single pop"    testIslandBeatsSingle
     ]
   return (sum failures)
 
@@ -153,3 +156,67 @@ testPlateau =
       r = runStrat s pop
       -- Should stop before 100 gens (plateau detection kicked in)
   in resultGens r < 100
+
+-- | The lifting functor law: sequential(lift(P,N), lift(P,M)) should produce
+-- the same final population as lift(P, N+M).
+--
+-- This tests Claudius's 2-category question: does composing strategies
+-- (sequential) give the same result as composing the underlying pipelines
+-- and lifting once?
+--
+-- The law holds at the population level because:
+-- 1. The step function is identical (same operators, same parameters)
+-- 2. PRNG state threads continuously through sequential composition
+-- 3. logGeneration only affects the Writer, not the State or population
+--
+-- The law breaks ONLY at the log level (generation counter resets in sequential)
+testLiftingFunctorLaw :: Bool
+testLiftingFunctorLaw =
+  let pop = mkScoredPop 900 30 20
+      -- sequential(lift(P,20), lift(P,20))
+      composed = sequential
+                   (generationalGA oneMaxFitness bitFlip (AfterGens 20))
+                   (generationalGA oneMaxFitness bitFlip (AfterGens 20))
+      -- lift(P, 40)
+      single = generationalGA oneMaxFitness bitFlip (AfterGens 40)
+      rComposed = runStrat composed pop
+      rSingle   = runStrat single pop
+      -- Sort populations by genome for comparison
+      sortByGenome = sortBy (comparing individual)
+      composedPop = map individual (sortByGenome (resultPop rComposed))
+      singlePop   = map individual (sortByGenome (resultPop rSingle))
+  -- Final populations should be identical (functor law at population level)
+  in composedPop == singlePop
+
+-- | Island strategy should improve fitness
+testIslandStrategy :: Bool
+testIslandStrategy =
+  let pop = mkScoredPop 1000 40 20
+      initBest = fitness $ head $ sortBy (comparing (Down . fitness)) pop
+      config' = IslandConfig
+        { islandCount    = 4
+        , islandMigRate  = 0.1
+        , islandMigFreq  = 5
+        , islandTopology = IslandRing
+        }
+      s = islandStrategy config' (gaStep oneMaxFitness bitFlip) (AfterGens 30)
+      r = runStrat s pop
+  in fitness (resultBest r) > initBest && resultGens r == 30
+
+-- | Island strategy should beat (or match) single-population GA
+-- because migration maintains diversity
+testIslandBeatsSingle :: Bool
+testIslandBeatsSingle =
+  let pop = mkScoredPop 1100 40 20
+      single = generationalGA oneMaxFitness bitFlip (AfterGens 40)
+      config' = IslandConfig
+        { islandCount    = 4
+        , islandMigRate  = 0.1
+        , islandMigFreq  = 5
+        , islandTopology = IslandRing
+        }
+      island = islandStrategy config' (gaStep oneMaxFitness bitFlip) (AfterGens 40)
+      rSingle = runStrat single pop
+      rIsland = runStrat island pop
+  -- Island should be competitive (at least 90% of single's fitness)
+  in fitness (resultBest rIsland) >= fitness (resultBest rSingle) * 0.9

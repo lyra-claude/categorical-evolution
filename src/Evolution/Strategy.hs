@@ -46,6 +46,12 @@ module Evolution.Strategy
   , adaptive
     -- * Strategy functor
   , mapStrategy
+    -- * Island strategy functor
+  , IslandConfig(..)
+  , IslandTopo(..)
+  , islandStrategy
+    -- * Step function export (for custom strategies)
+  , gaStep
   ) where
 
 import Control.Monad.Reader
@@ -295,10 +301,138 @@ mapStrategy decode encode s = Strategy $ \popB -> do
       bestB = Scored (encode (individual (resultBest r))) (fitness (resultBest r))
   return $ StrategyResult popB' bestB (resultGens r)
 
+-- | The generational GA step function, exported for use with 'mkStrategy'
+-- and 'islandStrategy'.
+--
+-- Each call runs one generation: log -> elitist select -> crossover -> mutate -> re-evaluate.
+gaStep :: ([a] -> Double) -> (a -> EvoM a) -> Int -> [Scored [a]] -> EvoM [Scored [a]]
+gaStep fitFunc mutFunc gen pop = runOp pipeline pop
+  where
+    pipeline = logGeneration gen
+           >>>: elitistSelect
+           >>>: onePointCrossover
+           >>>: pointMutate mutFunc
+           >>>: pointwise (\s -> Scored (individual s) (fitFunc (individual s)))
+
+-- | Configuration for the island strategy functor.
+data IslandConfig = IslandConfig
+  { islandCount    :: !Int         -- ^ Number of islands
+  , islandMigRate  :: !Double      -- ^ Fraction of each island's population to migrate
+  , islandMigFreq  :: !Int         -- ^ Migrate every N generations
+  , islandTopology :: !IslandTopo  -- ^ Migration topology
+  } deriving (Show, Eq)
+
+-- | Migration topology.
+data IslandTopo
+  = IslandRing   -- ^ Ring: island i sends migrants to island (i+1) mod n
+  | IslandFull   -- ^ Fully connected: every island exchanges with every other
+  deriving (Show, Eq)
+
+-- | The island functor: lifts a step function into an island-model strategy.
+--
+-- Given a per-island step function and termination conditions, produces a
+-- strategy that partitions the population into sub-populations, runs the
+-- step function on each independently, and performs periodic migration.
+--
+-- Migration is a natural transformation between the parallel strategy
+-- executions: it moves individuals between islands without knowing or
+-- caring about the step function running on each island. The topology
+-- (ring, fully connected) is a parameter of the functor.
+--
+-- @
+--   -- 4 islands, ring migration every 5 gens
+--   let config = IslandConfig 4 0.1 5 IslandRing
+--       strat = islandStrategy config (gaStep oneMaxFitness bitFlip) (AfterGens 50)
+-- @
+islandStrategy :: IslandConfig
+               -> (Int -> [Scored a] -> EvoM [Scored a])
+               -> StopWhen
+               -> Strategy a
+islandStrategy config step stop = Strategy $ \pop0 -> do
+  let n = islandCount config
+      islands0 = splitInto n pop0
+      mergedBest0 = bestOf (concat islands0)
+      ss0 = StopState 0 (fitness mergedBest0) 0
+  (finalIslands, finalBest, totalGens) <- islandLoop ss0 mergedBest0 islands0
+  return $ StrategyResult (concat finalIslands) finalBest totalGens
+  where
+    islandLoop ss overallBest islands
+      | checkStop stop ss = return (islands, overallBest, ssGens ss)
+      | otherwise = do
+          -- Evolve each island one step
+          islands' <- mapM (step (ssGens ss)) islands
+          -- Migrate if it's time
+          islands'' <- if ssGens ss > 0 && ssGens ss `mod` islandMigFreq config == 0
+                       then migrateIslands config islands'
+                       else return islands'
+          -- Update tracking
+          let merged = concat islands''
+              currentBest = bestOf merged
+              improved = fitness currentBest > ssBest ss
+              overallBest' = betterOf currentBest overallBest
+              ss' = StopState
+                { ssGens      = ssGens ss + 1
+                , ssBest      = max (ssBest ss) (fitness currentBest)
+                , ssNoImprove = if improved then 0 else ssNoImprove ss + 1
+                }
+          islandLoop ss' overallBest' islands''
+
+-- Island migration
+
+migrateIslands :: IslandConfig -> [[Scored a]] -> EvoM [[Scored a]]
+migrateIslands config islands = case islandTopology config of
+  IslandRing -> ringMig (islandMigRate config) islands
+  IslandFull -> fullMig (islandMigRate config) islands
+
+ringMig :: Double -> [[Scored a]] -> EvoM [[Scored a]]
+ringMig rate islands
+  | length islands <= 1 = return islands
+  | otherwise = do
+      let migCounts = map (\pop ->
+            max 1 (round (rate * fromIntegral (length pop)) :: Int)) islands
+      migrants <- mapM (\(pop, k) -> do
+          shuffled <- shuffle pop
+          return (Prelude.take k shuffled)
+        ) (zip islands migCounts)
+      -- Island i receives migrants from island (i-1)
+      let updated = zipWith (\pop migIn ->
+            let trimmed = Prelude.take (length pop - length migIn) pop
+            in migIn ++ trimmed
+            ) islands (last migrants : init migrants)
+      return updated
+
+fullMig :: Double -> [[Scored a]] -> EvoM [[Scored a]]
+fullMig rate islands
+  | length islands <= 1 = return islands
+  | otherwise = do
+      let n = length islands
+          perIsland = max 1 (round (rate * fromIntegral (length (Prelude.head islands))
+                                    / fromIntegral (n - 1)) :: Int)
+      donors <- mapM (\pop -> do
+          shuffled <- shuffle pop
+          return (Prelude.take (perIsland * (n - 1)) shuffled)
+        ) islands
+      let updated = zipWith3 (\i pop _ ->
+            let incoming = concatMap (\(j, d) ->
+                  if j /= i then Prelude.take perIsland d else [])
+                  (zip [0 :: Int ..] donors)
+                trimmed = Prelude.take (length pop - length incoming) pop
+            in incoming ++ trimmed
+            ) [0 :: Int ..] islands donors
+      return updated
+
 -- Helpers (not exported)
 
 bestOf :: [Scored a] -> Scored a
-bestOf = head . sortBy (comparing (Down . fitness))
+bestOf = Prelude.head . sortBy (comparing (Down . fitness))
 
 betterOf :: Scored a -> Scored a -> Scored a
 betterOf a b = if fitness a >= fitness b then a else b
+
+splitInto :: Int -> [a] -> [[a]]
+splitInto 0 xs = [xs]
+splitInto 1 xs = [xs]
+splitInto n xs =
+  let size = length xs `div` n
+      (chunk, rest) = splitAt size xs
+  in chunk : splitInto (n - 1) rest
