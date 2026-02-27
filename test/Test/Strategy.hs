@@ -25,6 +25,7 @@ runTests = do
     , test "lifting functor law (2-category)"    testLiftingFunctorLaw
     , test "island strategy improves fitness"    testIslandStrategy
     , test "island strategy beats single pop"    testIslandBeatsSingle
+    , test "island functor law breaks at boundary" testIslandFunctorLaw
     ]
   return (sum failures)
 
@@ -220,3 +221,41 @@ testIslandBeatsSingle =
       rIsland = runStrat island pop
   -- Island should be competitive (at least 90% of single's fitness)
   in fitness (resultBest rIsland) >= fitness (resultBest rSingle) * 0.9
+
+-- | The island functor law: does I(f)(S1;S2) = I(f)(S1);I(f)(S2)?
+--
+-- Claudius predicted this law BREAKS because migration introduces
+-- inter-island coupling. Sequential composition resets the migration
+-- schedule, creating a discontinuity at the boundary.
+--
+-- Single 40-gen run: migrates at gens {5,10,15,20,25,30,35}
+-- Sequential 20+20: migrates at {5,10,15} then {5,10,15} = {5,10,15,25,30,35}
+-- Missing migration at gen 20 means the populations diverge.
+--
+-- This test CONFIRMS the law breaks: the populations are NOT identical.
+testIslandFunctorLaw :: Bool
+testIslandFunctorLaw =
+  let pop = mkScoredPop 1200 40 20
+      iConfig = IslandConfig
+        { islandCount    = 4
+        , islandMigRate  = 0.1
+        , islandMigFreq  = 5
+        , islandTopology = IslandRing
+        }
+      -- I(f)(S1;S2): single island strategy for 40 gens
+      single = islandStrategy iConfig (gaStep oneMaxFitness bitFlip) (AfterGens 40)
+      -- I(f)(S1) ; I(f)(S2): sequential of two 20-gen island strategies
+      composed = sequential
+                   (islandStrategy iConfig (gaStep oneMaxFitness bitFlip) (AfterGens 20))
+                   (islandStrategy iConfig (gaStep oneMaxFitness bitFlip) (AfterGens 20))
+      rSingle   = runStrat single pop
+      rComposed = runStrat composed pop
+      -- Compare populations
+      sortByGenome = sortBy (comparing individual)
+      singlePop   = map individual (sortByGenome (resultPop rSingle))
+      composedPop = map individual (sortByGenome (resultPop rComposed))
+  -- The populations should DIFFER (functor law breaks due to migration coupling)
+  -- But both should still produce good results
+  in singlePop /= composedPop
+     && fitness (resultBest rSingle) > 10
+     && fitness (resultBest rComposed) > 10
