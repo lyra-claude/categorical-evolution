@@ -187,7 +187,36 @@ ringMigrate rate islands = do
   return updated
 
 -- ================================================================
--- Main: run all three and compare
+-- Strategy 4: Adaptive switching (conditional composition / coproduct)
+--
+-- Start with exploratory GP (high mutation). If fitness plateaus for
+-- 5 consecutive generations, switch to focused GP (low mutation,
+-- strong selection). The composition boundary is EMERGENT — chosen
+-- at runtime by inspecting population state.
+-- ================================================================
+
+runAdaptive :: Int -> [Scored Expr] -> EvoM ([Scored Expr], [GenMetrics])
+runAdaptive totalGens pop0 = go 0 pop0 (fitness (bestOf pop0)) (0 :: Int) False [computeMetrics 0 pop0]
+  where
+    go gen pop bestSoFar noImprove switched acc
+      | gen >= totalGens = return (pop, reverse acc)
+      | otherwise = do
+          -- Choose step based on whether we've switched
+          pop' <- if switched
+                  then gpStepWith 0.02 7 pop  -- Focused: low mutation, strong selection
+                  else gpStepWith 0.25 2 pop  -- Exploratory: high mutation, weak selection
+          let currentBest = fitness (bestOf pop')
+              improved = currentBest > bestSoFar
+              noImprove' = if improved then 0 else noImprove + 1
+              -- Switch if plateaued for 5 gens and haven't switched yet
+              switch = not switched && noImprove' >= 5
+              m = computeMetrics (gen + 1) pop'
+          go (gen + 1) pop' (max bestSoFar currentBest)
+             (if switch then 0 else noImprove')
+             (switched || switch) (m : acc)
+
+-- ================================================================
+-- Main: run all four and compare
 -- ================================================================
 
 main :: IO ()
@@ -234,26 +263,52 @@ main = do
   let ((_pop3, metrics3), _, _) = runEvoM config gen2
         (runIsland totalGens 4 5 0.15 initPop)
   putStrLn "--- Strategy 3: Island GA (4 islands, ring migration every 5 gens) ---"
+  putStrLn "  (Parametric coupling — composition via migration natural transformation)"
   printTrajectory metrics3
   putStrLn ""
 
-  -- Summary comparison
-  putStrLn "=== Diversity Trajectory Comparison ==="
+  -- 4. Adaptive switching: explore until plateau, then focus
+  let ((_pop4, metrics4), _, _) = runEvoM config gen2
+        (runAdaptive totalGens initPop)
+  putStrLn "--- Strategy 4: Adaptive (explore -> plateau detection -> focus) ---"
+  putStrLn "  (Conditional composition — coproduct with runtime predicate)"
+  printTrajectory metrics4
   putStrLn ""
-  putStrLn "Gen  | Flat GenoDiv | Hrgls GenoDiv | Island GenoDiv | Flat PhenoDiv | Hrgls PhenoDiv | Island PhenoDiv"
-  putStrLn "---- | ------------ | ------------- | -------------- | ------------- | -------------- | ---------------"
+
+  -- Summary comparison: genotypic diversity
+  putStrLn "=== Genotypic Diversity (tree size variance) ==="
+  putStrLn ""
+  putStrLn "Gen  | Flat    | Hrglass | Island  | Adaptive"
+  putStrLn "---- | ------- | ------- | ------- | --------"
   let sampleGens = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50]
   mapM_ (\g -> do
     let m1 = findGen g metrics1
         m2 = findGen g metrics2
         m3 = findGen g metrics3
+        m4 = findGen g metrics4
     putStrLn $ padL 4 (show g)
-            ++ " | " ++ padL 12 (showF (maybe 0 mGenoDiv m1))
-            ++ " | " ++ padL 13 (showF (maybe 0 mGenoDiv m2))
-            ++ " | " ++ padL 14 (showF (maybe 0 mGenoDiv m3))
-            ++ " | " ++ padL 13 (showF (maybe 0 mPhenoDiv m1))
-            ++ " | " ++ padL 14 (showF (maybe 0 mPhenoDiv m2))
-            ++ " | " ++ padL 15 (showF (maybe 0 mPhenoDiv m3))
+            ++ " | " ++ padL 7 (showF (maybe 0 mGenoDiv m1))
+            ++ " | " ++ padL 7 (showF (maybe 0 mGenoDiv m2))
+            ++ " | " ++ padL 7 (showF (maybe 0 mGenoDiv m3))
+            ++ " | " ++ padL 8 (showF (maybe 0 mGenoDiv m4))
+    ) sampleGens
+  putStrLn ""
+
+  -- Summary comparison: phenotypic diversity
+  putStrLn "=== Phenotypic Diversity (output variance) ==="
+  putStrLn ""
+  putStrLn "Gen  | Flat    | Hrglass | Island  | Adaptive"
+  putStrLn "---- | ------- | ------- | ------- | --------"
+  mapM_ (\g -> do
+    let m1 = findGen g metrics1
+        m2 = findGen g metrics2
+        m3 = findGen g metrics3
+        m4 = findGen g metrics4
+    putStrLn $ padL 4 (show g)
+            ++ " | " ++ padL 7 (showF (maybe 0 mPhenoDiv m1))
+            ++ " | " ++ padL 7 (showF (maybe 0 mPhenoDiv m2))
+            ++ " | " ++ padL 7 (showF (maybe 0 mPhenoDiv m3))
+            ++ " | " ++ padL 8 (showF (maybe 0 mPhenoDiv m4))
     ) sampleGens
   putStrLn ""
 
@@ -262,6 +317,7 @@ main = do
   let lastM1 = last metrics1
       lastM2 = last metrics2
       lastM3 = last metrics3
+      lastM4 = last metrics4
   putStrLn $ "Flat:      best=" ++ showF (mBestFit lastM1)
           ++ "  avg=" ++ showF (mAvgFit lastM1)
           ++ "  genoDiv=" ++ showF (mGenoDiv lastM1)
@@ -274,12 +330,17 @@ main = do
           ++ "  avg=" ++ showF (mAvgFit lastM3)
           ++ "  genoDiv=" ++ showF (mGenoDiv lastM3)
           ++ "  phenoDiv=" ++ showF (mPhenoDiv lastM3)
+  putStrLn $ "Adaptive:  best=" ++ showF (mBestFit lastM4)
+          ++ "  avg=" ++ showF (mAvgFit lastM4)
+          ++ "  genoDiv=" ++ showF (mGenoDiv lastM4)
+          ++ "  phenoDiv=" ++ showF (mPhenoDiv lastM4)
   putStrLn ""
 
   -- Best expressions found
   let best1 = bestOf _pop1
       best2 = bestOf _pop2
       best3 = bestOf _pop3
+      best4 = bestOf _pop4
   putStrLn "Best expressions found:"
   putStrLn $ "  Flat:      " ++ showExpr (individual best1)
           ++ "  (fitness " ++ showF (fitness best1) ++ ")"
@@ -287,6 +348,8 @@ main = do
           ++ "  (fitness " ++ showF (fitness best2) ++ ")"
   putStrLn $ "  Island:    " ++ showExpr (individual best3)
           ++ "  (fitness " ++ showF (fitness best3) ++ ")"
+  putStrLn $ "  Adaptive:  " ++ showExpr (individual best4)
+          ++ "  (fitness " ++ showF (fitness best4) ++ ")"
 
 -- Helpers
 
