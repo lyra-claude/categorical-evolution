@@ -9,6 +9,7 @@ import Test.Coevolution
 import Test.SymbolicRegression
 import Test.Strategy
 import Test.Landscape
+import Test.Checkers
 
 main :: IO ()
 main = do
@@ -22,8 +23,9 @@ main = do
   r6 <- Test.SymbolicRegression.runTests
   r7 <- Test.Strategy.runTests
   r8 <- Test.Landscape.runTests
+  r9 <- Test.Checkers.runTests
   putStrLn ""
-  let total = r1 + r2 + r3 + r4 + r5 + r6 + r7 + r8
+  let total = r1 + r2 + r3 + r4 + r5 + r6 + r7 + r8 + r9
   if total == 0
     then putStrLn "All tests passed!" >> exitSuccess
     else putStrLn (show total ++ " test(s) failed.") >> exitFailure
