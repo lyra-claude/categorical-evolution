@@ -1,7 +1,5 @@
 module Test.Operators (runTests) where
 
-import Data.List (sortBy)
-import Data.Ord (comparing, Down(..))
 import System.Random (mkStdGen)
 
 import Evolution.Category

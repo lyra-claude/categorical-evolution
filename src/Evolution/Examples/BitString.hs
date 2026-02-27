@@ -34,7 +34,6 @@ module Evolution.Examples.BitString
 import Control.Monad (replicateM)
 import System.Random
 
-import Evolution.Category
 import Evolution.Effects
 import Evolution.Pipeline
 

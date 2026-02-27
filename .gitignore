@@ -1,0 +1,9 @@
+dist-newstyle/
+dist/
+*.o
+*.hi
+*.dyn_o
+*.dyn_hi
+test-runner
+onemax-demo
+.ghc.environment.*

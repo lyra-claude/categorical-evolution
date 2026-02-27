@@ -96,7 +96,7 @@ main = runOneMax 20
 
 ```haskell
 -- Build a custom evolutionary pipeline by composing operators:
-myPipeline :: (a -> Double) -> (a -> EvoM a) -> Int -> GeneticOp EvoM [a] [a]
+myPipeline :: ([a] -> Double) -> (a -> EvoM a) -> Int -> GeneticOp EvoM [a] [a]
 myPipeline fitFunc mutFunc gen =
   evaluate fitFunc
     >>>: logGeneration gen

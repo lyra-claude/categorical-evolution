@@ -45,7 +45,6 @@ module Evolution.Pipeline
 
 import Data.List (sortBy)
 import Data.Ord (comparing, Down(..))
-import Control.Monad.Writer.Strict
 import System.Random
 
 import Evolution.Category
@@ -65,13 +64,13 @@ data EvoResult a = EvoResult
 --
 -- This is the "default pipeline" — the most common configuration.
 -- For custom pipelines, compose operators directly with '>>>:'.
-generationStep :: (a -> Double)           -- ^ Fitness function
+generationStep :: ([a] -> Double)          -- ^ Fitness function (genome -> fitness)
                -> (a -> EvoM a)           -- ^ Per-gene mutation function
                -> Int                     -- ^ Generation number (for logging)
                -> GeneticOp EvoM [a] [a]  -- ^ One generation: [genome] -> [genome]
 generationStep fitFunc mutFunc gen =
   -- Wrap genomes: [a] -> [Scored [a]]
-  evaluate (\genome -> fitFunc genome)
+  evaluate fitFunc
     >>>: logGeneration gen
     >>>: elitistSelect
     >>>: onePointCrossover
@@ -80,7 +79,7 @@ generationStep fitFunc mutFunc gen =
     >>>: pointwise individual
 
 -- | Run evolution for the configured number of generations.
-evolve :: forall a. (a -> Double)        -- ^ Fitness function
+evolve :: forall a. ([a] -> Double)      -- ^ Fitness function (genome -> fitness)
        -> (a -> EvoM a)                  -- ^ Per-gene mutation function
        -> GAConfig                       -- ^ Configuration
        -> StdGen                         -- ^ Initial PRNG
@@ -108,7 +107,7 @@ evolve fitFunc mutFunc config gen0 initPop =
 
 -- | Run evolution for exactly n generations (ignoring maxGenerations in config).
 evolveN :: forall a. Int                 -- ^ Number of generations
-        -> (a -> Double)                 -- ^ Fitness function
+        -> ([a] -> Double)               -- ^ Fitness function (genome -> fitness)
         -> (a -> EvoM a)                 -- ^ Per-gene mutation function
         -> GAConfig                      -- ^ Configuration
         -> StdGen                        -- ^ Initial PRNG

@@ -1,6 +1,3 @@
-{-# LANGUAGE GADTs #-}
-{-# LANGUAGE RankNTypes #-}
-
 -- | The categorical foundation for composable genetic operators.
 --
 -- In category-printf, format specifications are morphisms in the co-Kleisli
@@ -30,12 +27,10 @@ module Evolution.Category
   , liftMonadic
   , pointwise
   , pointwiseM
-    -- * Runners
-  , runOp
   ) where
 
 import Control.Monad ((>=>))
-import Prelude hiding (id, (.))
+import Prelude hiding (id)
 
 -- | A scored individual: an individual paired with its fitness value.
 data Scored a = Scored
