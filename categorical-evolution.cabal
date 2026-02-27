@@ -34,6 +34,7 @@ library
                      , Evolution.Island
                      , Evolution.Coevolution
                      , Evolution.Strategy
+                     , Evolution.Landscape
                      , Evolution.Examples.BitString
                      , Evolution.Examples.SymbolicRegression
   build-depends:       base >=4.14 && <5
@@ -55,6 +56,7 @@ test-suite categorical-evolution-test
                      , Test.Coevolution
                      , Test.SymbolicRegression
                      , Test.Strategy
+                     , Test.Landscape
   build-depends:       base >=4.14 && <5
                      , categorical-evolution
                      , random >=1.2 && <1.3
