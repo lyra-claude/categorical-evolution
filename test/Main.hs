@@ -6,6 +6,7 @@ import Test.Operators
 import Test.Pipeline
 import Test.Island
 import Test.Coevolution
+import Test.SymbolicRegression
 
 main :: IO ()
 main = do
@@ -16,8 +17,9 @@ main = do
   r3 <- Test.Pipeline.runTests
   r4 <- Test.Island.runTests
   r5 <- Test.Coevolution.runTests
+  r6 <- Test.SymbolicRegression.runTests
   putStrLn ""
-  let total = r1 + r2 + r3 + r4 + r5
+  let total = r1 + r2 + r3 + r4 + r5 + r6
   if total == 0
     then putStrLn "All tests passed!" >> exitSuccess
     else putStrLn (show total ++ " test(s) failed.") >> exitFailure
