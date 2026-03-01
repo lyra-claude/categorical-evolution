@@ -221,7 +221,7 @@ cabal run    # (if you add an executable)
 
 ## Acknowledgements
 
-- [Cale Gibbard](https://github.com/cgibbard) for `category-printf` — the co-Kleisli composition trick
+- [Cale](https://github.com/cgibbard) for `category-printf` — the co-Kleisli composition trick
 - [Sam Shuck](https://github.com/sjshuck) for the `mtl` fork with `MonadSelect` and `MonadAccum`
 - The conceptual bridge: categories are everywhere, and the same compositional patterns that make format strings elegant also make evolutionary algorithms elegant
 
