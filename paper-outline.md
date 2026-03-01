@@ -41,7 +41,7 @@ framework provides the shared language they lack.
 ### 2. Background
 
 #### 2.1 Category-printf and co-Kleisli Composition
-- Gibbard's category-printf: format specs as morphisms in the co-Kleisli
+- Cale's category-printf: format specs as morphisms in the co-Kleisli
   category for `((->) m)` where `m` is a monoid
 - Composition accumulates argument types: `"Hello " . s . "!" :: Format (String -> r) r`
 - Key insight: the /structure/ is in the composition, not in the individual specs
