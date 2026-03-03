@@ -51,12 +51,12 @@ The island model lifts a single-population strategy to a multi-population strate
 For strategies $S_1, S_2$ and island functor $I_{\mu}$ with migration rate $\mu$:
 \begin{enumerate}[nosep,leftmargin=1.5em]
   \item If $\mu = 0$: $I(S_1 \ggg S_2) = I(S_1) \ggg I(S_2)$ \emph{(strict monoidal)}.
-  \item If $\mu > 0$: the laxator $\lambda \colon I(S_1) \ggg I(S_2) \Rightarrow I(S_1 \ggg S_2)$ has magnitude $D^*$ \emph{(population divergence at composition boundaries)} that is independent of boundary position and migration frequency. Validated across all three domains.
+  \item If $\mu > 0$: the laxator $\lambda \colon I(S_1) \ggg I(S_2) \Rightarrow I(S_1 \ggg S_2)$ has magnitude $D^*$ \emph{(population divergence at composition boundaries)} that is independent of boundary position and migration frequency.
 \end{enumerate}
 \end{theorem}
 
 \noindent
-The laxity arises because resetting the migration schedule at the composition boundary perturbs a chaotic dynamical system; the perturbation magnitude is determined by the spectral gap of the migration topology's Markov chain, not by where or how often migration occurs. Both this result and Ghani et al.'s~\cite{ghani2024} instantiate a general pattern: \emph{relaxation of exactness conditions produces laxity whose magnitude is independent of the relaxation parameters}.
+We validate this across all three domains (checkers, mazes, symbolic regression). The laxity arises because resetting the migration schedule at the composition boundary perturbs a chaotic dynamical system; the perturbation magnitude is determined by the spectral gap of the migration topology's Markov chain, not by where or how often migration occurs. Both this result and Ghani et al.'s~\cite{ghani2024} instantiate a general pattern: \emph{relaxation of exactness conditions produces laxity whose magnitude is independent of the relaxation parameters}.
 
 \textbf{Result 3: Three-Level Composition.}
 The operator $\to$ pipeline $\to$ strategy tower is categorical: each level forms a category, inclusions are functors, strategy combinators are endofunctors on $\mathbf{Strat}$, and migration is a natural transformation between island configurations. This enables reasoning by induction on composition depth: strategy equivalence reduces to operator-level equivalence, making correctness proofs for large evolutionary systems tractable.
