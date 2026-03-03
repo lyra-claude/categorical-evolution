@@ -1,0 +1,105 @@
+\documentclass[10pt]{article}
+
+\usepackage[margin=0.85in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{mathtools}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage[numbers]{natbib}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{definition}{Definition}
+
+\setlength{\parskip}{0.3em}
+\setlength{\itemsep}{0pt}
+
+\title{\vspace{-1.5em}Genetic Algorithms as Kleisli Morphisms:\\
+  Compositional Invariants Across Evolutionary Domains\vspace{-0.5em}}
+
+\author{
+  Lyra \and Claudius \and Robin Langer \and Nick Meinhold
+}
+
+\date{}
+
+\begin{document}
+
+\maketitle
+\vspace{-1em}
+
+\noindent
+\textbf{Keywords:} Kleisli categories, genetic algorithms, functorial semantics, compositional invariants
+
+\section{Motivation and Framework}
+
+Every genetic algorithm follows the same compositional pattern: evaluate fitness, select survivors, recombine, mutate, repeat. This structure is invariant across domains---whether the genome encodes game-playing strategy weights~\cite{samuel1959}, maze topologies, or symbolic expressions---yet it remains implicit in imperative implementations. We make it explicit by formalizing GA operators as morphisms in a Kleisli category.
+
+GA operators require randomness, read-only configuration, and write-only logging. These effects are captured by a monad $M = \mathsf{ReaderT}\;\mathit{Config}\;(\mathsf{WriterT}\;\mathit{Log}\;(\mathsf{State}\;\mathit{StdGen}))$, and a \emph{genetic operator} is a Kleisli arrow $\mathit{op} \colon [a] \to M\,[b]$ on populations. A single generation is the composite $\mathit{step} = \mathit{evaluate} \ggg \mathit{select} \ggg \mathit{crossover} \ggg \mathit{mutate}$, itself a Kleisli arrow $[a] \to M\,[a]$, so generations compose: an $n$-generation run is $\mathit{step}^n$. We identify three composition levels:
+
+\begin{enumerate}[nosep,leftmargin=1.5em]
+  \item \textbf{Operators} compose into \textbf{pipelines} (one generation).
+  \item \textbf{Pipelines} compose across generations into \textbf{strategies}.
+  \item \textbf{Strategies} compose via higher-order combinators into \textbf{multi-population systems}.
+\end{enumerate}
+
+\noindent
+Each level has the same categorical structure. Strategy combinators (island, hourglass, adaptive) are endofunctors on $\mathbf{Strat}$; migration is a natural transformation between island configurations.
+
+\section{Results}
+
+We demonstrate three results across three domains (checkers weight evolution, maze topology evolution, symbolic regression) in a Haskell implementation (12 modules, 75 tests, ${\sim}5500$ lines).
+
+\smallskip\noindent\textbf{Result 1: Diversity Fingerprints.}
+Different strategy compositions produce qualitatively distinct diversity trajectories that are \emph{stable across genome types}: monotonic decline (flat/generational), spike--crash--rebound (hourglass), stable maintenance (island), and spike--collapse (adaptive). These signatures are determined by the composition pattern, not by the individual operators or genome type. We conjecture that fingerprints are functorial, composing predictably when strategies are composed---analogous to behavioral invariants of composed dynamical systems~\cite{baez2022}.
+
+\smallskip\noindent\textbf{Result 2: The Strict/Lax Dichotomy.}
+The island model defines a functor $I \colon \mathbf{Strat} \to \mathbf{Strat}$ lifting single-population to multi-population strategies with periodic migration.
+
+\begin{theorem}[Strict/Lax Dichotomy]
+For strategies $S_1, S_2$ and island functor $I_{\mu,f}$ with migration rate $\mu$:
+\begin{enumerate}[nosep,leftmargin=1.5em]
+  \item If $\mu = 0$: $I(S_1 \ggg S_2) = I(S_1) \ggg I(S_2)$ \emph{(strict monoidal)}.
+  \item If $\mu > 0$: $I(S_1 \ggg S_2) \ncong I(S_1) \ggg I(S_2)$, with laxity magnitude $D^*$ independent of boundary position and migration frequency \emph{(uniformly lax)}.
+\end{enumerate}
+\end{theorem}
+
+\noindent
+The laxity arises from chaotic amplification of migration schedule perturbation at composition boundaries. This is structurally analogous to Ghani et al.'s result that approximate Nash equilibria fail to compose~\cite{ghani2018}: both instantiate the general phenomenon that lax monoidal functors do not preserve composition strictly.
+
+\smallskip\noindent\textbf{Result 3: Three-Level Composition.}
+The operator $\to$ pipeline $\to$ strategy tower is categorical: each level forms a category, inclusions are functors, and the structure is preserved at every level. This enables recursive reasoning about evolutionary systems.
+
+\section{Positioning at ACT}
+
+This work connects evolutionary computation---a field not previously represented at ACT---to several active threads:
+
+\begin{itemize}[nosep,leftmargin=1.5em]
+  \item \textbf{Compositional game theory}~\cite{ghani2018}: GAs are open games; the Dichotomy Theorem is the evolutionary analogue of the failure of approximate equilibria to compose.
+  \item \textbf{Categorical cybernetics}~\cite{hedges2023}: GAs are bidirectional (forward: operators; backward: selection). Optics unify our Kleisli and co-Kleisli perspectives.
+  \item \textbf{Polynomial dynamical systems}~\cite{spivak2022}: Diversity fingerprints parallel how behavioral invariants of composed systems compose functorially.
+\end{itemize}
+
+\noindent
+Evolutionary computation offers rich, well-understood examples where categorical formalization yields non-obvious results---the Dichotomy Theorem is not discoverable without the functorial framework.
+
+\begin{thebibliography}{9}
+\small
+
+\bibitem[1]{samuel1959}
+A.~Samuel. Some studies in machine learning using the game of checkers. \emph{IBM J. Res. Dev.}, 3(3):210--229, 1959.
+
+\bibitem[2]{ghani2018}
+N.~Ghani, J.~Hedges, V.~Winschel, P.~Zahn. Compositional game theory. \emph{LICS 2018}, pp.~472--481. ACM, 2018.
+
+\bibitem[3]{hedges2023}
+J.~Hedges. Categorical cybernetics: A manifesto. \emph{Compositionality}, 2023.
+
+\bibitem[4]{spivak2022}
+D.~I. Spivak. \emph{Polynomial Functors: A Mathematical Theory of Interaction}. MIT Press, 2022.
+
+\bibitem[5]{baez2022}
+J.~C. Baez, D.~J. Myers. Open systems in classical mechanics. \emph{J. Math. Phys.}, 63(11):112902, 2022.
+
+\end{thebibliography}
+
+\end{document}
