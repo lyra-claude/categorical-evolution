@@ -30,17 +30,19 @@
 
 \medskip
 
-Hanks et al.\ showed that gradient descent is a hypergraph functor from optimization problems to dynamical systems~\cite{hanks2024}. Their framework requires differentiability. We provide the categorical foundation for the \emph{gradient-free} regime: population-based evolutionary search, where the relevant structure is not a derivative but a monad carrying randomness, configuration, and logging.
+Lax monoidal functors do not preserve composition strictly. Ghani et al.~\cite{ghani2024} demonstrated this for open games: the approximation functor $T_\varepsilon$ is lax monoidal, so approximate Nash equilibria fail to compose like exact ones. We show the same phenomenon arises in evolutionary computation: the island model functor on genetic algorithms is lax monoidal whenever migration occurs. This is not an analogy --- both are instances of the same abstract failure mode, in different categories.
+
+Hanks et al.~\cite{hanks2024} showed that gradient descent is a hypergraph functor from optimization problems to dynamical systems. Their framework requires differentiability. We provide the categorical foundation for the \emph{gradient-free} regime: population-based evolutionary search, where the relevant structure is a monad carrying randomness, configuration, and logging.
 
 \textbf{Framework.}
-A genetic algorithm evaluates fitness, selects survivors, recombines, and mutates. These operators are not pure functions --- they require random number generation, read-only parameters, and write-only logging. We package all three effects into a monad $M = \mathsf{ReaderT}\;\mathit{Config}\;(\mathsf{WriterT}\;\mathit{Log}\;(\mathsf{State}\;\mathit{StdGen}))$ and define a \emph{genetic operator} as a Kleisli arrow $\mathit{op} \colon [a] \to M\,[b]$ on populations. One generation step is the Kleisli composite
+A genetic algorithm evaluates fitness, selects survivors, recombines, and mutates. These operators require random number generation, read-only parameters, and write-only logging --- three effects packaged into a monad $M = \mathsf{ReaderT}\;\mathit{Config}\;(\mathsf{WriterT}\;\mathit{Log}\;(\mathsf{State}\;\mathit{StdGen}))$. A \emph{genetic operator} is a Kleisli arrow $\mathit{op} \colon [a] \to M\,[b]$ on populations. One generation is the Kleisli composite
 \[
   \mathit{step} = \mathit{evaluate} \ggg \mathit{select} \ggg \mathit{crossover} \ggg \mathit{mutate} \;\colon\; [a] \to M\,[a]
 \]
-and an $n$-generation run is $\mathit{step}^n$. The framework instantiates Miranda's abstract Kleisli structures~\cite{miranda2024} concretely: the Kleisli category $\mathcal{K}\!\ell(M)$ with population types as objects and GA operators as morphisms. We identify three composition levels --- operators into pipelines (one generation), pipelines across generations into strategies, strategies via higher-order combinators into multi-population systems --- each forming a category with the same Kleisli composition.
+and an $n$-generation run is $\mathit{step}^n$. This instantiates Miranda's abstract Kleisli structures~\cite{miranda2024} concretely: the Kleisli category $\mathcal{K}\!\ell(M)$ with population types as objects and GA operators as morphisms. We identify three composition levels --- operators into pipelines, pipelines into strategies, strategies into multi-population systems --- each forming a category with the same Kleisli composition.
 
 \textbf{Result 1: Diversity Fingerprints.}
-Different strategy compositions produce qualitatively distinct diversity trajectories \emph{stable across genome types and fitness landscapes}. On three domains (real-valued weight vectors, binary mazes, expression trees), we identify four fingerprints: monotonic decline (generational), spike--crash--rebound (hourglass), stable maintenance (island/migration), and spike--collapse (adaptive/plateau-triggered). These are determined by the \emph{composition pattern}, not by the individual operators. We conjecture that fingerprints are functorial invariants of strategy composition, analogous to Myers' behavioral invariants of composed dynamical systems~\cite{myers2022}.
+Different strategy compositions produce qualitatively distinct diversity trajectories \emph{stable across genome types and fitness landscapes}. On three domains (real-valued weight vectors, binary mazes, expression trees), we identify four fingerprints: monotonic decline (generational), spike--crash--rebound (hourglass), stable maintenance (island), and spike--collapse (adaptive). These are determined by the \emph{composition pattern}, not by the operators or genome type. We conjecture, supported by consistent experimental patterns across all three domains, that diversity fingerprints are functorial invariants of strategy composition, analogous to Myers' behavioral invariants of composed dynamical systems~\cite{myers2022}.
 
 \textbf{Result 2: The Strict/Lax Dichotomy.}
 The island model lifts a single-population strategy to a multi-population strategy with periodic migration, defining a functor $I \colon \mathbf{Strat} \to \mathbf{Strat}$.
@@ -49,22 +51,25 @@ The island model lifts a single-population strategy to a multi-population strate
 For strategies $S_1, S_2$ and island functor $I_{\mu}$ with migration rate $\mu$:
 \begin{enumerate}[nosep,leftmargin=1.5em]
   \item If $\mu = 0$: $I(S_1 \ggg S_2) = I(S_1) \ggg I(S_2)$ \emph{(strict monoidal)}.
-  \item If $\mu > 0$: the laxator $\lambda \colon I(S_1) \ggg I(S_2) \Rightarrow I(S_1 \ggg S_2)$ has magnitude $D^*$ that is independent of composition boundary position and migration frequency \emph{(uniformly lax)}.
+  \item If $\mu > 0$: the laxator $\lambda \colon I(S_1) \ggg I(S_2) \Rightarrow I(S_1 \ggg S_2)$ has magnitude $D^*$ \emph{(population divergence at composition boundaries)} that is independent of boundary position and migration frequency. Validated across all three domains.
 \end{enumerate}
 \end{theorem}
 
 \noindent
-The uniform laxity arises because resetting the migration schedule at the composition boundary perturbs a chaotic dynamical system; the perturbation magnitude is determined asymptotically by the spectral gap of the migration topology's Markov chain, not by where or how often migration occurs. This is structurally parallel to Ghani et al.'s result that the approximation functor $T_\varepsilon$ on open games is lax monoidal --- approximate Nash equilibria fail to compose like exact ones~\cite{ghani2024}. Both instantiate a general pattern: \emph{relaxation of exactness conditions produces uniform laxity in functorial composition}.
+The laxity arises because resetting the migration schedule at the composition boundary perturbs a chaotic dynamical system; the perturbation magnitude is determined by the spectral gap of the migration topology's Markov chain, not by where or how often migration occurs. Both this result and Ghani et al.'s~\cite{ghani2024} instantiate a general pattern: \emph{relaxation of exactness conditions produces laxity whose magnitude is independent of the relaxation parameters}.
 
 \textbf{Result 3: Three-Level Composition.}
-The operator $\to$ pipeline $\to$ strategy tower is not merely a design pattern. Each level is a category; inclusions are functors; strategy combinators (hourglass, island, adaptive) are endofunctors on $\mathbf{Strat}$; migration is a natural transformation between island configurations.
+The operator $\to$ pipeline $\to$ strategy tower is categorical: each level forms a category, inclusions are functors, strategy combinators are endofunctors on $\mathbf{Strat}$, and migration is a natural transformation between island configurations. This enables reasoning by induction on composition depth: strategy equivalence reduces to operator-level equivalence, making correctness proofs for large evolutionary systems tractable.
 
 \textbf{Positioning.}
-Evolutionary computation has never appeared at ACT. We connect it to three active threads: (1)~Ghani's compositional game theory~\cite{ghani2024} --- GAs are open games; the Dichotomy Theorem is the evolutionary analogue of lax composition of approximate equilibria; (2)~Hedges and Sakamoto's categorical cybernetics~\cite{hedges2024} --- GAs are bidirectional processes (forward: genetic operators; backward: fitness-based selection) that may admit an optic description; (3)~Hanks et al.'s optimization-as-functor~\cite{hanks2024} --- we cover the complementary gradient-free regime. The framework is implemented in Haskell (12 modules, 75 tests, ${\sim}5500$ lines) and demonstrated on three domains. A full manuscript is in preparation.
+Evolutionary computation has never appeared at ACT. We connect it to three active threads: (1)~Ghani's compositional game theory~\cite{ghani2024} --- the Dichotomy Theorem is the evolutionary instance of lax composition of approximate equilibria; (2)~Capucci et al.'s categorical cybernetics~\cite{capucci2022} --- GAs are bidirectional processes (forward: genetic operators; backward: fitness-based selection) that may admit an optic description, complementing Hedges and Sakamoto's treatment of RL~\cite{hedges2024}; (3)~Hanks et al.'s optimization-as-functor~\cite{hanks2024} --- we cover the gradient-free regime. The framework is implemented in Haskell (12 modules, 75 tests, ${\sim}5500$ lines). A full manuscript is in preparation.
 
 \begin{thebibliography}{9}
 \small
 \setlength{\itemsep}{0pt}
+
+\bibitem{ghani2024}
+N.~Ghani, J.~Hedges, V.~Winschel, P.~Zahn. A category theoretic approach to approximate game theory. \emph{EPTCS} 429, 2024. arXiv:2509.20932.
 
 \bibitem{hanks2024}
 T.~Hanks, M.~Klawonn, J.~Fairbanks. Generalized gradient descent is a hypergraph functor. \emph{EPTCS} 429, 2024. arXiv:2403.19845.
@@ -72,8 +77,8 @@ T.~Hanks, M.~Klawonn, J.~Fairbanks. Generalized gradient descent is a hypergraph
 \bibitem{miranda2024}
 A.~Miranda. Abstract Kleisli structures on 2-categories. \emph{EPTCS} 429, 2024. arXiv:2404.00900.
 
-\bibitem{ghani2024}
-N.~Ghani, J.~Hedges, V.~Winschel, P.~Zahn. A category theoretic approach to approximate game theory. \emph{EPTCS} 429, 2024. arXiv:2509.20932.
+\bibitem{capucci2022}
+M.~Capucci, B.~Gavranovi\'c, J.~Hedges, E.~F.~Rischel. Towards foundations of categorical cybernetics. \emph{EPTCS} 372, pp.~235--248, 2022. arXiv:2105.06332.
 
 \bibitem{hedges2024}
 J.~Hedges, R.~Rodriguez Sakamoto. Reinforcement learning in categorical cybernetics. \emph{EPTCS} 429, 2024. arXiv:2404.02688.
