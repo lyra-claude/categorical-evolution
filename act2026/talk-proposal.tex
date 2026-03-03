@@ -5,13 +5,11 @@
 \usepackage{mathtools}
 \usepackage{hyperref}
 \usepackage{enumitem}
-\usepackage[numbers]{natbib}
 
 \newtheorem{theorem}{Theorem}
 \newtheorem{definition}{Definition}
 
 \setlength{\parskip}{0.3em}
-\setlength{\itemsep}{0pt}
 
 \title{\vspace{-1.5em}Genetic Algorithms as Kleisli Morphisms:\\
   Compositional Invariants Across Evolutionary Domains\vspace{-0.5em}}
@@ -28,77 +26,60 @@
 \vspace{-1em}
 
 \noindent
-\textbf{Keywords:} Kleisli categories, genetic algorithms, functorial semantics, compositional invariants
+\textbf{Keywords:} Kleisli categories, genetic algorithms, lax monoidal functors, compositional invariants
 
-\section{Motivation and Framework}
+\medskip
 
-Every genetic algorithm follows the same compositional pattern: evaluate fitness, select survivors, recombine, mutate, repeat. This structure is invariant across domains---whether the genome encodes game-playing strategy weights~\cite{samuel1959}, maze topologies, or symbolic expressions---yet it remains implicit in imperative implementations. We make it explicit by formalizing GA operators as morphisms in a Kleisli category.
+Hanks et al.\ showed that gradient descent is a hypergraph functor from optimization problems to dynamical systems~\cite{hanks2024}. Their framework requires differentiability. We provide the categorical foundation for the \emph{gradient-free} regime: population-based evolutionary search, where the relevant structure is not a derivative but a monad carrying randomness, configuration, and logging.
 
-GA operators require randomness, read-only configuration, and write-only logging. These effects are captured by a monad $M = \mathsf{ReaderT}\;\mathit{Config}\;(\mathsf{WriterT}\;\mathit{Log}\;(\mathsf{State}\;\mathit{StdGen}))$, and a \emph{genetic operator} is a Kleisli arrow $\mathit{op} \colon [a] \to M\,[b]$ on populations. A single generation is the composite $\mathit{step} = \mathit{evaluate} \ggg \mathit{select} \ggg \mathit{crossover} \ggg \mathit{mutate}$, itself a Kleisli arrow $[a] \to M\,[a]$, so generations compose: an $n$-generation run is $\mathit{step}^n$. We identify three composition levels:
+\textbf{Framework.}
+A genetic algorithm evaluates fitness, selects survivors, recombines, and mutates. These operators are not pure functions --- they require random number generation, read-only parameters, and write-only logging. We package all three effects into a monad $M = \mathsf{ReaderT}\;\mathit{Config}\;(\mathsf{WriterT}\;\mathit{Log}\;(\mathsf{State}\;\mathit{StdGen}))$ and define a \emph{genetic operator} as a Kleisli arrow $\mathit{op} \colon [a] \to M\,[b]$ on populations. One generation step is the Kleisli composite
+\[
+  \mathit{step} = \mathit{evaluate} \ggg \mathit{select} \ggg \mathit{crossover} \ggg \mathit{mutate} \;\colon\; [a] \to M\,[a]
+\]
+and an $n$-generation run is $\mathit{step}^n$. The framework instantiates Miranda's abstract Kleisli structures~\cite{miranda2024} concretely: the Kleisli category $\mathcal{K}\!\ell(M)$ with population types as objects and GA operators as morphisms. We identify three composition levels --- operators into pipelines (one generation), pipelines across generations into strategies, strategies via higher-order combinators into multi-population systems --- each forming a category with the same Kleisli composition.
 
-\begin{enumerate}[nosep,leftmargin=1.5em]
-  \item \textbf{Operators} compose into \textbf{pipelines} (one generation).
-  \item \textbf{Pipelines} compose across generations into \textbf{strategies}.
-  \item \textbf{Strategies} compose via higher-order combinators into \textbf{multi-population systems}.
-\end{enumerate}
+\textbf{Result 1: Diversity Fingerprints.}
+Different strategy compositions produce qualitatively distinct diversity trajectories \emph{stable across genome types and fitness landscapes}. On three domains (real-valued weight vectors, binary mazes, expression trees), we identify four fingerprints: monotonic decline (generational), spike--crash--rebound (hourglass), stable maintenance (island/migration), and spike--collapse (adaptive/plateau-triggered). These are determined by the \emph{composition pattern}, not by the individual operators. We conjecture that fingerprints are functorial invariants of strategy composition, analogous to Myers' behavioral invariants of composed dynamical systems~\cite{myers2022}.
 
-\noindent
-Each level has the same categorical structure. Strategy combinators (island, hourglass, adaptive) are endofunctors on $\mathbf{Strat}$; migration is a natural transformation between island configurations.
-
-\section{Results}
-
-We demonstrate three results across three domains (checkers weight evolution, maze topology evolution, symbolic regression) in a Haskell implementation (12 modules, 75 tests, ${\sim}5500$ lines).
-
-\smallskip\noindent\textbf{Result 1: Diversity Fingerprints.}
-Different strategy compositions produce qualitatively distinct diversity trajectories that are \emph{stable across genome types}: monotonic decline (flat/generational), spike--crash--rebound (hourglass), stable maintenance (island), and spike--collapse (adaptive). These signatures are determined by the composition pattern, not by the individual operators or genome type. We conjecture that fingerprints are functorial, composing predictably when strategies are composed---analogous to behavioral invariants of composed dynamical systems~\cite{baez2022}.
-
-\smallskip\noindent\textbf{Result 2: The Strict/Lax Dichotomy.}
-The island model defines a functor $I \colon \mathbf{Strat} \to \mathbf{Strat}$ lifting single-population to multi-population strategies with periodic migration.
+\textbf{Result 2: The Strict/Lax Dichotomy.}
+The island model lifts a single-population strategy to a multi-population strategy with periodic migration, defining a functor $I \colon \mathbf{Strat} \to \mathbf{Strat}$.
 
 \begin{theorem}[Strict/Lax Dichotomy]
-For strategies $S_1, S_2$ and island functor $I_{\mu,f}$ with migration rate $\mu$:
+For strategies $S_1, S_2$ and island functor $I_{\mu}$ with migration rate $\mu$:
 \begin{enumerate}[nosep,leftmargin=1.5em]
   \item If $\mu = 0$: $I(S_1 \ggg S_2) = I(S_1) \ggg I(S_2)$ \emph{(strict monoidal)}.
-  \item If $\mu > 0$: $I(S_1 \ggg S_2) \ncong I(S_1) \ggg I(S_2)$, with laxity magnitude $D^*$ independent of boundary position and migration frequency \emph{(uniformly lax)}.
+  \item If $\mu > 0$: the laxator $\lambda \colon I(S_1) \ggg I(S_2) \Rightarrow I(S_1 \ggg S_2)$ has magnitude $D^*$ that is independent of composition boundary position and migration frequency \emph{(uniformly lax)}.
 \end{enumerate}
 \end{theorem}
 
 \noindent
-The laxity arises from chaotic amplification of migration schedule perturbation at composition boundaries. This is structurally analogous to Ghani et al.'s result that approximate Nash equilibria fail to compose~\cite{ghani2018}: both instantiate the general phenomenon that lax monoidal functors do not preserve composition strictly.
+The uniform laxity arises because resetting the migration schedule at the composition boundary perturbs a chaotic dynamical system; the perturbation magnitude is determined asymptotically by the spectral gap of the migration topology's Markov chain, not by where or how often migration occurs. This is structurally parallel to Ghani et al.'s result that the approximation functor $T_\varepsilon$ on open games is lax monoidal --- approximate Nash equilibria fail to compose like exact ones~\cite{ghani2024}. Both instantiate a general pattern: \emph{relaxation of exactness conditions produces uniform laxity in functorial composition}.
 
-\smallskip\noindent\textbf{Result 3: Three-Level Composition.}
-The operator $\to$ pipeline $\to$ strategy tower is categorical: each level forms a category, inclusions are functors, and the structure is preserved at every level. This enables recursive reasoning about evolutionary systems.
+\textbf{Result 3: Three-Level Composition.}
+The operator $\to$ pipeline $\to$ strategy tower is not merely a design pattern. Each level is a category; inclusions are functors; strategy combinators (hourglass, island, adaptive) are endofunctors on $\mathbf{Strat}$; migration is a natural transformation between island configurations.
 
-\section{Positioning at ACT}
-
-This work connects evolutionary computation---a field not previously represented at ACT---to several active threads:
-
-\begin{itemize}[nosep,leftmargin=1.5em]
-  \item \textbf{Compositional game theory}~\cite{ghani2018}: GAs are open games; the Dichotomy Theorem is the evolutionary analogue of the failure of approximate equilibria to compose.
-  \item \textbf{Categorical cybernetics}~\cite{hedges2023}: GAs are bidirectional (forward: operators; backward: selection). Optics unify our Kleisli and co-Kleisli perspectives.
-  \item \textbf{Polynomial dynamical systems}~\cite{spivak2022}: Diversity fingerprints parallel how behavioral invariants of composed systems compose functorially.
-\end{itemize}
-
-\noindent
-Evolutionary computation offers rich, well-understood examples where categorical formalization yields non-obvious results---the Dichotomy Theorem is not discoverable without the functorial framework.
+\textbf{Positioning.}
+Evolutionary computation has never appeared at ACT. We connect it to three active threads: (1)~Ghani's compositional game theory~\cite{ghani2024} --- GAs are open games; the Dichotomy Theorem is the evolutionary analogue of lax composition of approximate equilibria; (2)~Hedges and Sakamoto's categorical cybernetics~\cite{hedges2024} --- GAs are bidirectional processes (forward: genetic operators; backward: fitness-based selection) that may admit an optic description; (3)~Hanks et al.'s optimization-as-functor~\cite{hanks2024} --- we cover the complementary gradient-free regime. The framework is implemented in Haskell (12 modules, 75 tests, ${\sim}5500$ lines) and demonstrated on three domains. A full manuscript is in preparation.
 
 \begin{thebibliography}{9}
 \small
+\setlength{\itemsep}{0pt}
 
-\bibitem[1]{samuel1959}
-A.~Samuel. Some studies in machine learning using the game of checkers. \emph{IBM J. Res. Dev.}, 3(3):210--229, 1959.
+\bibitem{hanks2024}
+T.~Hanks, M.~Klawonn, J.~Fairbanks. Generalized gradient descent is a hypergraph functor. \emph{EPTCS} 429, 2024. arXiv:2403.19845.
 
-\bibitem[2]{ghani2018}
-N.~Ghani, J.~Hedges, V.~Winschel, P.~Zahn. Compositional game theory. \emph{LICS 2018}, pp.~472--481. ACM, 2018.
+\bibitem{miranda2024}
+A.~Miranda. Abstract Kleisli structures on 2-categories. \emph{EPTCS} 429, 2024. arXiv:2404.00900.
 
-\bibitem[3]{hedges2023}
-J.~Hedges. Categorical cybernetics: A manifesto. \emph{Compositionality}, 2023.
+\bibitem{ghani2024}
+N.~Ghani, J.~Hedges, V.~Winschel, P.~Zahn. A category theoretic approach to approximate game theory. \emph{EPTCS} 429, 2024. arXiv:2509.20932.
 
-\bibitem[4]{spivak2022}
-D.~I. Spivak. \emph{Polynomial Functors: A Mathematical Theory of Interaction}. MIT Press, 2022.
+\bibitem{hedges2024}
+J.~Hedges, R.~Rodriguez Sakamoto. Reinforcement learning in categorical cybernetics. \emph{EPTCS} 429, 2024. arXiv:2404.02688.
 
-\bibitem[5]{baez2022}
-J.~C. Baez, D.~J. Myers. Open systems in classical mechanics. \emph{J. Math. Phys.}, 63(11):112902, 2022.
+\bibitem{myers2022}
+D.~J. Myers. Double categories of open dynamical systems. \emph{Proc.\ ACT} 2020. arXiv:2005.05956.
 
 \end{thebibliography}
 
