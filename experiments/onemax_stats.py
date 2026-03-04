@@ -1,0 +1,851 @@
+#!/usr/bin/env python3
+"""
+Multi-seed statistical experiments for OneMax island model GA.
+
+Reproduces Experiments C (migration frequency sweep) and D (boundary position
+sweep) from the GECCO 2026 paper "Composition Determines Behavior".
+
+The GA implementation matches the Haskell source in
+  src/Evolution/{Effects,Operators,Island,Examples/BitString}.hs
+
+Usage:
+    python onemax_stats.py              # Run both experiments
+    python onemax_stats.py --exp C      # Experiment C only
+    python onemax_stats.py --exp D      # Experiment D only
+    python onemax_stats.py --seeds 10   # Use 10 seeds instead of 30
+    python onemax_stats.py --seed0 42   # Single seed for validation
+"""
+
+import argparse
+import csv
+import os
+import sys
+import time
+from dataclasses import dataclass, field
+from typing import List, Tuple, Optional
+
+import numpy as np
+from scipy import stats
+
+
+# ---------------------------------------------------------------------------
+# GA Configuration
+# ---------------------------------------------------------------------------
+
+@dataclass
+class GAConfig:
+    population_size: int = 80
+    genome_length: int = 20
+    num_islands: int = 4
+    tournament_size: int = 3
+    crossover_rate: float = 0.8
+    mutation_rate: float = 0.05  # 1/L where L=20
+    max_generations: int = 40
+    migration_freq: int = 5
+    migration_rate: float = 0.05  # fraction of pop to migrate (gives 1 migrant per island of 20)
+
+
+# ---------------------------------------------------------------------------
+# Core GA operators (matching Haskell implementation)
+# ---------------------------------------------------------------------------
+
+def onemax_fitness(individual: np.ndarray) -> float:
+    """OneMax: count the number of 1-bits."""
+    return float(np.sum(individual))
+
+
+def random_population(rng: np.random.Generator, pop_size: int, genome_length: int) -> np.ndarray:
+    """Generate random binary population. Shape: (pop_size, genome_length)."""
+    return rng.integers(0, 2, size=(pop_size, genome_length), dtype=np.int8)
+
+
+def evaluate(pop: np.ndarray) -> np.ndarray:
+    """Evaluate OneMax fitness for entire population. Returns 1D array of fitnesses."""
+    return pop.sum(axis=1).astype(float)
+
+
+def tournament_select(rng: np.random.Generator, pop: np.ndarray, fitnesses: np.ndarray,
+                      tournament_size: int) -> np.ndarray:
+    """Tournament selection. Matches Haskell: pick k random, keep best, repeat n times.
+
+    The Haskell code (tournamentSelect) does:
+        replicateM n (tournament k pop)
+    where tournament picks k random individuals and returns the one with highest fitness.
+    Selection is WITH replacement (randomChoice from the full pop each time).
+    """
+    n = len(pop)
+    selected_indices = np.empty(n, dtype=int)
+    for i in range(n):
+        # Pick k random contestants (with replacement, matching Haskell's replicateM k (randomChoice pop))
+        contestants = rng.integers(0, n, size=tournament_size)
+        # Keep the one with highest fitness
+        best_idx = contestants[np.argmax(fitnesses[contestants])]
+        selected_indices[i] = best_idx
+    return pop[selected_indices].copy()
+
+
+def one_point_crossover(rng: np.random.Generator, pop: np.ndarray,
+                        crossover_rate: float) -> np.ndarray:
+    """One-point crossover on pairs. Matches Haskell onePointCrossover.
+
+    The Haskell code pairs up individuals sequentially (p1:p2:rest),
+    generates a random double, and if < rate, picks a random crossover point
+    in [1, len-1] and swaps tails.
+    """
+    result = pop.copy()
+    n = len(pop)
+    genome_len = pop.shape[1]
+
+    i = 0
+    while i + 1 < n:
+        r = rng.random()
+        if r < crossover_rate:
+            # Random crossover point in [1, genome_len-1]
+            # Haskell: randomInt 1 (max 1 (len - 1))
+            point = rng.integers(1, genome_len)  # [1, genome_len) i.e. 1..genome_len-1
+            # Swap tails
+            result[i, point:], result[i+1, point:] = (
+                pop[i+1, point:].copy(), pop[i, point:].copy()
+            )
+        i += 2
+    return result
+
+
+def point_mutate(rng: np.random.Generator, pop: np.ndarray,
+                 mutation_rate: float) -> np.ndarray:
+    """Per-gene bit-flip mutation. Matches Haskell pointMutate bitFlip.
+
+    The Haskell code iterates each gene in each individual:
+    for each gene, draw random double; if < mutation_rate, flip the bit.
+    """
+    result = pop.copy()
+    # Generate mutation mask
+    mask = rng.random(size=pop.shape) < mutation_rate
+    # Flip bits where mask is True
+    result[mask] = 1 - result[mask]
+    return result
+
+
+# ---------------------------------------------------------------------------
+# Island model (matching Haskell Evolution.Island)
+# ---------------------------------------------------------------------------
+
+def split_population(pop: np.ndarray, num_islands: int) -> List[np.ndarray]:
+    """Split population into islands. Matches Haskell makeIslands."""
+    island_size = len(pop) // num_islands
+    islands = []
+    for i in range(num_islands):
+        start = i * island_size
+        end = start + island_size
+        islands.append(pop[start:end].copy())
+    return islands
+
+
+def merge_populations(islands: List[np.ndarray]) -> np.ndarray:
+    """Merge island populations back into one."""
+    return np.vstack(islands)
+
+
+def ring_migrate(rng: np.random.Generator, islands: List[np.ndarray],
+                 migration_rate: float) -> List[np.ndarray]:
+    """Ring migration. Matches Haskell ringMigrate.
+
+    The Haskell code:
+    1. For each island, compute migrant_count = max 1 (round(rate * pop_size))
+    2. Shuffle each island's population, take first migrant_count as migrants
+    3. Island i sends migrants to island (i+1) mod n
+    4. Receiving island: migrants replace the LAST individuals
+       (migrantsIn ++ trimmed where trimmed = take (len - len_migrants) pop)
+       So migrants go to the FRONT and the last individuals are dropped.
+
+    Wait, re-reading the Haskell more carefully:
+        let updatedIslands = zipWith (\\isl migrantsIn ->
+                let pop = islandPop isl
+                    trimmed = take (length pop - length migrantsIn) pop
+                in isl { islandPop = migrantsIn ++ trimmed }
+              ) islands (last migrants : init migrants)
+
+    So island 0 receives from island (n-1) (last migrants),
+    island 1 receives from island 0, etc.
+    That means island i receives migrants from island (i-1) mod n.
+    And island i sends its migrants to island (i+1) mod n.
+
+    The receiving island puts migrants at the FRONT and keeps the first
+    (pop_size - num_migrants) of its original population. This means the
+    LAST individuals in the original ordering are dropped.
+    """
+    n = len(islands)
+    if n <= 1:
+        return [isl.copy() for isl in islands]
+
+    # Compute migrants for each island
+    migrants_list = []
+    for isl in islands:
+        pop_size = len(isl)
+        num_migrants = max(1, round(migration_rate * pop_size))
+        # Shuffle and take first num_migrants
+        indices = rng.permutation(pop_size)
+        migrants_list.append(isl[indices[:num_migrants]].copy())
+
+    # Apply migration: island i receives migrants from island (i-1) mod n
+    # In Haskell: (last migrants : init migrants) means
+    #   island 0 gets migrants from island n-1 (last)
+    #   island 1 gets migrants from island 0 (first of init)
+    #   ...
+    result = []
+    for i in range(n):
+        source_idx = (i - 1) % n  # island i receives from island i-1
+        incoming = migrants_list[source_idx]
+        pop = islands[i]
+        # trimmed = take (pop_size - num_incoming) pop
+        trimmed = pop[:len(pop) - len(incoming)]
+        # new pop = incoming ++ trimmed
+        new_pop = np.vstack([incoming, trimmed])
+        result.append(new_pop)
+
+    return result
+
+
+def evolve_islands(rng: np.random.Generator, islands: List[np.ndarray],
+                   config: GAConfig, start_gen: int = 0,
+                   end_gen: Optional[int] = None) -> Tuple[List[np.ndarray], dict]:
+    """Run island model evolution. Matches Haskell evolveIslands.
+
+    The Haskell code:
+        go gen maxG isls
+          | gen >= maxG = return isls
+          | otherwise = do
+              isls' <- mapM (evolve one gen) isls
+              isls'' <- if gen > 0 && gen `mod` migrationFreq == 0
+                        then migrate model isls'
+                        else return isls'
+              go (gen + 1) maxG isls''
+
+    Returns (final_islands, stats_dict).
+    """
+    if end_gen is None:
+        end_gen = config.max_generations
+
+    stats = {
+        'best_fitness': [],
+        'mean_fitness': [],
+        'hamming_div': [],
+    }
+
+    for gen in range(start_gen, end_gen):
+        # Evolve each island for one generation
+        new_islands = []
+        for isl in islands:
+            # Pipeline: evaluate -> tournament_select -> one_point_crossover -> point_mutate
+            fitnesses = evaluate(isl)
+            selected = tournament_select(rng, isl, fitnesses, config.tournament_size)
+            crossed = one_point_crossover(rng, selected, config.crossover_rate)
+            mutated = point_mutate(rng, crossed, config.mutation_rate)
+            new_islands.append(mutated)
+
+        islands = new_islands
+
+        # Migrate if it's time
+        # Haskell: gen > 0 && gen `mod` migrationFreq == 0
+        if gen > 0 and gen % config.migration_freq == 0:
+            islands = ring_migrate(rng, islands, config.migration_rate)
+
+        # Log stats
+        all_pop = merge_populations(islands)
+        all_fit = evaluate(all_pop)
+        stats['best_fitness'].append(float(np.max(all_fit)))
+        stats['mean_fitness'].append(float(np.mean(all_fit)))
+        stats['hamming_div'].append(hamming_diversity(all_pop))
+
+    return islands, stats
+
+
+# ---------------------------------------------------------------------------
+# Metrics
+# ---------------------------------------------------------------------------
+
+def hamming_diversity(pop: np.ndarray) -> float:
+    """Mean pairwise Hamming distance, normalized to [0, 1].
+
+    For binary genomes, this is the average fraction of positions that differ
+    between all pairs of individuals.
+    """
+    n = len(pop)
+    if n < 2:
+        return 0.0
+    genome_len = pop.shape[1]
+
+    # Efficient computation: for each bit position, count the number of 1s
+    # Then pairwise Hamming = sum over positions of (k * (n - k)) * 2 / (n * (n-1))
+    # where k = number of 1s at that position
+    ones_per_position = pop.sum(axis=0)  # shape: (genome_len,)
+    # Number of disagreeing pairs at each position
+    disagreeing = ones_per_position * (n - ones_per_position)
+    # Total pairs
+    total_pairs = n * (n - 1) / 2
+    # Mean Hamming distance normalized by genome length
+    mean_hamming = np.sum(disagreeing) / total_pairs / genome_len
+    return float(mean_hamming)
+
+
+def population_divergence(pop1: np.ndarray, pop2: np.ndarray) -> float:
+    """Normalized distance between two populations.
+
+    Compares the allele frequencies at each locus. Returns a value in [0, 1]
+    where 0 = identical allele distributions, 1 = maximally different.
+
+    Uses L1 distance on allele frequencies, normalized by genome length.
+    """
+    if len(pop1) == 0 or len(pop2) == 0:
+        return 1.0
+    freq1 = pop1.mean(axis=0)  # allele frequency per locus
+    freq2 = pop2.mean(axis=0)
+    # L1 distance normalized by genome length
+    return float(np.mean(np.abs(freq1 - freq2)))
+
+
+def island_population_divergence(islands1: List[np.ndarray],
+                                  islands2: List[np.ndarray]) -> float:
+    """Compare two sets of islands (continuous vs composed).
+
+    Returns the mean per-island population divergence.
+    """
+    divs = []
+    for isl1, isl2 in zip(islands1, islands2):
+        divs.append(population_divergence(isl1, isl2))
+    return float(np.mean(divs))
+
+
+def fitness_difference(islands1: List[np.ndarray], islands2: List[np.ndarray]) -> float:
+    """Absolute difference in best fitness between two sets of islands."""
+    fit1 = max(float(np.max(evaluate(isl))) for isl in islands1)
+    fit2 = max(float(np.max(evaluate(isl))) for isl in islands2)
+    return abs(fit1 - fit2)
+
+
+# ---------------------------------------------------------------------------
+# Experiment C: Migration Frequency Sweep
+# ---------------------------------------------------------------------------
+
+def run_experiment_c_single(seed: int, config: GAConfig,
+                            freq: int) -> dict:
+    """Run a single seed of Experiment C for one migration frequency.
+
+    The dichotomy test: compare continuous 40-gen run I(S1;S2) vs
+    composed run I(S1);I(S2) where S1 = first 20 gens, S2 = second 20 gens.
+    The boundary resets the migration counter.
+    """
+    cfg = GAConfig(
+        population_size=config.population_size,
+        genome_length=config.genome_length,
+        num_islands=config.num_islands,
+        tournament_size=config.tournament_size,
+        crossover_rate=config.crossover_rate,
+        mutation_rate=config.mutation_rate,
+        max_generations=config.max_generations,
+        migration_freq=freq,
+        migration_rate=config.migration_rate,
+    )
+    boundary = 20  # Split at gen 20
+
+    # --- Continuous run: I(S1 ; S2) ---
+    rng_cont = np.random.default_rng(seed)
+    init_pop = random_population(rng_cont, cfg.population_size, cfg.genome_length)
+    islands_cont = split_population(init_pop, cfg.num_islands)
+    final_cont, stats_cont = evolve_islands(rng_cont, islands_cont, cfg,
+                                             start_gen=0, end_gen=cfg.max_generations)
+
+    # --- Composed run: I(S1) ; I(S2) ---
+    # Same initial population and RNG state
+    rng_comp = np.random.default_rng(seed)
+    init_pop2 = random_population(rng_comp, cfg.population_size, cfg.genome_length)
+    islands_comp = split_population(init_pop2, cfg.num_islands)
+
+    # Phase 1: generations 0..boundary-1
+    islands_phase1, _ = evolve_islands(rng_comp, islands_comp, cfg,
+                                        start_gen=0, end_gen=boundary)
+
+    # Phase 2: generations boundary..max_gen-1
+    # KEY: migration counter resets at the boundary. In the Haskell code,
+    # the generation counter used for migration check is the actual gen number.
+    # When we compose, the second phase starts at gen=boundary but the migration
+    # schedule resets because in a "composed" run, we restart the go loop
+    # from gen=0 for the second phase (conceptually). But actually, the paper says
+    # "resetting the migration schedule at the boundary".
+    #
+    # To match: run phase 2 with gen starting from 0 (so migration check uses
+    # gen % freq == 0 with gen starting from 0, not from boundary).
+    islands_phase2, _ = evolve_islands(rng_comp, islands_phase1, cfg,
+                                        start_gen=0, end_gen=cfg.max_generations - boundary)
+
+    # Compute metrics
+    pop_div = island_population_divergence(final_cont, islands_phase2)
+    ham_div_cont = hamming_diversity(merge_populations(final_cont))
+    ham_div_comp = hamming_diversity(merge_populations(islands_phase2))
+    ham_div_diff = abs(ham_div_cont - ham_div_comp)
+    fit_diff = fitness_difference(final_cont, islands_phase2)
+
+    # Schedule difference: number of migration events displaced
+    # In continuous: migrations at gen g where g > 0 and g % freq == 0, for g in [0, max_gen)
+    cont_events = set(g for g in range(cfg.max_generations) if g > 0 and g % freq == 0)
+    # In composed: phase1 events at g > 0 and g % freq == 0 for g in [0, boundary)
+    # phase2 events at g > 0 and g % freq == 0 for g in [0, max_gen - boundary)
+    # mapped to absolute: boundary + g
+    comp_events_p1 = set(g for g in range(boundary) if g > 0 and g % freq == 0)
+    comp_events_p2 = set(boundary + g for g in range(cfg.max_generations - boundary)
+                         if g > 0 and g % freq == 0)
+    comp_events = comp_events_p1 | comp_events_p2
+    sched_diff = len(cont_events.symmetric_difference(comp_events))
+
+    return {
+        'seed': seed,
+        'freq': freq,
+        'sched_diff': sched_diff,
+        'pop_divergence': pop_div,
+        'hamming_div_diff': ham_div_diff,
+        'fitness_diff': fit_diff,
+        'hamming_div_cont': ham_div_cont,
+        'hamming_div_comp': ham_div_comp,
+    }
+
+
+def run_experiment_c(seeds: List[int], config: GAConfig,
+                     frequencies: List[int] = None) -> List[dict]:
+    """Run Experiment C: migration frequency sweep."""
+    if frequencies is None:
+        frequencies = [2, 5, 10, 20, 40]
+
+    results = []
+    total = len(frequencies) * len(seeds)
+    done = 0
+
+    for freq in frequencies:
+        for seed in seeds:
+            result = run_experiment_c_single(seed, config, freq)
+            results.append(result)
+            done += 1
+            if done % 10 == 0 or done == total:
+                print(f"  Experiment C: {done}/{total} runs complete", flush=True)
+
+    return results
+
+
+# ---------------------------------------------------------------------------
+# Experiment D: Boundary Position Sweep
+# ---------------------------------------------------------------------------
+
+def run_experiment_d_single(seed: int, config: GAConfig,
+                            boundary: int) -> dict:
+    """Run a single seed of Experiment D for one boundary position.
+
+    Same as C but with fixed migration freq=5, varying boundary position.
+    """
+    cfg = GAConfig(
+        population_size=config.population_size,
+        genome_length=config.genome_length,
+        num_islands=config.num_islands,
+        tournament_size=config.tournament_size,
+        crossover_rate=config.crossover_rate,
+        mutation_rate=config.mutation_rate,
+        max_generations=config.max_generations,
+        migration_freq=5,  # fixed
+        migration_rate=config.migration_rate,
+    )
+
+    # --- Continuous run ---
+    rng_cont = np.random.default_rng(seed)
+    init_pop = random_population(rng_cont, cfg.population_size, cfg.genome_length)
+    islands_cont = split_population(init_pop, cfg.num_islands)
+    final_cont, _ = evolve_islands(rng_cont, islands_cont, cfg,
+                                    start_gen=0, end_gen=cfg.max_generations)
+
+    # --- Composed run ---
+    rng_comp = np.random.default_rng(seed)
+    init_pop2 = random_population(rng_comp, cfg.population_size, cfg.genome_length)
+    islands_comp = split_population(init_pop2, cfg.num_islands)
+
+    # Phase 1: generations 0..boundary-1
+    islands_phase1, _ = evolve_islands(rng_comp, islands_comp, cfg,
+                                        start_gen=0, end_gen=boundary)
+
+    # Phase 2: generations 0..(max_gen - boundary - 1), migration counter reset
+    islands_phase2, _ = evolve_islands(rng_comp, islands_phase1, cfg,
+                                        start_gen=0, end_gen=cfg.max_generations - boundary)
+
+    # Compute metrics
+    pop_div = island_population_divergence(final_cont, islands_phase2)
+    ham_div_cont = hamming_diversity(merge_populations(final_cont))
+    ham_div_comp = hamming_diversity(merge_populations(islands_phase2))
+    ham_div_diff = abs(ham_div_cont - ham_div_comp)
+
+    # Does boundary hit a migration event?
+    hits_migration = (boundary > 0 and boundary % 5 == 0)
+
+    return {
+        'seed': seed,
+        'boundary': boundary,
+        'hits_migration': hits_migration,
+        'pop_divergence': pop_div,
+        'hamming_div_diff': ham_div_diff,
+        'hamming_div_cont': ham_div_cont,
+        'hamming_div_comp': ham_div_comp,
+    }
+
+
+def run_experiment_d(seeds: List[int], config: GAConfig,
+                     boundaries: List[int] = None) -> List[dict]:
+    """Run Experiment D: boundary position sweep."""
+    if boundaries is None:
+        boundaries = [15, 17, 20, 23, 25]
+
+    results = []
+    total = len(boundaries) * len(seeds)
+    done = 0
+
+    for boundary in boundaries:
+        for seed in seeds:
+            result = run_experiment_d_single(seed, config, boundary)
+            results.append(result)
+            done += 1
+            if done % 10 == 0 or done == total:
+                print(f"  Experiment D: {done}/{total} runs complete", flush=True)
+
+    return results
+
+
+# ---------------------------------------------------------------------------
+# Statistical Analysis
+# ---------------------------------------------------------------------------
+
+def vargha_delaney_a(group1: np.ndarray, group2: np.ndarray) -> float:
+    """Vargha-Delaney A effect size measure.
+
+    A = P(X > Y) + 0.5 * P(X == Y)
+    where X ~ group1, Y ~ group2.
+
+    A = 0.5 means no effect. A > 0.5 means group1 tends to be larger.
+    """
+    m, n = len(group1), len(group2)
+    if m == 0 or n == 0:
+        return 0.5
+
+    # Use Mann-Whitney U statistic: A = U / (m * n)
+    # where U = number of (x, y) pairs where x > y + 0.5 * (x == y)
+    count = 0.0
+    for x in group1:
+        for y in group2:
+            if x > y:
+                count += 1.0
+            elif x == y:
+                count += 0.5
+    return count / (m * n)
+
+
+def analyze_experiment_c(results: List[dict]) -> dict:
+    """Compute summary statistics and tests for Experiment C."""
+    frequencies = sorted(set(r['freq'] for r in results))
+
+    summary = {}
+    for freq in frequencies:
+        freq_results = [r for r in results if r['freq'] == freq]
+        pop_divs = np.array([r['pop_divergence'] for r in freq_results])
+        ham_divs = np.array([r['hamming_div_diff'] for r in freq_results])
+        fit_diffs = np.array([r['fitness_diff'] for r in freq_results])
+        sched_diffs = [r['sched_diff'] for r in freq_results]
+
+        summary[freq] = {
+            'sched_diff': sched_diffs[0],  # same for all seeds
+            'pop_div_mean': float(np.mean(pop_divs)),
+            'pop_div_std': float(np.std(pop_divs, ddof=1)) if len(pop_divs) > 1 else 0.0,
+            'pop_div_median': float(np.median(pop_divs)),
+            'pop_div_iqr': float(np.percentile(pop_divs, 75) - np.percentile(pop_divs, 25)),
+            'ham_div_mean': float(np.mean(ham_divs)),
+            'ham_div_std': float(np.std(ham_divs, ddof=1)) if len(ham_divs) > 1 else 0.0,
+            'ham_div_median': float(np.median(ham_divs)),
+            'fit_diff_mean': float(np.mean(fit_diffs)),
+            'n': len(freq_results),
+        }
+
+    # Kruskal-Wallis test across non-40 frequencies on pop_divergence
+    nonzero_groups = [
+        np.array([r['pop_divergence'] for r in results if r['freq'] == f])
+        for f in frequencies if f != 40
+    ]
+    if len(nonzero_groups) >= 2 and all(len(g) >= 2 for g in nonzero_groups):
+        kw_stat, kw_p = stats.kruskal(*nonzero_groups)
+    else:
+        kw_stat, kw_p = float('nan'), float('nan')
+
+    # Pairwise Mann-Whitney U and Vargha-Delaney between each freq pair
+    pairwise = {}
+    for i, f1 in enumerate(frequencies):
+        for f2 in frequencies[i+1:]:
+            g1 = np.array([r['pop_divergence'] for r in results if r['freq'] == f1])
+            g2 = np.array([r['pop_divergence'] for r in results if r['freq'] == f2])
+            if len(g1) >= 2 and len(g2) >= 2:
+                u_stat, u_p = stats.mannwhitneyu(g1, g2, alternative='two-sided')
+                a_effect = vargha_delaney_a(g1, g2)
+            else:
+                u_stat, u_p, a_effect = float('nan'), float('nan'), 0.5
+            pairwise[(f1, f2)] = {
+                'U': float(u_stat), 'p': float(u_p), 'A': float(a_effect)
+            }
+
+    return {
+        'summary': summary,
+        'kruskal_wallis': {'H': float(kw_stat), 'p': float(kw_p)},
+        'pairwise': pairwise,
+    }
+
+
+def analyze_experiment_d(results: List[dict]) -> dict:
+    """Compute summary statistics and tests for Experiment D."""
+    boundaries = sorted(set(r['boundary'] for r in results))
+
+    summary = {}
+    for boundary in boundaries:
+        b_results = [r for r in results if r['boundary'] == boundary]
+        pop_divs = np.array([r['pop_divergence'] for r in b_results])
+        ham_divs = np.array([r['hamming_div_diff'] for r in b_results])
+        hits = b_results[0]['hits_migration']
+
+        summary[boundary] = {
+            'hits_migration': hits,
+            'pop_div_mean': float(np.mean(pop_divs)),
+            'pop_div_std': float(np.std(pop_divs, ddof=1)) if len(pop_divs) > 1 else 0.0,
+            'pop_div_median': float(np.median(pop_divs)),
+            'pop_div_iqr': float(np.percentile(pop_divs, 75) - np.percentile(pop_divs, 25)),
+            'ham_div_mean': float(np.mean(ham_divs)),
+            'ham_div_std': float(np.std(ham_divs, ddof=1)) if len(ham_divs) > 1 else 0.0,
+            'ham_div_median': float(np.median(ham_divs)),
+            'n': len(b_results),
+        }
+
+    # Kruskal-Wallis across all boundaries
+    groups = [
+        np.array([r['pop_divergence'] for r in results if r['boundary'] == b])
+        for b in boundaries
+    ]
+    if len(groups) >= 2 and all(len(g) >= 2 for g in groups):
+        kw_stat, kw_p = stats.kruskal(*groups)
+    else:
+        kw_stat, kw_p = float('nan'), float('nan')
+
+    # Pairwise Mann-Whitney U
+    pairwise = {}
+    for i, b1 in enumerate(boundaries):
+        for b2 in boundaries[i+1:]:
+            g1 = np.array([r['pop_divergence'] for r in results if r['boundary'] == b1])
+            g2 = np.array([r['pop_divergence'] for r in results if r['boundary'] == b2])
+            if len(g1) >= 2 and len(g2) >= 2:
+                u_stat, u_p = stats.mannwhitneyu(g1, g2, alternative='two-sided')
+                a_effect = vargha_delaney_a(g1, g2)
+            else:
+                u_stat, u_p, a_effect = float('nan'), float('nan'), 0.5
+            pairwise[(b1, b2)] = {
+                'U': float(u_stat), 'p': float(u_p), 'A': float(a_effect)
+            }
+
+    return {
+        'summary': summary,
+        'kruskal_wallis': {'H': float(kw_stat), 'p': float(kw_p)},
+        'pairwise': pairwise,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Output
+# ---------------------------------------------------------------------------
+
+def save_csv(results: List[dict], filename: str):
+    """Save raw results to CSV."""
+    if not results:
+        return
+    keys = results[0].keys()
+    with open(filename, 'w', newline='') as f:
+        writer = csv.DictWriter(f, fieldnames=keys)
+        writer.writeheader()
+        writer.writerows(results)
+    print(f"  Saved: {filename}")
+
+
+def print_experiment_c_summary(analysis: dict):
+    """Print summary table matching Table 5 format."""
+    print("\n" + "=" * 80)
+    print("EXPERIMENT C: Migration Frequency Sweep")
+    print("=" * 80)
+    print(f"\nTable 5 (multi-seed): Island functor laxity vs. migration frequency")
+    print(f"{'Freq':>6} {'SchedDiff':>10} {'PopDiv(mean)':>14} {'PopDiv(std)':>13} "
+          f"{'PopDiv(med)':>13} {'PopDiv(IQR)':>13} {'HamDiv(mean)':>14} {'FitDiff':>10} {'n':>4}")
+    print("-" * 105)
+    for freq in sorted(analysis['summary'].keys()):
+        s = analysis['summary'][freq]
+        print(f"{freq:>6} {s['sched_diff']:>10} {s['pop_div_mean']:>14.3f} "
+              f"{s['pop_div_std']:>13.3f} {s['pop_div_median']:>13.3f} "
+              f"{s['pop_div_iqr']:>13.3f} {s['ham_div_mean']:>14.3f} "
+              f"{s['fit_diff_mean']:>10.1f} {s['n']:>4}")
+
+    kw = analysis['kruskal_wallis']
+    print(f"\nKruskal-Wallis (non-40 freqs, pop divergence): H={kw['H']:.3f}, p={kw['p']:.4f}")
+
+    print(f"\nPairwise Mann-Whitney U (pop divergence):")
+    print(f"{'Pair':>12} {'U':>10} {'p':>10} {'A (V-D)':>10}")
+    print("-" * 45)
+    for (f1, f2), pw in sorted(analysis['pairwise'].items()):
+        print(f"  {f1} vs {f2:>3} {pw['U']:>10.1f} {pw['p']:>10.4f} {pw['A']:>10.3f}")
+
+
+def print_experiment_d_summary(analysis: dict):
+    """Print summary table matching Table 6 format."""
+    print("\n" + "=" * 80)
+    print("EXPERIMENT D: Boundary Position Sweep")
+    print("=" * 80)
+    print(f"\nTable 6 (multi-seed): Divergence vs. composition boundary position (freq=5)")
+    print(f"{'Boundary':>10} {'HitsMig?':>10} {'PopDiv(mean)':>14} {'PopDiv(std)':>13} "
+          f"{'PopDiv(med)':>13} {'PopDiv(IQR)':>13} {'HamDiv(mean)':>14} {'n':>4}")
+    print("-" * 95)
+    for boundary in sorted(analysis['summary'].keys()):
+        s = analysis['summary'][boundary]
+        hits = "YES" if s['hits_migration'] else "no"
+        print(f"{boundary:>10} {hits:>10} {s['pop_div_mean']:>14.3f} "
+              f"{s['pop_div_std']:>13.3f} {s['pop_div_median']:>13.3f} "
+              f"{s['pop_div_iqr']:>13.3f} {s['ham_div_mean']:>14.3f} {s['n']:>4}")
+
+    kw = analysis['kruskal_wallis']
+    print(f"\nKruskal-Wallis (all boundaries, pop divergence): H={kw['H']:.3f}, p={kw['p']:.4f}")
+
+    print(f"\nPairwise Mann-Whitney U (pop divergence):")
+    print(f"{'Pair':>12} {'U':>10} {'p':>10} {'A (V-D)':>10}")
+    print("-" * 45)
+    for (b1, b2), pw in sorted(analysis['pairwise'].items()):
+        print(f"  {b1} vs {b2:>3} {pw['U']:>10.1f} {pw['p']:>10.4f} {pw['A']:>10.3f}")
+
+
+# ---------------------------------------------------------------------------
+# Single-seed validation (match paper's seed 42)
+# ---------------------------------------------------------------------------
+
+def run_single_seed_validation(config: GAConfig, seed: int = 42):
+    """Run a single seed to compare with the paper's Tables 5 and 6."""
+    print("\n" + "=" * 80)
+    print(f"SINGLE-SEED VALIDATION (seed={seed})")
+    print("=" * 80)
+
+    # Experiment C
+    print("\nExperiment C results (single seed):")
+    print(f"{'Freq':>6} {'SchedDiff':>10} {'PopDiv':>10} {'HamDivDiff':>12} {'FitDiff':>10}")
+    print("-" * 55)
+    for freq in [2, 5, 10, 20, 40]:
+        r = run_experiment_c_single(seed, config, freq)
+        print(f"{r['freq']:>6} {r['sched_diff']:>10} {r['pop_divergence']:>10.3f} "
+              f"{r['hamming_div_diff']:>12.3f} {r['fitness_diff']:>10.1f}")
+
+    print("\nPaper Table 5 reference values:")
+    print(f"{'Freq':>6} {'SchedDiff':>10} {'PopDiv':>10} {'HamDivDiff':>12} {'FitDiff':>10}")
+    print("-" * 55)
+    paper_c = [
+        (2, 1, 0.744, 0.110, 0.0),
+        (5, 1, 0.812, 0.102, 0.0),
+        (10, 1, 0.756, 0.096, 0.0),
+        (20, 1, 0.819, 0.129, 0.0),
+        (40, 0, 0.000, 0.000, 0.0),
+    ]
+    for freq, sd, pd, hd, fd in paper_c:
+        print(f"{freq:>6} {sd:>10} {pd:>10.3f} {hd:>12.3f} {fd:>10.1f}")
+
+    # Experiment D
+    print("\nExperiment D results (single seed):")
+    print(f"{'Boundary':>10} {'HitsMig?':>10} {'PopDiv':>10} {'HamDivDiff':>12}")
+    print("-" * 45)
+    for boundary in [15, 17, 20, 23, 25]:
+        r = run_experiment_d_single(seed, config, boundary)
+        hits = "YES" if r['hits_migration'] else "no"
+        print(f"{r['boundary']:>10} {hits:>10} {r['pop_divergence']:>10.3f} "
+              f"{r['hamming_div_diff']:>12.3f}")
+
+    print("\nPaper Table 6 reference values:")
+    print(f"{'Boundary':>10} {'HitsMig?':>10} {'PopDiv':>10} {'HamDivDiff':>12}")
+    print("-" * 45)
+    paper_d = [
+        (15, "YES", 0.794, 0.105),
+        (17, "no", 0.725, 0.098),
+        (20, "YES", 0.812, 0.102),
+        (23, "no", 0.744, 0.108),
+        (25, "YES", 0.800, 0.102),
+    ]
+    for b, hm, pd, hd in paper_d:
+        print(f"{b:>10} {hm:>10} {pd:>10.3f} {hd:>12.3f}")
+
+
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="OneMax island model experiments for GECCO 2026 paper")
+    parser.add_argument('--exp', choices=['C', 'D', 'both'], default='both',
+                        help='Which experiment to run (default: both)')
+    parser.add_argument('--seeds', type=int, default=30,
+                        help='Number of seeds (default: 30)')
+    parser.add_argument('--seed0', type=int, default=None,
+                        help='Run single seed for validation (overrides --seeds)')
+    parser.add_argument('--outdir', type=str, default=None,
+                        help='Output directory for CSV files (default: same as script)')
+    args = parser.parse_args()
+
+    # Determine output directory
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    outdir = args.outdir or script_dir
+
+    # Configuration matching the paper
+    config = GAConfig(
+        population_size=80,
+        genome_length=20,
+        num_islands=4,
+        tournament_size=3,
+        crossover_rate=0.8,
+        mutation_rate=1.0 / 20.0,  # 1/L
+        max_generations=40,
+        migration_freq=5,
+        migration_rate=0.05,  # gives max(1, round(0.05 * 20)) = 1 migrant per island
+    )
+
+    print("OneMax Island Model Experiments")
+    print(f"Config: pop={config.population_size}, L={config.genome_length}, "
+          f"islands={config.num_islands}, tourn={config.tournament_size}, "
+          f"cx={config.crossover_rate}, mut={config.mutation_rate:.3f}, "
+          f"gens={config.max_generations}")
+    print(f"Migration: rate={config.migration_rate}, freq={config.migration_freq}")
+
+    # Single-seed validation
+    if args.seed0 is not None:
+        run_single_seed_validation(config, args.seed0)
+        return
+
+    seeds = list(range(args.seeds))
+    print(f"\nRunning with {len(seeds)} seeds: {seeds[0]}..{seeds[-1]}")
+    t0 = time.time()
+
+    # --- Experiment C ---
+    if args.exp in ('C', 'both'):
+        print("\n--- Experiment C: Migration Frequency Sweep ---")
+        results_c = run_experiment_c(seeds, config)
+        analysis_c = analyze_experiment_c(results_c)
+        print_experiment_c_summary(analysis_c)
+        save_csv(results_c, os.path.join(outdir, 'experiment_c_raw.csv'))
+
+    # --- Experiment D ---
+    if args.exp in ('D', 'both'):
+        print("\n--- Experiment D: Boundary Position Sweep ---")
+        results_d = run_experiment_d(seeds, config)
+        analysis_d = analyze_experiment_d(results_d)
+        print_experiment_d_summary(analysis_d)
+        save_csv(results_d, os.path.join(outdir, 'experiment_d_raw.csv'))
+
+    elapsed = time.time() - t0
+    print(f"\nTotal time: {elapsed:.1f}s")
+
+
+if __name__ == '__main__':
+    main()
