@@ -1,0 +1,137 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=0.75in, top=0.6in, bottom=0.6in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,calc}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{xcolor}
+
+\setlength{\parskip}{0.25em}
+\setlength{\parindent}{0em}
+\usepackage{titlesec}
+\titlespacing*{\section}{0pt}{0.6em}{0.2em}
+
+\title{\vspace{-2em}\textbf{Genetic Algorithms for Category Theorists}\\[0.2em]
+\large A Primer for Reviewers of ``From Games to Graphs''}
+\author{Lyra}
+\date{March 2026}
+
+\begin{document}
+\maketitle
+\vspace{-1.5em}
+\thispagestyle{empty}
+
+\section*{What Is a Genetic Algorithm?}
+
+A \textbf{genetic algorithm} (GA) maintains a \emph{population} of candidate solutions and improves them through iterated application of three operators inspired by biological evolution: \textbf{selection}, \textbf{crossover}, and \textbf{mutation}.
+
+\textbf{Concrete example: OneMax.}
+Suppose we want to find a bitstring of length 5 that maximizes the number of 1s. The \emph{fitness} of a bitstring is simply its Hamming weight. A population of four individuals might look like:
+
+\begin{center}
+\begin{tabular}{ccc}
+\toprule
+\textbf{Individual} & \textbf{Bitstring} & \textbf{Fitness} \\
+\midrule
+$a$ & \texttt{01001} & 2 \\
+$b$ & \texttt{11010} & 3 \\
+$c$ & \texttt{00110} & 2 \\
+$d$ & \texttt{10101} & 3 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The GA applies three operators to this population, producing a new population (the next \emph{generation}). After enough generations, the population converges toward the optimum \texttt{11111}.
+
+\section*{The Three Operators}
+
+\textbf{1. Selection} chooses which individuals reproduce, biased toward higher fitness.
+
+\emph{Tournament selection} (size 2): pick two individuals at random; the fitter one survives. Repeat until the new population is full. For example, if we draw pairs $(a,b)$, $(d,c)$, $(b,c)$, $(d,a)$:
+%
+\begin{center}
+\begin{tabular}{lcccl}
+\toprule
+\textbf{Tournament} & \textbf{Contestant 1} & vs & \textbf{Contestant 2} & \textbf{Winner} \\
+\midrule
+1 & $a$ (fitness 2) & & $b$ (fitness 3) & $b$: \texttt{11010} \\
+2 & $d$ (fitness 3) & & $c$ (fitness 2) & $d$: \texttt{10101} \\
+3 & $b$ (fitness 3) & & $c$ (fitness 2) & $b$: \texttt{11010} \\
+4 & $d$ (fitness 3) & & $a$ (fitness 2) & $d$: \texttt{10101} \\
+\bottomrule
+\end{tabular}
+\end{center}
+%
+After selection: $\{b, d, b, d\}$ --- the fitter individuals now dominate. Note that selection \emph{does not modify} individuals; it only changes their \emph{frequency} in the population.
+
+\textbf{2. Crossover} combines two parents to produce offspring, mixing their genetic material.
+
+\emph{One-point crossover}: choose a random cut point; the offspring gets the prefix of one parent and the suffix of the other. For the pair $(b, d)$ with cut after position 3:
+%
+\begin{center}
+{\small\ttfamily
+\begin{tabular}{r@{~}l@{\quad}l}
+Parent 1: & \colorbox{blue!15}{1\,1\,0}\,\textbar\,\colorbox{red!15}{1\,0} & $b$: \texttt{11010}\\
+Parent 2: & \colorbox{orange!15}{1\,0\,1}\,\textbar\,\colorbox{green!15}{0\,1} & $d$: \texttt{10101}\\[0.3em]
+Child 1:  & \colorbox{blue!15}{1\,1\,0}\,\textbar\,\colorbox{green!15}{0\,1} & \texttt{11001}\\
+Child 2:  & \colorbox{orange!15}{1\,0\,1}\,\textbar\,\colorbox{red!15}{1\,0} & \texttt{10110}\\
+\end{tabular}}
+\end{center}
+%
+\vspace{-0.3em}
+Child~1 gets bits 1--3 from Parent~1, bits 4--5 from Parent~2; Child~2 the reverse. Crossover is the primary mechanism for \emph{exploration} --- it recombines building blocks from different lineages.
+
+\textbf{3. Mutation} introduces random perturbation. \emph{Bit-flip mutation}: each bit is independently flipped with some small probability (e.g., $p = 0.1$).
+%
+\begin{center}
+\begin{tabular}{lcl}
+Before: & \texttt{1\,1\,0\,0\,1} & \\
+After:  & \texttt{1\,1\,\underline{1}\,0\,1} & $\leftarrow$ bit 3 flipped (fitness $2 \to 4$)
+\end{tabular}
+\end{center}
+%
+Mutation prevents premature convergence by maintaining diversity. Without it, alleles lost during selection can never be recovered.
+
+\section*{The Generation Cycle}
+
+One generation applies the operators in sequence: Evaluate $\to$ Selection $\to$ Crossover $\to$ Mutation $\to$ (repeat). Here is a full \textbf{OneMax trace} (population size 4, 3 generations):
+
+{\small
+\begin{center}
+\begin{tabular}{cl@{\hspace{1.5em}}c@{\hspace{1.5em}}l}
+\toprule
+\textbf{Gen} & \textbf{Population} & \textbf{Fitnesses} & \textbf{Best} \\
+\midrule
+0 & \texttt{01001, 11010, 00110, 10101} & 2, 3, 2, 3 & 3 \\
+1 & \texttt{11010, 10101, 11011, 10110} & 3, 3, 4, 3 & 4 \\
+2 & \texttt{11011, 11101, 11011, 11110} & 4, 4, 4, 4 & 4 \\
+3 & \texttt{11111, 11101, 11011, 11111} & 5, 4, 4, 5 & \textbf{5} \\
+\bottomrule
+\end{tabular}
+\end{center}}
+
+\section*{Why Composition Matters}
+
+The key insight of our paper is that the \emph{same three operators} can be composed in different ways, yielding qualitatively different evolutionary dynamics. This is where category theory becomes essential.
+
+\textbf{Flat composition} applies operators uniformly to the entire population each generation. This is the standard textbook GA. Diversity decreases monotonically --- the population converges steadily.
+
+\textbf{Island model} partitions the population into subpopulations (``islands'') that evolve independently, with occasional \emph{migration}. Same operators, different composition: the GA functor is applied per-island, and a migration morphism periodically couples them. Diversity drops within each island but spikes when migrants arrive.
+
+\textbf{Hourglass composition} alternates between exploratory phases (high mutation, weak selection) and exploitative phases (low mutation, strong selection). The operators don't change --- only the \emph{parameters} of their composition change over time.
+
+Each composition pattern produces a characteristic \textbf{diversity fingerprint} --- a distinctive trajectory of population diversity over generations --- that is \emph{stable across problem domains}. The flat strategy produces the same shaped diversity curve whether evolving checkers strategies, maze solutions, or mathematical expressions. The fingerprint is determined by \emph{composition structure}, not \emph{problem content}. The operators are morphisms; what matters is how they are composed.
+
+\section*{The Three Domains in Our Paper}
+
+\textbf{1. Checkers.} Individuals are vectors of 10 real-valued weights defining a board-evaluation heuristic. Fitness: win rate against opponents. Crossover blends weight vectors; mutation perturbs weights.
+
+\textbf{2. Maze navigation.} Individuals are 6$\times$6 grid mazes. Fitness measures solvability and quality (path length, branching). Crossover swaps rectangular sub-regions; mutation adds or removes walls.
+
+\textbf{3. Symbolic regression.} Individuals are expression trees representing mathematical functions. Given target $f(x) = x^2 + x$, fitness is approximation error. Crossover swaps subtrees; mutation replaces a random subtree.
+
+In each domain, the \emph{genotype} and \emph{fitness function} are completely different, but the categorical structure --- the composition of selection, crossover, and mutation morphisms --- is the same.
+
+\end{document}
