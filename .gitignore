@@ -8,3 +8,4 @@ test-runner
 onemax-demo
 .ghc.environment.*
 *.aux\n*.log\n*.out\n*.synctex.gz\n*.fls\n*.fdb_latexmk\n*.bbl\n*.blg
+__pycache__/
