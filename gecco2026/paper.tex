@@ -21,7 +21,7 @@
 \affiliation{\institution{Anonymous Institution}}
 
 \begin{abstract}
-How you compose GA operators matters more than which operators you choose. We demonstrate this empirically across three domains---checkers (real-valued), mazes (binary), and symbolic regression (tree-structured)---by formalizing GA pipelines as morphisms in a Kleisli category, where the monad carries randomness, configuration, and logging. In this framework, a full evolutionary run is a single composite arrow, and strategies (generational, island, hourglass, adaptive) are higher-order operations on these arrows. We present three results. First, different strategy compositions produce qualitatively distinct diversity trajectories---\emph{diversity fingerprints}---that are stable across genome types and fitness landscapes. Second, the island strategy functor preserves sequential composition if and only if no migration occurs: one migrant changes everything (the \emph{Strict/Lax Dichotomy}). Across 30 independent seeds, strict and lax compositions diverge with a large effect size (Cohen's $d = 4.34$, $p < 4 \times 10^{-11}$) while converging to identical fitness optima. Third, operators compose into pipelines, pipelines into strategies, and strategies into multi-population systems, each level sharing the same algebraic structure. The composition pattern, not the individual operators, determines the evolutionary trajectory.
+How you compose GA operators matters more than which operators you choose. We demonstrate this empirically across four domains---checkers (real-valued), mazes (binary), symbolic regression (tree-structured), and OneMax (binary, for the Dichotomy experiment)---by formalizing GA pipelines as morphisms in a Kleisli category, where the monad carries randomness, configuration, and logging. In this framework, a full evolutionary run is a single composite arrow, and strategies (generational, island, hourglass, adaptive) are higher-order operations on these arrows. We present three results. First, different strategy compositions produce qualitatively distinct diversity trajectories---\emph{diversity fingerprints}---that are stable across genome types and fitness landscapes. Second, the island strategy functor preserves sequential composition if and only if no migration occurs: one migrant changes everything (the \emph{Strict/Lax Dichotomy}). Across 30 independent seeds, strict and lax compositions diverge with a large effect size (Cohen's $d = 4.34$, $p < 4 \times 10^{-11}$) while converging to identical fitness optima. Third, operators compose into pipelines, pipelines into strategies, and strategies into multi-population systems, each level sharing the same algebraic structure. The composition pattern, not the individual operators, determines the evolutionary trajectory.
 \end{abstract}
 
 \begin{CCSXML}
@@ -102,12 +102,12 @@ With the monad in place, we type the core GA operators as Kleisli arrows operati
 Selection   & \texttt{Pop\,a $\to$ $M$\,(Pop\,a)} \\
 Crossover   & \texttt{Pop\,a $\to$ $M$\,(Pop\,a)} \\
 Mutation    & \texttt{Pop\,a $\to$ $M$\,(Pop\,a)} \\
-Replacement & \texttt{(Pop\,a, Pop\,a) $\to$ $M$\,(Pop\,a)} \\
+Replacement & \texttt{Pop\,a $\to$ $M$\,(Pop\,a)} \\
 \bottomrule
 \end{tabular}
 \end{center}
 
-\noindent Each operator takes a population and returns a population, with effects bundled in~$M$. Selection reads tournament size from the config and draws random competitors. Crossover reads the crossover rate and generates random split points. Mutation reads the mutation rate and perturbs random individuals. All three log diversity statistics.
+\noindent Every operator has the uniform Kleisli arrow type \texttt{Pop\,a $\to$ $M$\,(Pop\,a)}: one population in, one population out, with effects bundled in~$M$. Selection reads tournament size from the config and draws random competitors. Crossover reads the crossover rate and generates random split points. Mutation reads the mutation rate and perturbs random individuals. Replacement merges offspring with the parent population; it accesses the parent population through the \texttt{Reader} component of the monad stack rather than taking it as a second argument, preserving the uniform Kleisli signature. All four operators log diversity statistics.
 
 A \emph{pipeline} is the Kleisli composition of these operators into one generation step:
 
@@ -167,13 +167,13 @@ Populations of 30 weight vectors, each encoding 10 Samuel-style board evaluation
 Each weight is a real number in $[-5, 5]$. Fitness is win rate against two baseline opponents (2~games each, alternating colors, 4~games total). Crossover is one-point; mutation is Gaussian perturbation ($\sigma = 0.5$). Tournament selection with size~3.
 
 \paragraph{Maze topology (binary genomes).}
-Adapted from the \texttt{mazegen-rs} system, we evolve $6 \times 6$ grid mazes with population size~30. The genome is a 60-bit binary vector encoding wall presence. Fitness is a weighted composite of three BFS-derived metrics: solution path length (longer paths are harder, weight 0.5), dead-end ratio (more dead ends increase difficulty, weight 0.3), and branching factor (more decision points create more interesting navigation, weight 0.2). Crossover is one-point; mutation is bit flip with rate $1/60$ per bit. Tournament selection with size~3.
+We evolve $6 \times 6$ grid mazes with population size~30. The genome is a 60-bit binary vector encoding wall presence. Fitness is a weighted composite of three BFS-derived metrics: solution path length (longer paths are harder, weight 0.5), dead-end ratio (more dead ends increase difficulty, weight 0.3), and branching factor (more decision points create more interesting navigation, weight 0.2). Crossover is one-point; mutation is bit flip with rate $1/60$ per bit. Tournament selection with size~3.
 
 \paragraph{Symbolic regression (expression trees).}
 We evolve populations of 60 expression trees targeting $y = x^2 + x$ from 21 uniformly spaced training points on $[-5, 5]$. The function set is $\{+, -, \times, /\}$ with protected division; the terminal set is $\{x\} \cup \{-5, -4, \ldots, 5\}$. Fitness is negative mean squared error (higher is better). Crossover is subtree exchange; mutation is subtree replacement with maximum depth~4. Tournament selection with size~3. Trees are initialized with ramped half-and-half (depth 2--5).
 
 \paragraph{OneMax (binary, Dichotomy experiment only).}
-For the Strict/Lax Dichotomy experiment (Section~\ref{sec:dichotomy}), we use 20-bit OneMax---a standard benchmark where fitness equals the number of 1-bits in a binary string. We use a larger population of~80 (20 per island across 4~islands) and run each configuration for 100~generations across 30~independent random seeds. OneMax provides a smooth, unimodal landscape where all strategies converge to the global optimum, isolating the compositional effect of migration from confounding fitness-landscape effects. We report mean $\pm$ standard deviation across seeds and use the Mann-Whitney $U$ test with Cohen's $d$ effect size to quantify separation between strict and lax compositions.
+For the Strict/Lax Dichotomy experiment (Section~\ref{sec:dichotomy}), we use 20-bit OneMax---a standard benchmark where fitness equals the number of 1-bits in a binary string. We use a larger population of~80 (20 per island across 4~islands). The Dichotomy experiment consists of two sub-experiments: a sweep study (40~generations split into two 20-generation phases, varying migration frequency and boundary position) and a multi-seed statistical validation (100~generations across 30~independent random seeds). OneMax provides a smooth, unimodal landscape where all strategies converge to the global optimum, isolating the compositional effect of migration from confounding fitness-landscape effects. We report mean $\pm$ standard deviation across seeds and use the Mann-Whitney $U$ test with Cohen's $d$ effect size to quantify separation between strict and lax compositions.
 
 \subsection{Strategies}
 
@@ -359,7 +359,7 @@ Checkers compresses diversity differences because the fitness landscape saturate
 
 The island model consistently maintains intermediate diversity. In mazes, where the landscape is multimodal, island achieves both the highest fitness (0.73 vs.\ 0.70 flat, 0.68 hourglass) and higher diversity than flat. The hourglass strategy produces the highest final genotypic diversity (0.46 in mazes) but sacrifices fitness (0.68), consistent with the diversity-quality tradeoff predicted by the spike-crash-rebound fingerprint.
 
-The key result is that \emph{composition structure is the invariant}. Real-valued vectors, binary strings, and expression trees respond to the same composition pattern in the same qualitative way. The fingerprint follows the functor, not the object.
+The key result is that \emph{on non-saturating landscapes, composition structure is the invariant}. Binary strings and expression trees---where fitness gradients persist throughout the run---respond to the same composition pattern in the same qualitative way. Checkers, where the landscape saturates early (all strategies reach perfect 1.0 win rate), compresses the fingerprint differences: flat and hourglass converge to the same diversity level, and the trajectory-shape distinctions that are clear in mazes and symbolic regression are attenuated. The fingerprint follows the functor, not the object, provided the fitness landscape maintains sufficient selective gradient.
 
 
 \subsection{The Strict/Lax Dichotomy}
@@ -443,12 +443,14 @@ The results are unambiguous. By generation~50, strict composition maintains $1.7
 
 The statistical figure (mean trajectories with 95\% confidence bands across 30~seeds) confirms that the separation between strict and lax diversity trajectories is not a single-seed artifact but a robust, large-effect phenomenon. The confidence bands for the two compositions cease to overlap by approximately generation~20 and remain fully separated thereafter.
 
-\paragraph{Formal statement.}
+\begin{theorem}[Strict/Lax Dichotomy]
+\label{thm:dichotomy}
 Let $I(\mu, \mathrm{freq}, n, \mathrm{topo})$ be the island strategy functor parameterized by migration count $\mu$, migration frequency, island count $n$, and migration topology. For any strategies $S_1$, $S_2$:
 \begin{enumerate}[nosep]
   \item If $\mu = 0$ or $\mathrm{freq} > |S_1| + |S_2|$ (no migration events occur), then $I(S_1 ; S_2) = I(S_1) ; I(S_2)$---the functor is \textbf{strict}.
   \item Otherwise, $I(S_1 ; S_2) \cong I(S_1) ; I(S_2)$ with laxity magnitude $D^*$ that is independent of boundary position and migration frequency, determined asymptotically by the spectral gap of the migration topology's Markov chain. The multi-seed experiment confirms this with Cohen's $d$ up to 5.36 across 30~independent runs (Table~\ref{tab:multiseed}).
 \end{enumerate}
+\end{theorem}
 
 \paragraph{Practical implication.}
 This result has direct consequences for distributed GA implementations. Any system that checkpoints and restarts island-model runs, composes partial runs from different compute nodes, or chains island-model phases in a multi-stage optimization pipeline must account for the laxity. The composed result will differ from continuous execution by a characteristic magnitude $D^*$---not by a small perturbation, but by a population-level divergence of ${\sim}0.78$ in normalized terms. For applications where genotypic reproducibility matters (e.g., evolved safety-critical controllers), this is a dealbreaker for naive checkpointing. For applications where only fitness matters, the laxity is benign: fitness divergence is 0.0 across all conditions tested. The multi-seed experiment (Table~\ref{tab:multiseed}) confirms this at scale: both strict and lax compositions reach the OneMax optimum, yet their diversity trajectories diverge with effect sizes exceeding $d = 4.0$ from generation~50 onward. This pattern echoes findings in LLM-based multi-agent systems, where independent (lax) composition amplifies errors $17.2\times$ versus $4.4\times$ for centralized (strict) composition~\cite{chen2025scaling}.
@@ -478,7 +480,7 @@ Hedges and Sakamoto~\cite{hedges2024reinforcement} model reinforcement learning 
 Gavranovi\'{c} et al.~\cite{gavranovic2024categorical} formalize neural network architectures as monads in the Para construction (ICML 2024).
 Hanks et al.~\cite{hanks2024gradient} cast gradient descent as a hypergraph functor.
 Miranda~\cite{miranda2024abstract} develops abstract Kleisli structures that generalize the construction we instantiate here.
-Ghani et al.~\cite{ghani2024approximate} develop approximate game theory using categorical methods; their treatment of strict vs.\ approximate preservation parallels our Strict/Lax Dichotomy structurally.
+Ghani et al.~\cite{ghani2025approximate} develop approximate game theory using categorical methods; their treatment of strict vs.\ approximate preservation parallels our Strict/Lax Dichotomy structurally.
 Our contribution fills the remaining gap: \emph{evolutionary computation} has had no categorical treatment of operator composition until now. Taken together, these results span the optimization landscape---neural networks, reinforcement learning, gradient methods, and now GAs---all within categorical frameworks.
 
 \paragraph{Categorical Approaches to Evolutionary Biology.}
@@ -524,7 +526,7 @@ The fingerprint results (Sections~4.1--4.2) use single random seeds per configur
 Three domains demonstrate that fingerprints are not domain-specific, but three is not exhaustive. Extending the framework to permutation-based domains (TSP, scheduling), variable-length genomes (NEAT-style neuroevolution~\cite{eiben2015introduction}), and high-dimensional continuous optimization (CMA-ES-scale problems) would strengthen the universality claim. We expect the fingerprint patterns to hold---they are composition-determined---but empirical confirmation is needed.
 
 \paragraph{Formal proofs.}
-The Strict/Lax Dichotomy Theorem (Section~4.3) is stated with formal precision and supported by experimental evidence across migration frequencies and boundary positions. Full categorical proofs, including the connection between laxity magnitude $D^*$ and the spectral gap of the migration topology's Markov chain, are developed in an extended version of this work. The present paper focuses on the empirical phenomenon and its practical consequences.
+The Strict/Lax Dichotomy (Theorem~\ref{thm:dichotomy}) is stated with formal precision and supported by experimental evidence across migration frequencies and boundary positions. Full categorical proofs, including the connection between laxity magnitude $D^*$ and the spectral gap of the migration topology's Markov chain, are developed in an extended version of this work. The present paper focuses on the empirical phenomenon and its practical consequences.
 
 \paragraph{The co-Kleisli direction.}
 Our framework models what operators \emph{do}: each operator takes a population and produces a new population within an effect context. The dual perspective---what operators \emph{need} from their environment---would use co-Kleisli arrows of a comonad, where the comonadic context represents the population structure that each operator depends on. This co-Kleisli formulation could model selection as a context-dependent extraction (the comonad provides the population; selection extracts from it) and would give a bidirectional account of evolutionary computation. We leave this direction for future work.
