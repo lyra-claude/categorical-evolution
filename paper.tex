@@ -525,6 +525,12 @@ Three papers appear most frequently as bridges across structural holes:
 
 Our contribution bridges \textbf{game-theory to structural-design} --- the deepest hole --- by providing a formal language (categorical composition) that states precisely what the domains share. The bridge is not another algorithm or application. It is a \emph{vocabulary}: the same morphism composition, parameterized by different objects.
 
+\subsection{Categorical Approaches to Evolutionary Computation}
+
+The intersection of category theory and evolutionary computation is nearly empty. Jia et al.~\cite{jia2025} survey categorical approaches to machine learning across four perspectives (gradient-based learning, probability, invariance, compositionality), yet evolutionary computation is not covered --- an explicit gap in the literature that this work begins to fill.
+
+The closest related work is Warrell et al.~\cite{warrell2024}, who use the Kantorovich monad to model multilevel population structure in genetic algorithms. Their framework captures population hierarchy via Wasserstein distances: populations are probability distributions over genotypes, and hierarchical populations (demes, species) are distributions over distributions. This is complementary to our approach. Warrell et al.\ model \emph{what populations are} (hierarchical probability distributions); we model \emph{what operators do} (Kleisli morphisms that compose). Their framework does not represent GA operators as categorical morphisms and has no analog of our diversity fingerprints or the strict/lax dichotomy. Conversely, our framework does not capture the measure-theoretic structure of population distributions that the Kantorovich monad provides. A synthesis --- Kleisli composition of operators acting on Kantorovich-structured populations --- is a natural direction for future work.
+
 \subsection{The Neuroevolution-OEE Gap}
 
 The bridge score between neuroevolution and open-ended evolution is 22, but this is inflated by tool-usage citations --- NEAT used as a component in OEE systems, not studied as a source of open-ended complexity. Nobody has coupled growing-topology neuroevolution with growing-complexity environments. The categorical framework offers a language for describing this coupling: functors between behavior categories of different dimensions, where the functor itself evolves.
@@ -761,6 +767,8 @@ The categorical framework is not just a different notation for standard GAs. It 
 
 \textbf{Landscape-aware strategy selection.} The existing \texttt{recommendStrategy} function analyzes fitness landscape properties (ruggedness, neutrality, correlation length) and selects a strategy. Connecting landscape analysis to the diversity fingerprint theory --- predicting which fingerprint a landscape demands --- would close the loop between theory and practice.
 
+\textbf{Kleisli--Kantorovich synthesis.} Our Kleisli composition of operators and Warrell et al.'s~\cite{warrell2024} Kantorovich monad for hierarchical populations address orthogonal aspects of evolutionary computation. Composing Kleisli arrows over Kantorovich-structured population spaces would unify operator composition with population-level measure theory --- a richer categorical framework for multilevel evolutionary systems.
+
 \section{Conclusion}
 
 A genetic algorithm is a composition of morphisms in a Kleisli category. This is not a metaphor --- it is a precise mathematical statement with testable consequences. We have shown three such consequences: diversity fingerprints are determined by composition structure and stable across domains; the island functor exhibits a sharp strict/lax dichotomy at zero migration; and three levels of categorical composition (operators, pipelines, strategies) share the same algebraic structure.
@@ -821,6 +829,17 @@ Paired open-ended trailblazer (POET).
 Moggi, E. (1991).
 Notions of computation and monads.
 \textit{Information and Computation}, 93(1), 55--92.
+
+\bibitem{warrell2024}
+Warrell, J., Kuelheim, C., \& Moran, G.\,F. (2024).
+A categorical framework for multilevel evolution of genetic algorithms using the Kantorovich monad.
+\textit{arXiv:2411.09779}.
+
+\bibitem{jia2025}
+Jia, P., Liang, T., \& Chen, C. (2025).
+Category theory and machine learning: A survey.
+\textit{Axioms}, 14(2), 146.
+arXiv:2408.14014.
 
 \end{thebibliography}
 

@@ -62,9 +62,11 @@ We validate this across all three domains (checkers, mazes, symbolic regression)
 The operator $\to$ pipeline $\to$ strategy tower is categorical: each level forms a category, inclusions are functors, strategy combinators are endofunctors on $\mathbf{Strat}$, and migration is a natural transformation between island configurations. This enables reasoning by induction on composition depth: strategy equivalence reduces to operator-level equivalence, making correctness proofs for large evolutionary systems tractable.
 
 \textbf{Positioning.}
-Evolutionary computation has never appeared at ACT. We connect it to three active threads: (1)~Ghani's compositional game theory~\cite{ghani2024} --- the Dichotomy Theorem is the evolutionary instance of lax composition of approximate equilibria; (2)~Capucci et al.'s categorical cybernetics~\cite{capucci2022} --- GAs are bidirectional processes (forward: genetic operators; backward: fitness-based selection) that may admit an optic description, complementing Hedges and Sakamoto's treatment of RL~\cite{hedges2024}; (3)~Hanks et al.'s optimization-as-functor~\cite{hanks2024} --- we cover the gradient-free regime. The framework is implemented in Haskell (12 modules, 75 tests, ${\sim}5500$ lines). A full manuscript is in preparation.
+Evolutionary computation has never appeared at ACT, despite growing urgency: LLM-driven evolution systems (e.g., AlphaEvolve~\cite{alphaevolve2025}) compose evolutionary operators at industrial scale without any formal compositional framework, and empirical studies show that multi-agent composition fails unpredictably --- independent agents amplify errors 17.2$\times$ vs.\ 4.4$\times$ for centralized ones~\cite{chen2025}, a numerical shadow of strict vs.\ lax composition. Jia et al.~\cite{jia2025} survey categorical approaches to machine learning across four perspectives yet do not cover evolutionary computation --- an explicit gap. The closest related work is Warrell et al.~\cite{warrell2024}, who use the Kantorovich monad to model multilevel population hierarchy; our approach is complementary, modeling operator \emph{composition} (Kleisli) rather than population \emph{structure} (Wasserstein).
 
-\begin{thebibliography}{9}
+We connect to three active ACT threads: (1)~Ghani's compositional game theory~\cite{ghani2024} --- the Dichotomy Theorem is the evolutionary instance of lax composition of approximate equilibria; (2)~Capucci et al.'s categorical cybernetics~\cite{capucci2022} --- GAs are bidirectional processes that may admit an optic description, complementing Hedges and Sakamoto's treatment of RL~\cite{hedges2024}; (3)~Hanks et al.'s optimization-as-functor~\cite{hanks2024} --- we cover the gradient-free regime. Libkind and Myers~\cite{libkind2025} provide a complementary perspective: their compositional dynamical systems framework via Moore machines offers a natural setting for evolutionary dynamics viewed as state machines; our diversity fingerprints may be expressible as behavioral invariants in their framework. The full framework is implemented in Haskell (12 modules, 75 tests, ${\sim}5500$ lines). A manuscript is in preparation.
+
+\begin{thebibliography}{99}
 \small
 \setlength{\itemsep}{0pt}
 
@@ -85,6 +87,21 @@ J.~Hedges, R.~Rodriguez Sakamoto. Reinforcement learning in categorical cybernet
 
 \bibitem{myers2022}
 D.~J. Myers. Double categories of open dynamical systems. \emph{Proc.\ ACT} 2020. arXiv:2005.05956.
+
+\bibitem{warrell2024}
+J.~Warrell, C.~Kuelheim, G.\,F.~Moran. A categorical framework for multilevel evolution of genetic algorithms using the Kantorovich monad. arXiv:2411.09779, 2024.
+
+\bibitem{jia2025}
+P.~Jia, T.~Liang, C.~Chen. Category theory and machine learning: A survey. \emph{Axioms}, 14(2):146, 2025. arXiv:2408.14014.
+
+\bibitem{libkind2025}
+S.~Libkind, D.\,J.~Myers. Compositional dynamical systems with Moore machines. arXiv:2505.18329, 2025.
+
+\bibitem{alphaevolve2025}
+K.~Huang et al. AlphaEvolve discovers multi-agent reinforcement learning algorithms. arXiv:2602.16928, 2025.
+
+\bibitem{chen2025}
+Y.~Chen et al. On the scaling behavior of multi-agent systems. arXiv:2512.08296, 2025.
 
 \end{thebibliography}
 
