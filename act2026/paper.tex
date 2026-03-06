@@ -84,23 +84,118 @@ Robin Langer
 \section{Introduction: Four Groups, One Insight}
 \label{sec:intro}
 
-% Open with: "Over the past three years, four independent research groups
-% have converged on the same idea: categorical composition determines
-% optimization behavior."
-%
-% The zoo:
-%   - Gavranovic et al. (neural networks, Para monads, ICML 2024)
-%   - Hedges (RL, parametrised optics, ACT 2024)
-%   - Bakirtzis et al. (compositional RL, categorical MDPs, JMLR 2025)
-%   - Us (evolutionary computation, Kleisli morphisms) — the last gap
-%
-% The one idea: composition > components
-% Connection to Ghani's approximate composition (Tε)
-%
-% End with paper roadmap
-%
-% Placeholder citations for compilation:
-\nocite{gavranovic2024categorical,hedges2024reinforcement,bakirtzis2024compositional,moggi1991notions}
+Over the past three years, four independent research groups---working on four
+different optimization paradigms---have arrived at the same structural insight:
+the way an optimization pipeline \emph{composes} its components determines its
+dynamics more than the components themselves. This convergence is not
+coincidental. It reflects a deep mathematical regularity that category theory
+is uniquely positioned to articulate.
+
+\paragraph{Neural networks.}
+Gavranovi\'{c} et al.~\cite{gavranovic2024categorical} showed that deep learning
+architectures can be understood as constructions in the category $\mathbf{Para}$,
+where gradient descent is a functor and backpropagation emerges as its
+composition law. The key insight is not that individual layers are interesting
+categorically---it is that the \emph{way layers compose} (via the chain rule,
+formalized as Kleisli composition for a suitable monad) determines both the
+expressiveness and the trainability of the resulting network. Their framework
+was presented at ICML~2024 and has since informed the design of compositional
+neural architectures at scale.
+
+\paragraph{Reinforcement learning.}
+Hedges and Sakamoto~\cite{hedges2024reinforcement} formalized reinforcement
+learning within the framework of categorical cybernetics, expressing RL
+algorithms as parametrised optics. In their formulation, the Bellman equation
+becomes a natural transformation between functors---an identity that holds not
+because of the specific reward structure, but because of how the agent--environment
+interface composes. Their work, published in EPTCS~429, demonstrates that the
+compositional structure of the learning loop, rather than the choice of
+value function or policy representation, governs convergence behavior.
+
+\paragraph{Compositional RL.}
+Bakirtzis et al.~\cite{bakirtzis2024compositional} extended this line of
+reasoning to multi-agent settings, formalizing Markov decision processes as
+objects in a category where compositional reasoning is native. Their framework,
+published in JMLR~v26, shows that safety guarantees and convergence properties
+of composed RL systems can be derived from the categorical structure of the
+composition, rather than verified post hoc. Structurally, their contribution is
+the closest analogue to ours: they take an existing optimization paradigm,
+formalize its components categorically, and demonstrate that composition reveals
+structure invisible at the component level.
+
+\paragraph{Evolutionary computation: the remaining gap.}
+One major optimization paradigm has remained outside this categorical
+landscape: evolutionary computation. Genetic algorithms have been studied
+extensively for over five decades~\cite{holland1975adaptation,goldberg1989genetic,
+dejong2006evolutionary}, yet their formalization has remained largely
+set-theoretic or statistical. The compositional structure of a GA pipeline---selection,
+crossover, mutation, composed in sequence---has been treated as an
+implementation detail rather than a mathematical object worthy of study in its
+own right. This paper addresses that gap.
+
+\medskip
+
+The common thread across all four programs is a single observation: in each
+case, the categorical structure of \emph{how} components are composed predicts
+system-level behavior that is invisible when components are studied in
+isolation. Gavranovi\'{c} et al.\ show this for layers in a neural network.
+Hedges and Sakamoto show it for the agent--environment loop in RL. Bakirtzis
+et al.\ show it for composed MDPs. We show it for the operators of a genetic
+algorithm.
+
+This observation has a natural categorical formulation. When composition is
+\emph{strict}---meaning it respects component boundaries exactly, with
+information flowing only through defined interfaces---compositional invariants
+are preserved. When composition is \emph{lax}---meaning additional communication
+occurs between components beyond the formal interface---those invariants may
+degrade. This strict/lax distinction is well-studied in category theory (a
+strict monoidal functor preserves structure on the nose; a lax monoidal functor
+preserves it only up to coherent natural transformations), and it connects our
+work to Ghani et al.'s recent formalization of approximate game
+theory~\cite{ghani2025approximate}, where exact Nash equilibria compose cleanly
+but approximate equilibria do not. We conjecture that this pattern is general:
+compositional invariants are preserved under strict composition and disrupted
+under lax composition, across optimization paradigms.
+
+Our formalization proceeds via Moggi's framework of monads and Kleisli
+categories~\cite{moggi1991notions}. We model the state of an evolutionary
+computation as a monad $T = \mathit{Reader} \times \mathit{Writer} \times
+\mathit{State}$, capturing configuration, logging, and randomness respectively.
+GA operators become Kleisli morphisms $a \to T\,b$, and the composition of
+operators into pipelines is Kleisli composition. This is not merely a
+notational convenience. By expressing GA pipelines as composed Kleisli
+morphisms, we gain access to the full machinery of categorical
+reasoning---functors, natural transformations, and compositional invariants---and
+can state and test precise claims about how pipeline structure determines
+evolutionary dynamics.
+
+\paragraph{Contributions.}
+This paper makes three contributions:
+\begin{enumerate}
+\item We formalize genetic algorithm operators as Kleisli morphisms over a
+  population monad, completing the categorical optimization landscape initiated
+  by~\cite{gavranovic2024categorical,hedges2024reinforcement,bakirtzis2024compositional}.
+\item We introduce \emph{diversity fingerprints}---compositional invariants that
+  characterize the diversity dynamics of a GA pipeline---and demonstrate
+  empirically that the same composition produces the same fingerprint across
+  two unrelated problem domains (game-playing strategy evolution and maze
+  topology optimization), with effect size $d = 4.34$ and $p < 3.69 \times
+  10^{-11}$.
+\item We propose a general conjecture: across optimization paradigms,
+  compositional structure predicts system-level behavior. Specifically, strict
+  composition preserves compositional invariants while lax composition
+  disrupts them.
+\end{enumerate}
+
+\paragraph{Outline.}
+Section~\ref{sec:bridge} describes the disconnected state of the evolutionary
+computation literature and the bridging role of categorical vocabulary.
+Section~\ref{sec:framework} presents our Kleisli formalization of GA operators.
+Section~\ref{sec:domains} instantiates the framework on two domains.
+Section~\ref{sec:fingerprints} presents the diversity fingerprint results.
+Section~\ref{sec:conjecture} states our general conjecture with supporting
+evidence from all four categorical optimization programs.
+Section~\ref{sec:discussion} discusses limitations and future directions.
 
 %% ============================================================
 %% Section 2: The Knowledge Graph Hole (~1 page)
