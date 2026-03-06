@@ -1,0 +1,230 @@
+\documentclass[submission,copyright,creativecommons]{eptcs}
+\providecommand{\event}{ACT 2026} % Applied Category Theory 2026
+
+\usepackage{iftex}
+
+\ifpdf
+  \usepackage{underscore}
+  \usepackage[T1]{fontenc}
+\fi
+
+% Math packages
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+
+% Graphics
+\usepackage{graphicx}
+
+% Tables
+\usepackage{booktabs}
+
+% Code listings
+\usepackage{listings}
+\lstset{
+  language=Haskell,
+  basicstyle=\small\ttfamily,
+  keywordstyle=\bfseries,
+  columns=flexible,
+  keepspaces=true
+}
+
+% Tikz for diagrams
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,cd}
+
+% Title and authors
+\title{From Games to Graphs:\\Categorical Composition of Genetic Algorithms Across Domains}
+
+\author{Lyra Vega
+\institute{Open University Helsinki}
+\email{lyraclaude20@gmail.com}
+\and
+Claudius Turing
+\institute{Independent Researcher}
+\and
+Robin Langer
+\institute{Independent Researcher}
+}
+
+\newcommand{\titlerunning}{From Games to Graphs}
+\newcommand{\authorrunning}{L. Vega, C. Turing \& R. Langer}
+
+\hypersetup{
+  bookmarksnumbered,
+  pdftitle    = {\titlerunning},
+  pdfauthor   = {\authorrunning},
+  pdfsubject  = {ACT 2026},
+  pdfkeywords = {category theory, genetic algorithms, Kleisli morphisms, evolutionary computation, compositional optimization}
+}
+
+% Theorem environments
+\newtheorem{theorem}{Theorem}
+\newtheorem{conjecture}{Conjecture}
+\newtheorem{definition}{Definition}
+\newtheorem{proposition}{Proposition}
+\newtheorem{lemma}{Lemma}
+\newtheorem{corollary}{Corollary}
+\newtheorem{remark}{Remark}
+\newtheorem{example}{Example}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+% TODO: Rewrite abstract with fingerprint-first framing.
+% Key elements: (1) optimization zoo convergence, (2) Kleisli morphisms for GA operators,
+% (3) compositional invariants (fingerprints) across domains, (4) conjecture.
+% Keep under 200 words for EPTCS.
+\end{abstract}
+
+%% ============================================================
+%% Section 1: The Optimization Zoo (~2 pages)
+%% ============================================================
+\section{Introduction: Four Groups, One Insight}
+\label{sec:intro}
+
+% Open with: "Over the past three years, four independent research groups
+% have converged on the same idea: categorical composition determines
+% optimization behavior."
+%
+% The zoo:
+%   - Gavranovic et al. (neural networks, Para monads, ICML 2024)
+%   - Hedges (RL, parametrised optics, ACT 2024)
+%   - Bakirtzis et al. (compositional RL, categorical MDPs, JMLR 2025)
+%   - Us (evolutionary computation, Kleisli morphisms) — the last gap
+%
+% The one idea: composition > components
+% Connection to Ghani's approximate composition (Tε)
+%
+% End with paper roadmap
+%
+% Placeholder citations for compilation:
+\nocite{gavranovic2024categorical,hedges2024reinforcement,bakirtzis2024compositional,moggi1991notions}
+
+%% ============================================================
+%% Section 2: The Knowledge Graph Hole (~1 page)
+%% ============================================================
+\section{Bridging Disconnected Communities}
+\label{sec:bridge}
+
+% 76 papers, 555 concepts, 446 edges in knowledge graph
+% Game-theoretic coevolution is a disconnected island
+% Categorical vocabulary provides the bridge
+% The bridge is linguistic, not algorithmic — same ideas, different words
+% Brief methodology for the knowledge graph
+
+%% ============================================================
+%% Section 3: Framework (~2 pages)
+%% ============================================================
+\section{Genetic Algorithm Operators as Kleisli Morphisms}
+\label{sec:framework}
+
+% 3.1: The evolution monad T = Reader × Writer × State
+% 3.2: Operators as Kleisli arrows: a → T b
+% 3.3: Kleisli composition (>=>): the key compositional operation
+% 3.4: Three-level tower:
+%   Level 1: operators (selection, crossover, mutation)
+%   Level 2: pipelines (operators composed via >=>)
+%   Level 3: strategies (pipelines composed via combinators)
+% 3.5: Haskell code showing plug-and-play composition
+
+%% ============================================================
+%% Section 4: Two Domains (~2 pages)
+%% ============================================================
+\section{Two Domains, One Category}
+\label{sec:domains}
+
+% 4.1: Checkers — evolving evaluation functions (Samuel's insight)
+%   - Representation, fitness, domain-specific details
+% 4.2: Mazes — evolving topological structures
+%   - Graph-based representation, connectivity fitness
+% 4.3: What changes, what stays
+%   - Invariance table: same categorical structure, different domains
+%   - Show same pipeline, different domain
+
+%% ============================================================
+%% Section 5: Key Result (~2 pages)
+%% ============================================================
+\section{Diversity Fingerprints: Composition Determines Dynamics}
+\label{sec:fingerprints}
+
+% 5.1: Four strategy compositions on both domains
+%   - Strategy A (baseline), B (migration), C (adaptive), D (island)
+% 5.2: Four fingerprints observed:
+%   - Monotonic decline
+%   - Spike-crash-rebound
+%   - Stable oscillation
+%   - Spike-collapse
+% 5.3: Cross-domain robustness — same composition → same fingerprint
+% 5.4: Statistical rigor
+%   - Cohen's d = 4.34 (strict vs lax)
+%   - p < 3.69e-11
+%   - Multi-seed validation (30 seeds)
+
+%% ============================================================
+%% Section 6: Conjecture (~1 page)
+%% ============================================================
+\section{A General Conjecture}
+\label{sec:conjecture}
+
+% Statement: For any monoidal category of optimization components,
+% the compositional structure (how components are composed)
+% predicts system-level behavior (diversity dynamics, convergence).
+%
+% Supported by all four zoo entries:
+%   - Our fingerprints
+%   - Gavranovic's Para composition
+%   - Hedges' optic composition
+%   - Bakirtzis' categorical MDP composition
+%
+% Mathematical tools for eventual proof:
+%   - Markov chain mixing times
+%   - Spectral analysis of composition operators
+%   - Natural transformations as behavioral invariants
+
+%% ============================================================
+%% Section 7: Discussion (~1.5 pages)
+%% ============================================================
+\section{Discussion}
+\label{sec:discussion}
+
+% 7.1: Strict/lax dichotomy as a brief conjecture
+%   - Strict composition preserves diversity
+%   - Lax composition collapses diversity
+%   - Connection to Ghani's Tε
+% 7.2: Connection to agent orchestration
+%   - Microsoft's 5 agent patterns as categorical catalog
+% 7.3: Limitations
+%   - Two domains (need more)
+%   - Haskell translation not mechanically verified
+%   - Conjecture is empirical, not proved
+% 7.4: Future directions
+%   - Formal proof via spectral methods
+%   - More domains (neural architecture search, program synthesis)
+%   - Connection to self-evolution taxonomy
+
+%% ============================================================
+%% Section 8: Conclusion (~0.5 pages)
+%% ============================================================
+\section{Conclusion}
+\label{sec:conclusion}
+
+% Restate the one idea: composition determines behavior
+% Restate the conjecture
+% The optimization zoo is converging — we fill the last gap
+% Call to action: categorical methods for EC
+
+%% ============================================================
+%% Acknowledgements
+%% ============================================================
+% \subparagraph*{Acknowledgements.}
+% TODO: Add acknowledgements
+
+%% ============================================================
+%% Bibliography
+%% ============================================================
+\bibliographystyle{eptcs}
+\bibliography{references}
+
+\end{document}
