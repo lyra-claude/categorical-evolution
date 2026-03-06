@@ -203,11 +203,74 @@ Section~\ref{sec:discussion} discusses limitations and future directions.
 \section{Bridging Disconnected Communities}
 \label{sec:bridge}
 
-% 76 papers, 555 concepts, 446 edges in knowledge graph
-% Game-theoretic coevolution is a disconnected island
-% Categorical vocabulary provides the bridge
-% The bridge is linguistic, not algorithmic — same ideas, different words
-% Brief methodology for the knowledge graph
+The convergence described in Section~\ref{sec:intro} is invisible from
+within any single community. To understand why, we constructed a knowledge
+graph of the evolutionary computation literature. Our corpus comprises 76
+papers spanning five research communities---neuroevolution, morphology-control
+co-evolution, open-ended evolution, quality-diversity, and game-theoretic
+coevolution---yielding 555 concept nodes and 446 edges, where an edge
+connects two concepts that co-occur in the same paper.
+
+\paragraph{The disconnection.}
+The graph reveals a striking structural hole. Game-theoretic coevolution
+shares \emph{zero} concept overlap with three of the four other clusters.
+Its only bridge to the rest of the corpus is the term ``fitness,'' shared
+with morphology-control---a term so generic that it provides no structural
+connection. This isolation is not an artifact of our corpus selection. It
+reflects a genuine disciplinary fragmentation: researchers studying the
+evolution of competitive game strategies and researchers evolving robot
+morphologies use the same algorithmic machinery---population-based search
+with selection, crossover, and mutation---yet cite different foundational
+works, attend different conferences, and employ different vocabularies.
+
+The disconnection is linguistic, not algorithmic. Consider migration:
+in island-model genetic algorithms~\cite{whitley1999island,skolicki2005influence},
+subpopulations exchange individuals periodically to maintain diversity.
+In game-theoretic coevolution, the same mechanism appears as
+``strategy transfer'' between competing populations. In quality-diversity
+archives, it surfaces as ``niche injection.'' The underlying operation---a
+functorial map transporting individuals between subpopulations---is
+identical in all three cases. But because each community names it
+differently, the shared structure remains invisible in the literature graph.
+
+\paragraph{Categorical vocabulary as bridge.}
+This paper introduces categorical vocabulary that makes the shared
+structure explicit. In our framework (Section~\ref{sec:framework}), each
+GA operator is a Kleisli morphism $a \to T\,b$ over a population monad $T$.
+This single formalization captures what the communities already do under
+different names:
+\begin{itemize}
+\item \textbf{Mutation} becomes an endomorphism $a \to T\,a$: a Kleisli
+  arrow whose domain and codomain coincide.
+\item \textbf{Selection} becomes a projection: a morphism that reduces the
+  population by discarding individuals according to a fitness criterion.
+\item \textbf{Crossover} becomes a product construction: a morphism that
+  combines information from two parent individuals into offspring.
+\item \textbf{Migration} becomes a functorial transformation: a natural
+  transformation between population functors on different subpopulations.
+\end{itemize}
+These are not new algorithms. They are new \emph{names} for existing
+algorithms---names drawn from a mathematical vocabulary (category theory)
+that is designed precisely for describing how components compose. The
+bridge we build is linguistic: we do not propose better selection operators
+or faster crossover schemes. We provide a shared formal language in which
+the structural identity across communities becomes a provable fact rather
+than an informal analogy.
+
+\paragraph{Plugging the hole.}
+In the knowledge graph, bridge papers are those that span structural
+holes between otherwise disconnected clusters. The most effective bridges
+in our corpus are NEAT~% TODO: add \cite{stanley2002neat} to references.bib
+(bridging neuroevolution to multiple communities) and novelty
+search~% TODO: add \cite{lehman2011novelty} to references.bib
+(bridging open-ended evolution to quality-diversity). Our contribution
+bridges the deepest hole: \textbf{game-theoretic coevolution to
+structural optimization}. The categorical vocabulary of Kleisli morphisms,
+functors, and natural transformations provides exactly the shared
+terminology that the knowledge graph lacks. By introducing this vocabulary,
+we do not merely describe a connection that already existed informally---we
+create new edges in the knowledge graph, connecting concepts that were
+previously isolated despite denoting the same underlying operations.
 
 %% ============================================================
 %% Section 3: Framework (~2 pages)
