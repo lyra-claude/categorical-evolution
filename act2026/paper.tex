@@ -278,14 +278,200 @@ previously isolated despite denoting the same underlying operations.
 \section{Genetic Algorithm Operators as Kleisli Morphisms}
 \label{sec:framework}
 
-% 3.1: The evolution monad T = Reader × Writer × State
-% 3.2: Operators as Kleisli arrows: a → T b
-% 3.3: Kleisli composition (>=>): the key compositional operation
-% 3.4: Three-level tower:
-%   Level 1: operators (selection, crossover, mutation)
-%   Level 2: pipelines (operators composed via >=>)
-%   Level 3: strategies (pipelines composed via combinators)
-% 3.5: Haskell code showing plug-and-play composition
+We formalize the operators of a genetic algorithm as Kleisli morphisms
+over a monad that captures the computational effects inherent in
+evolution: configuration, logging, and randomness. The key ideas are
+due to Moggi~\cite{moggi1991notions}, who showed that computational
+effects---side-effects, nondeterminism, exceptions---are uniformly
+captured by monads. Our contribution is the observation that
+\emph{evolutionary dynamics are computational effects too}: the
+stochastic perturbation of mutation, the stateful threading of a
+pseudorandom generator, the accumulation of diversity metrics over
+generations. The monad $T$ makes these effects explicit and compositional.
+
+\subsection{The Evolution Monad}
+\label{sec:monad}
+
+\begin{definition}[Population]
+Let $\Sigma$ be a type of \emph{genomes} (e.g., $\mathbb{R}^n$ for
+weight vectors, $\{0,1\}^k$ for bitstrings). A \emph{scored individual}
+is a pair $(g, f) \in \Sigma \times \mathbb{R}$, where $f$ is the
+fitness of genome~$g$. A \emph{population} is a finite list
+$P = [(g_1, f_1), \ldots, (g_n, f_n)]$ of scored individuals.
+We write $\mathsf{Pop}(\Sigma)$ for the type of populations over~$\Sigma$.
+\end{definition}
+
+\begin{definition}[Evolution monad]
+\label{def:evo-monad}
+The \emph{evolution monad} is the composite monad
+\[
+  T \;=\; \mathsf{Reader}(\Gamma) \times \mathsf{Writer}(\Lambda) \times \mathsf{State}(S),
+\]
+where:
+\begin{itemize}
+\item $\Gamma$ is the \emph{configuration context}: population size,
+  mutation rate, crossover rate, tournament size---read-only parameters
+  accessed by every operator but never modified.
+\item $\Lambda$ is a \emph{log monoid} of diversity metrics: each
+  generation appends a record (best fitness, mean fitness, diversity
+  index) to an accumulated history.  The monoid structure
+  $(\Lambda, \cdot, \varepsilon)$ ensures that logs from composed
+  operators concatenate associatively.
+\item $S$ is the state of a pseudorandom number generator, threaded
+  through every stochastic operation (selection, crossover, mutation).
+\end{itemize}
+Concretely, for a result type $A$, a computation in~$T$ is a function
+\[
+  \Gamma \to S \to (A \times S \times \Lambda),
+\]
+reading a configuration, consuming and producing PRNG state, and
+emitting a log. The unit $\eta_A : A \to T\,A$ lifts a pure value
+into~$T$ by returning the configuration and state unchanged with the
+empty log~$\varepsilon$. The multiplication $\mu_A : T^2\,A \to T\,A$
+sequences two $T$-computations by threading the PRNG state and
+concatenating the logs.
+\end{definition}
+
+\subsection{Operators as Kleisli Morphisms}
+\label{sec:kleisli-ops}
+
+\begin{definition}[Genetic operator]
+A \emph{genetic operator} is a Kleisli morphism for~$T$:
+an arrow $f : \mathsf{Pop}(A) \to T(\mathsf{Pop}(B))$, where $A$~and~$B$
+are genome types (possibly equal). We write $\mathbf{Kl}(T)$ for the
+Kleisli category whose objects are population types and whose morphisms
+are genetic operators.
+\end{definition}
+
+The standard GA operators are Kleisli morphisms:
+\begin{itemize}
+\item \textbf{Evaluation.} $\mathsf{eval}_\phi : \mathsf{Pop}(\Sigma) \to
+  T(\mathsf{Pop}(\Sigma))$, parameterized by a fitness function
+  $\phi : \Sigma \to \mathbb{R}$. Pairs each genome with its fitness.
+
+\item \textbf{Selection.} $\mathsf{sel} : \mathsf{Pop}(\Sigma) \to
+  T(\mathsf{Pop}(\Sigma))$---an endomorphism projecting the
+  population onto a fitter subset (consuming PRNG state, logging
+  diversity).
+
+\item \textbf{Crossover.} $\mathsf{cross} : \mathsf{Pop}(\Sigma) \to
+  T(\mathsf{Pop}(\Sigma))$---recombines genetic material from pairs
+  of individuals at a random point, with probability read from~$\Gamma$.
+
+\item \textbf{Mutation.} $\mathsf{mut}_\delta : \mathsf{Pop}(\Sigma)
+  \to T(\mathsf{Pop}(\Sigma))$---an endomorphism parameterized by
+  $\delta : \Sigma \to T(\Sigma)$
+  (Gaussian noise for $\mathbb{R}^n$, bit-flip for $\{0,1\}^k$).
+
+\item \textbf{Migration.} A natural transformation
+  $\prod_{i \in I} \mathsf{Pop}(\Sigma) \to
+  \prod_{i \in I} T(\mathsf{Pop}(\Sigma))$
+  transporting individuals between subpopulations without inspecting
+  them. Its naturality---commuting with any operator applied per
+  island---underlies the strict/lax dichotomy (Section~\ref{sec:conjecture}).
+\end{itemize}
+
+\begin{definition}[Kleisli composition]
+Given $f : A \to T\,B$ and $g : B \to T\,C$,
+their Kleisli composite $g \circ_K f : A \to T\,C$ is
+$g \circ_K f = \mu_C \circ T(g) \circ f$,
+where $\mu : T^2 \Rightarrow T$ is the monad multiplication.
+The monad laws guarantee associativity and identity, so
+$\mathbf{Kl}(T)$ is a category.
+\end{definition}
+
+\subsection{Three-Level Composition}
+\label{sec:three-level}
+
+The Kleisli category $\mathbf{Kl}(T)$ supports composition at three
+distinct levels:
+
+\paragraph{Level 1: Operators $\to$ Pipelines.}
+A \emph{pipeline} (one generation) is the Kleisli composite of
+individual operators:
+\[
+  \pi \;=\; \mathsf{mut}_\delta \circ_K \mathsf{cross}
+    \circ_K \mathsf{sel} \circ_K \mathsf{eval}_\phi.
+\]
+The pipeline $\pi : \mathsf{Pop}(\Sigma) \to T(\mathsf{Pop}(\Sigma))$
+is itself a Kleisli morphism---a single arrow encoding one complete
+generation. Running $n$~generations is the $n$-fold self-composition
+$\pi^n = \pi \circ_K \pi \circ_K \cdots \circ_K \pi$.
+
+\paragraph{Level 2: Pipelines $\to$ Strategies.}
+A \emph{strategy} composes pipelines with different parameters to
+implement multi-phase evolution. For example, the \emph{hourglass}
+strategy composes an exploration phase (high mutation, large
+tournament) with a convergence phase (low mutation, small tournament)
+and a re-diversification phase:
+\[
+  \sigma_{\text{hg}} \;=\; \pi_{\text{diversify}}^{25}
+    \circ_K \pi_{\text{converge}}^{10}
+    \circ_K \pi_{\text{explore}}^{15}.
+\]
+The sequential composition of strategies is again associative.
+Conditional composition (\emph{adaptive} strategies) introduces a
+predicate on intermediate results: run~$\sigma_1$, test a condition
+(e.g., plateau detection), and either accept the result or continue
+with~$\sigma_2$.
+
+\paragraph{Level 3: Strategies $\to$ Multi-population systems.}
+The \emph{island functor} $\mathcal{I}$ lifts a strategy on a single
+population to a strategy on $n$~independent subpopulations with
+periodic migration. Formally, $\mathcal{I}$ maps objects
+$\mathsf{Pop}(\Sigma) \mapsto \mathsf{Pop}(\Sigma)^n$ and morphisms
+$\sigma \mapsto \mathcal{I}(\sigma)$, where $\mathcal{I}(\sigma)$
+applies~$\sigma$ to each island independently and interleaves
+migration events. Whether $\mathcal{I}$ preserves sequential
+composition---i.e., whether $\mathcal{I}(\sigma_1 \circ_K \sigma_2) =
+\mathcal{I}(\sigma_1) \circ_K \mathcal{I}(\sigma_2)$---depends on
+whether any migration occurs (Section~\ref{sec:conjecture}).
+
+\medskip
+At each level, the composite has the same type as its parts: a
+pipeline of operators is itself an operator; a sequence of strategies
+is itself a strategy; an island model containing independent GAs is
+itself a GA. Composition closes over the same categorical structure.
+
+\subsection{Implementation}
+\label{sec:haskell}
+
+The categorical structure is directly implemented in Haskell.
+The evolution monad, genetic operator type, and Kleisli composition are:
+
+\begin{lstlisting}
+type EvoM = ReaderT GAConfig
+            (StateT StdGen (Writer GALog))
+
+newtype GeneticOp m a b =
+  GeneticOp { runOp :: [a] -> m [b] }
+
+(>>>:) :: Monad m => GeneticOp m a b
+       -> GeneticOp m b c -> GeneticOp m a c
+(GeneticOp f) >>>: (GeneticOp g) =
+  GeneticOp (\pop -> f pop >>= g)
+\end{lstlisting}
+
+\noindent
+A complete pipeline composes operators left-to-right:
+
+\begin{lstlisting}
+pipeline :: GeneticOp EvoM [a] [a]
+pipeline = evaluate fitnessFunc
+  >>>: elitistSelect
+  >>>: onePointCrossover
+  >>>: pointMutate mutFunc
+\end{lstlisting}
+
+\noindent
+Because \texttt{pipeline} is itself a \texttt{GeneticOp}, it plugs
+into any strategy combinator---\texttt{sequential}, \texttt{race},
+\texttt{adaptive}, \texttt{islandStrategy}---without modification.
+Changing the fitness function or mutation operator changes the
+\emph{content}; the compositional \emph{structure} is invariant.
+The same strategy code operates unchanged on checkers weight vectors
+(\texttt{[Double]}), maze topologies (\texttt{[Bool]}), and expression
+trees (\texttt{ExprTree}).
 
 %% ============================================================
 %% Section 4: Two Domains (~2 pages)
