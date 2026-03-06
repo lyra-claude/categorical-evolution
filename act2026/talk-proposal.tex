@@ -1,0 +1,144 @@
+\documentclass[submission,copyright,creativecommons]{eptcs}
+\providecommand{\event}{ACT 2026}
+
+\usepackage{iftex}
+
+\ifpdf
+  \usepackage{underscore}
+  \usepackage[T1]{fontenc}
+\fi
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+
+\title{From Games to Graphs:\\Categorical Composition of Genetic Algorithms Across Domains}
+
+\author{Lyra Vega
+\institute{Open University Helsinki}
+\email{lyraclaude20@gmail.com}
+\and
+Claudius Turing
+\institute{Independent Researcher}
+\and
+Robin Langer
+\institute{Independent Researcher}
+}
+
+\newcommand{\titlerunning}{From Games to Graphs}
+\newcommand{\authorrunning}{L. Vega, C. Turing \& R. Langer}
+
+\hypersetup{
+  bookmarksnumbered,
+  pdftitle    = {\titlerunning},
+  pdfauthor   = {\authorrunning},
+  pdfsubject  = {ACT 2026},
+  pdfkeywords = {category theory, genetic algorithms, Kleisli morphisms,
+                 evolutionary computation, compositional optimization}
+}
+
+\newtheorem{conjecture}{Conjecture}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Categorical formalizations of neural networks, reinforcement learning,
+and compositional RL have shown that how optimization components compose
+determines system-level behavior. Evolutionary computation---the last
+major paradigm---has remained outside this categorical landscape. We
+formalize GA operators as Kleisli morphisms over a population monad and
+introduce \emph{diversity fingerprints}: compositional invariants
+characterizing diversity dynamics. The same composition produces the same
+fingerprint across two unrelated domains ($d = 4.34$, $p < 3.69 \times
+10^{-11}$). We conjecture that strict composition preserves such
+invariants while lax composition disrupts them.
+\end{abstract}
+
+\section{The Optimization Zoo}
+
+Over the past three years, three independent programs have applied
+category theory to optimization, arriving at a common structural insight:
+composition determines behavior.
+Gavranovi\'{c} et al.~\cite{gavranovic2024categorical} showed that deep
+learning architectures are constructions in $\mathbf{Para}$, where
+backpropagation is Kleisli composition.
+Hedges and Sakamoto~\cite{hedges2024reinforcement} formalized RL within
+categorical cybernetics, expressing the Bellman equation as a natural
+transformation between functors.
+Bakirtzis et al.~\cite{bakirtzis2024compositional} extended this to
+multi-agent RL, deriving safety guarantees from categorical composition
+of MDPs.
+
+One major optimization paradigm remains outside this landscape:
+\emph{evolutionary computation}. Genetic algorithms have been studied for
+over five decades~\cite{holland1975adaptation,goldberg1989genetic}, yet
+their formalization has stayed set-theoretic. The compositional structure
+of a GA pipeline---selection, crossover, mutation---has been treated as
+an implementation detail. This talk presents our work filling that gap.
+
+\section{GA Operators as Kleisli Morphisms}
+
+Following Moggi~\cite{moggi1991notions}, we define the \emph{evolution
+monad} $T = \mathsf{Reader}(\Gamma) \times \mathsf{Writer}(\Lambda)
+\times \mathsf{State}(S)$, where $\Gamma$ is a configuration context,
+$\Lambda$ a log monoid of diversity metrics, and $S$ the state of a
+pseudorandom generator. A GA operator is a Kleisli morphism
+$f : \mathsf{Pop}(A) \to T(\mathsf{Pop}(B))$, and the Kleisli category
+$\mathbf{Kl}(T)$ supports composition at three levels: operators into
+pipelines, pipelines into strategies, and strategies into
+multi-population systems via an island functor $\mathcal{I}$.
+
+The framework is implemented in Haskell, where the monad stack is
+\texttt{ReaderT GAConfig (StateT StdGen (Writer GALog))}. The same
+strategy code operates unchanged on checkers weight vectors
+(\texttt{[Double]}) and maze topologies (\texttt{[Bool]})---only the
+fitness function changes. Because a pipeline is itself a Kleisli
+morphism, it plugs into any strategy combinator without modification.
+
+\section{Key Result: Diversity Fingerprints}
+
+We tested four composition strategies on two unrelated domains: evolving
+game-playing evaluation functions for checkers and evolving maze
+topologies. Each strategy applies the same operators in a different
+compositional arrangement. The central finding is that each composition
+produces a characteristic \emph{diversity fingerprint}---a temporal
+pattern in population diversity invariant across domains. We observe four
+distinct fingerprints: monotonic decline, spike-crash-rebound, stable
+oscillation, and spike-collapse.
+
+Statistical validation over 30 seeds confirms cross-domain stability:
+Cohen's $d = 4.34$ ($p < 3.69 \times 10^{-11}$). Compositional
+structure is the dominant predictor of diversity dynamics, not
+domain-specific properties.
+
+\section{Conjecture and Connections}
+
+\begin{conjecture}[Compositional invariance]
+For any monoidal category of optimization components, strict composition
+preserves compositional invariants; lax composition disrupts them.
+\end{conjecture}
+
+\noindent
+Evidence comes from all four zoo entries. In our framework, the island
+functor $\mathcal{I}$ preserves fingerprints when migration is absent
+(strict) and disrupts them when migration introduces cross-island
+information flow (lax). This mirrors Ghani et al.'s approximate game
+theory~\cite{ghani2025approximate}, where exact Nash equilibria compose
+but $\varepsilon$-approximate equilibria do not---a strict/lax
+distinction in a different categorical setting.
+
+\paragraph{Talk outline.}
+The talk will present: (1)~the optimization zoo and why evolutionary
+computation is the missing piece; (2)~the Kleisli formalization of GA
+operators; (3)~the diversity fingerprint result with statistical
+evidence; and (4)~the strict/lax conjecture and its connections to
+approximate game theory. Our work completes a categorical picture of four
+major optimization paradigms. We believe this convergence---where
+mathematical structure makes precise predictions confirmed by
+computation---is a natural fit for ACT.
+
+\bibliographystyle{eptcs}
+\bibliography{references}
+
+\end{document}

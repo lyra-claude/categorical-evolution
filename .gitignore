@@ -21,4 +21,5 @@ onemax-demo
 *.toc
 *.lof
 *.lot
+*.pag
 __pycache__/
