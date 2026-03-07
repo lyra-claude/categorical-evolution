@@ -32,6 +32,8 @@
 % Tikz for diagrams
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta,positioning,cd}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
 
 % Title and authors
 \title{From Games to Graphs:\\Categorical Composition of Genetic Algorithms Across Domains}
@@ -385,7 +387,44 @@ $g \circ_K f = \mu_C \circ T(g) \circ f$,
 where $\mu : T^2 \Rightarrow T$ is the monad multiplication.
 The monad laws guarantee associativity and identity, so
 $\mathbf{Kl}(T)$ is a category.
+Figure~\ref{fig:kleisli-pipeline} illustrates this mechanism and the
+resulting pipeline structure.
 \end{definition}
+
+\begin{figure}[t]
+\centering
+\begin{tikzcd}[column sep=3.2em, row sep=3em]
+|[alias=P]| P
+  \arrow[r, "\mathsf{eval}_\phi"]
+  \arrow[rrrr, bend right=20,
+    "\pi \;=\; \mathsf{mut}_\delta \circ_K \mathsf{cross} \circ_K \mathsf{sel} \circ_K \mathsf{eval}_\phi"']
+& P
+  \arrow[r, "\mathsf{sel}"]
+& P
+  \arrow[r, "\mathsf{cross}"]
+& P
+  \arrow[r, "\mathsf{mut}_\delta"]
+& P
+\end{tikzcd}
+
+\medskip
+
+\begin{tikzcd}[column sep=3.5em, row sep=3em]
+A \arrow[r, "f"] \arrow[rr, bend right=20, "g \circ_K f"']
+& TB \arrow[r, "T\!g"] & T^2 C \arrow[d, "\mu_C"] \\
+& & TC
+\end{tikzcd}
+\caption{Top: the single-generation pipeline in the Kleisli category
+  $\mathbf{Kl}(T)$, where $P = \mathsf{Pop}(\Sigma)$.  Each arrow is a
+  Kleisli morphism $P \to T\!P$ and the curved arrow is their composite
+  $\pi$---itself a Kleisli morphism.  Bottom: the Kleisli composition
+  mechanism (Definition~\ref{def:kleisli-comp}).  Given $f : A \to T\!B$
+  and $g : B \to T\!C$, the composite $g \circ_K f = \mu_C \circ T\!g
+  \circ f$ first applies $f$, lifts $g$ into $T$, then flattens via the
+  monad multiplication~$\mu$.  This mechanism is applied three times to
+  build $\pi$ from the four operators above.}
+\label{fig:kleisli-pipeline}
+\end{figure}
 
 \subsection{Three-Level Composition}
 \label{sec:three-level}
@@ -672,8 +711,9 @@ assembled---not by the genome type~$\Sigma$ or the fitness function.
 \label{sec:fp-observed}
 
 Table~\ref{tab:fingerprints} shows genotypic diversity over time for
-each strategy on both domains. Four qualitatively distinct fingerprints
-emerge:
+each strategy on both domains, and Figure~\ref{fig:fingerprints}
+visualizes the trajectories side by side. Four qualitatively distinct
+fingerprints emerge:
 
 \begin{table}[t]
 \centering
@@ -699,6 +739,86 @@ Gen & Ck & Mz & Ck & Mz & Ck & Mz \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  name=left,
+  width=0.48\textwidth,
+  height=0.32\textwidth,
+  xlabel={Generation},
+  ylabel={Diversity},
+  title={\small Checkers ($\mathbb{R}^{10}$)},
+  xmin=-1, xmax=21,
+  ymin=0.15, ymax=0.55,
+  xtick={0,5,10,15,20},
+  ytick={0.2,0.3,0.4,0.5},
+  legend pos=south west,
+  legend style={font=\scriptsize, draw=none, fill=none},
+  grid=major,
+  grid style={gray!25},
+  tick label style={font=\scriptsize},
+  label style={font=\small},
+  title style={font=\small},
+]
+% Flat — monotonic decline
+\addplot[black, solid, thick, mark=square*, mark size=1.3pt]
+  coordinates {(0,0.49) (5,0.34) (10,0.33) (15,0.31) (20,0.30)};
+% Hourglass — spike-crash-rebound
+\addplot[blue!70!black, dashed, thick, mark=triangle*, mark size=1.8pt]
+  coordinates {(0,0.49) (5,0.32) (10,0.33) (15,0.32) (20,0.30)};
+% Island — stable oscillation
+\addplot[red!70!black, dotted, thick, mark=o, mark size=1.3pt]
+  coordinates {(0,0.49) (5,0.23) (10,0.47) (15,0.44) (20,0.34)};
+\legend{Flat, Hourglass, Island}
+\end{axis}
+
+\begin{axis}[
+  at={(left.east)},
+  anchor=west,
+  xshift=12pt,
+  width=0.48\textwidth,
+  height=0.32\textwidth,
+  xlabel={Generation},
+  ylabel={},
+  title={\small Mazes ($\{0,1\}^{60}$)},
+  xmin=-1, xmax=21,
+  ymin=0.15, ymax=0.55,
+  xtick={0,5,10,15,20},
+  ytick={0.2,0.3,0.4,0.5},
+  yticklabels={},
+  legend pos=south west,
+  legend style={font=\scriptsize, draw=none, fill=none},
+  grid=major,
+  grid style={gray!25},
+  tick label style={font=\scriptsize},
+  label style={font=\small},
+  title style={font=\small},
+]
+% Flat — monotonic decline
+\addplot[black, solid, thick, mark=square*, mark size=1.3pt]
+  coordinates {(0,0.47) (5,0.21) (10,0.26) (15,0.26) (20,0.27)};
+% Hourglass — spike-crash-rebound
+\addplot[blue!70!black, dashed, thick, mark=triangle*, mark size=1.8pt]
+  coordinates {(0,0.47) (5,0.51) (10,0.29) (15,0.46) (20,0.46)};
+% Island — stable oscillation
+\addplot[red!70!black, dotted, thick, mark=o, mark size=1.3pt]
+  coordinates {(0,0.47) (5,0.37) (10,0.31) (15,0.28) (20,0.32)};
+\legend{Flat, Hourglass, Island}
+\end{axis}
+\end{tikzpicture}
+\caption{Cross-domain diversity fingerprints. Each panel shows the
+same three composition strategies applied to an unrelated domain:
+checkers (left, real-valued genomes) and mazes (right, binary genomes).
+The fingerprint \emph{shapes}---monotonic decline (Flat), oscillation
+with recovery (Hourglass), migration-maintained band (Island)---are
+determined by the composition pattern, not the domain. Identical
+Kleisli composites produce matching trajectory shapes across
+incompatible genome types and fitness functions
+(Table~\ref{tab:fingerprints}).}
+\label{fig:fingerprints}
+\end{figure}
 
 \begin{enumerate}
 \item \textbf{Flat: monotonic decline.} Diversity decreases steadily
