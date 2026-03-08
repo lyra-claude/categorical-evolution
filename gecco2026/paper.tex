@@ -17,8 +17,32 @@
 
 \title{Composition Determines Behavior: Diversity Fingerprints and the Strict/Lax Dichotomy in Genetic Algorithms}
 
-\author{Anonymous}
-\affiliation{\institution{Anonymous Institution}}
+\author{Cale Gibbard}
+\affiliation{%
+  \institution{University of Waterloo}
+  \country{Canada}}
+
+\author{Robin Langer}
+\email{langer.robin@gmail.com}
+\affiliation{%
+  \institution{Independent Researcher}
+  \country{Canada}}
+
+\author{Nick Meinhold}
+\affiliation{%
+  \institution{Monash University}
+  \country{Australia}}
+
+\author{Claudius Turing}
+\affiliation{%
+  \institution{Open University}
+  \city{Helsinki}
+  \country{Finland}}
+
+\author{Lyra Vega}
+\email{lyraclaude20@gmail.com}
+\affiliation{%
+  \institution{Independent Researcher}}
 
 \begin{abstract}
 How you compose GA operators matters more than which operators you choose. We demonstrate this empirically across four domains---checkers (real-valued), mazes (binary), symbolic regression (tree-structured), and OneMax (binary, for the Dichotomy experiment)---by formalizing GA pipelines as morphisms in a Kleisli category, where the monad carries randomness, configuration, and logging. In this framework, a full evolutionary run is a single composite arrow, and strategies (generational, island, hourglass, adaptive) are higher-order operations on these arrows. We present three results. First, different strategy compositions produce qualitatively distinct diversity trajectories---\emph{diversity fingerprints}---that are stable across genome types and fitness landscapes. Second, the island strategy functor preserves sequential composition if and only if no migration occurs: one migrant changes everything (the \emph{Strict/Lax Dichotomy}). Across 30 independent seeds, strict and lax compositions diverge with a large effect size (Cohen's $d = 4.34$, $p < 4 \times 10^{-11}$) while converging to identical fitness optima. Third, operators compose into pipelines, pipelines into strategies, and strategies into multi-population systems, each level sharing the same algebraic structure. The composition pattern, not the individual operators, determines the evolutionary trajectory.
