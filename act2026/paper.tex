@@ -100,7 +100,7 @@ the problem domain. Experiments on two unrelated domains (checkers strategy
 evolution and maze topology optimization) show that composition pattern, not
 domain content, determines the fingerprint, with strict composition preserving
 $2.2\times$ higher diversity than lax (Cohen's $d = 4.34$,
-$p < 3.69 \times 10^{-11}$). We conjecture that strict composition preserves
+$p < 3.7 \times 10^{-11}$). We conjecture that strict composition preserves
 compositional invariants while lax composition degrades them---a pattern
 supported by five independent studies across optimization paradigms.
 \end{abstract}
@@ -194,7 +194,7 @@ This paper makes three contributions:
   characterize the diversity dynamics of a GA pipeline---and demonstrate
   empirically that the same composition produces the same fingerprint across
   two unrelated problem domains (game-playing strategy evolution and maze
-  topology optimization), with effect size $d = 4.34$ and $p < 3.69 \times
+  topology optimization), with effect size $d = 4.34$ and $p < 3.7 \times
   10^{-11}$.
 \item We propose a general conjecture: across optimization paradigms,
   compositional structure predicts system-level behavior. Specifically, strict
@@ -883,11 +883,10 @@ be the domain-change functor that replaces the genome type, fitness
 function, and mutation operator while preserving the composition
 structure. Then for any strategy~$\sigma$ in the checkers domain,
 the qualitative shape of $\mathbf{d}(F(\sigma))$ matches the shape
-of $\mathbf{d}(\sigma)$. In particular, the ordering of final
-diversities across the three cross-domain strategies is preserved:
-$\mathbf{d}_n(\sigma_{\mathrm{flat}})
-< \mathbf{d}_n(\sigma_{\mathrm{isl}}) <
-\mathbf{d}_n(\sigma_{\mathrm{hg}})$.
+of $\mathbf{d}(\sigma)$. In particular, the relative ordering of
+final diversities across strategies is approximately preserved
+across domains: strategies with more diversity-restoring phases
+produce higher or equal final diversity in both domains.
 \end{proposition}
 
 \begin{proof}[Proof sketch]
@@ -897,15 +896,20 @@ Since fingerprints are traces of the log component $\Lambda$
 accumulated via Kleisli composition
 (Definition~\ref{def:evo-monad}), and $F$ preserves the monad
 multiplication $\mu$, the fingerprint shape is determined by the
-composition pattern alone. The diversity ordering then follows from
-the monotonic relationship between composition complexity (number of
-diversity-restoring phases) and final diversity.
+composition pattern alone. The diversity ordering is approximately
+preserved because composition complexity (number of
+diversity-restoring phases) monotonically influences final diversity,
+though domain-specific parameters may cause near-ties (e.g.,
+flat and hourglass converge to $0.30$ in checkers).
 \end{proof}
 
-This ordering---flat $<$ island $<$ hourglass for final genotypic
-diversity---holds in both domains (Table~\ref{tab:fingerprints}).
-The composition pattern, not the content, determines the diversity
-dynamics.
+The key insight is that different composition patterns produce
+distinguishable fingerprints that are consistent across domains
+(Table~\ref{tab:fingerprints}). In mazes, the ordering
+flat~$<$~island~$<$~hourglass holds strictly; in checkers,
+flat and hourglass converge to the same value ($0.30$) while island
+remains higher ($0.34$). The composition pattern, not the content,
+determines the diversity dynamics.
 
 \subsection{Statistical Confirmation}
 \label{sec:fp-stats}
@@ -928,7 +932,7 @@ By convention, $d > 0.8$ is a ``large'' effect.
 \caption{Strict vs.\ lax composition over 30~seeds. Diversity is
   normalized pairwise Hamming distance.  By generation~50, the
   distributions barely overlap ($d = 2.55$). By generation~100,
-  they are completely separated ($d = 4.34$, $p = 3.7 \times
+  they are completely separated ($d = 4.34$, $p < 3.7 \times
   10^{-11}$).  Both conditions converge to the same optimal fitness.}
 \label{tab:stats}
 \begin{tabular}{@{}r cc cc@{}}
@@ -947,7 +951,7 @@ Gen & Strict (mean $\pm$ std) & Lax (mean $\pm$ std) & $d$ & $p$ \\
 Table~\ref{tab:stats} shows the results. By generation~25, the
 separation is already significant ($d = 1.05$, $p < 5 \times
 10^{-4}$). By generation~100, the effect size reaches $d = 4.34$ with
-$p = 3.7 \times 10^{-11}$---the diversity distributions under strict
+$p < 3.7 \times 10^{-11}$---the diversity distributions under strict
 and lax composition do not overlap at all across 30~seeds. This is not
 merely a ``large'' effect in the conventional sense; it is a
 \emph{massive} effect, the kind rarely observed in empirical science.
@@ -1045,7 +1049,7 @@ of these four paradigms: genetic algorithm operators as Kleisli
 morphisms over a population monad, with diversity fingerprints as
 the key compositional invariant. Our experiments show that the same
 composition pattern produces the same fingerprint across unrelated
-domains ($d = 4.34$, $p < 4 \times 10^{-11}$), and we conjecture
+domains ($d = 4.34$, $p < 3.7 \times 10^{-11}$), and we conjecture
 that the strict/lax distinction governing this phenomenon is
 general across the optimization landscape.
 
@@ -1060,9 +1064,6 @@ language in which that convergence becomes precise.
 %% ============================================================
 %% Acknowledgements
 %% ============================================================
-% \subparagraph*{Acknowledgements.}
-% TODO: Add acknowledgements
-
 %% ============================================================
 %% Bibliography
 %% ============================================================
