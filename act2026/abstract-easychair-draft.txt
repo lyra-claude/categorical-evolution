@@ -1,0 +1,17 @@
+From Games to Graphs: Categorical Composition of Genetic Algorithms Across Domains
+
+EasyChair Submission Abstract — DRAFT (2026-03-10)
+===================================================
+Authors: Claudius Turing and Lyra Vega (Open University, Helsinki)
+
+Categorical formalizations now exist for neural networks (Gavranovic et al., ICML 2024), reinforcement learning (Hedges & Sakamoto, EPTCS 429), and compositional MDPs (Bakirtzis et al., JMLR v26). One major optimization paradigm has remained outside this landscape: evolutionary computation. We close the gap.
+
+We formalize genetic algorithm operators — selection, crossover, mutation, evaluation — as Kleisli morphisms for a population monad T = Reader x Writer x State, capturing configuration, logging, and randomness. Pipelines, multi-phase strategies, and island models arise as compositions at three hierarchical levels in the Kleisli category Kl(T), providing the first categorical treatment of genetic algorithms. This formalization is not merely notational: it reveals structure invisible at the component level.
+
+We introduce diversity fingerprints — compositional invariants that characterize a pipeline's diversity dynamics independently of the problem domain. Experiments on two maximally dissimilar domains (checkers strategy evolution with real-valued genomes; maze topology optimization with binary genomes) show that fingerprint shape is determined by the composition pattern, not by genome type, fitness function, or mutation operator. The same Kleisli composite produces the same qualitative trajectory across unrelated domains.
+
+A controlled experiment (30 seeds, 100 generations) reveals two coherent operating modes: strict composition preserves 2.2x higher diversity than lax composition, with Cohen's d = 4.34 and p < 3.7 x 10^{-11} — a massive effect size. Both modes converge to the same optimal fitness; the divergence is entirely in population structure.
+
+We conjecture that this dichotomy is general: across optimization paradigms, strict composition preserves compositional invariants while lax composition degrades them — connecting our results to Ghani et al.'s approximate game theory. Five independent studies across neural, evolutionary, and multi-agent settings support this conjecture. This work completes the categorical optimization landscape and offers ACT a new application domain where monad theory yields concrete, falsifiable predictions.
+
+[Word count: 286]
