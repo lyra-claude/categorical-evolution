@@ -86,12 +86,14 @@ and island models arise as compositions at three hierarchical levels in the
 Kleisli category, providing the first categorical formalization of genetic
 algorithms. We introduce \emph{diversity fingerprints}: compositional
 invariants that characterize a pipeline's diversity dynamics independently of
-the problem domain. Experiments on two unrelated domains (checkers strategy
-evolution and maze topology optimization) show that composition pattern, not
-domain content, determines the fingerprint, with strict composition preserving
-$2.2\times$ higher diversity than lax (Cohen's $d = 4.34$,
-$p < 3.7 \times 10^{-11}$). We conjecture that strict composition preserves
-compositional invariants while lax composition degrades them---a pattern
+the problem domain. Our main result (Proposition~1) establishes that diversity fingerprints are
+functorial: a domain-change functor preserving composition structure preserves
+fingerprint shape. Experiments on two unrelated domains (checkers strategy
+evolution and maze topology optimization) confirm this prediction, with strict
+composition preserving $2.2\times$ higher genotypic diversity than lax
+(Cohen's $d = 4.34$, $p < 3.7 \times 10^{-11}$). We conjecture that strict
+composition preserves compositional invariants while lax composition degrades
+them---a pattern
 supported by five independent studies across optimization paradigms.
 \end{abstract}
 
@@ -108,71 +110,67 @@ dynamics more than the components themselves. This convergence is not
 coincidental. It reflects a deep mathematical regularity that category theory
 is uniquely positioned to articulate.
 
+Consider the octopus. Each of its eight arms contains an independent neural
+cluster capable of local sensory processing and motor control; a severed arm
+will still reach for food. Yet in the intact animal, the central brain
+coordinates the arms through modulatory signals, allowing information
+discovered by one arm to influence the behavior of another. This is precisely
+the distinction our framework formalizes. When the arms compute in
+isolation---strict composition---each preserves its internal dynamics. When a
+coordination channel couples them---lax composition---information migrates
+across component boundaries, altering convergence and diversity in ways that
+depend not on what the arms are doing, but on how tightly they are coupled.
+The same structural dichotomy, we will argue, governs every compositional
+optimization system, from genetic algorithms to gradient descent.
+
 \paragraph{Neural networks.}
 Gavranovi\'{c} et al.~\cite{gavranovic2024categorical} showed that deep learning
-architectures can be understood as constructions in the category $\mathbf{Para}$,
-where gradient descent is a functor and backpropagation emerges as its
-composition law. The key insight is not that individual layers are interesting
-categorically---it is that the \emph{way layers compose} (via the chain rule,
-formalized as Kleisli composition for a suitable monad) determines both the
-expressiveness and the trainability of the resulting network. Their framework
-was presented at ICML~2024 and has since informed the design of compositional
-neural architectures at scale.
+architectures are constructions in $\mathbf{Para}$, where gradient descent is
+a functor and backpropagation its composition law. The key insight: the
+\emph{way layers compose} (via the chain rule, formalized as Kleisli
+composition) determines both expressiveness and trainability.
 
 \paragraph{Reinforcement learning.}
 Hedges and Sakamoto~\cite{hedges2024reinforcement} formalized RL within
-categorical cybernetics (EPTCS~429), expressing the Bellman equation as
-a natural transformation. The compositional structure of the
-agent--environment loop, not the choice of value function, governs
-convergence.
+categorical cybernetics, expressing the Bellman equation as a natural
+transformation. The compositional structure of the agent--environment loop,
+not the value function, governs convergence.
 
 \paragraph{Compositional RL.}
-In JMLR~v26, Bakirtzis et al.~\cite{bakirtzis2024compositional}
-formalized Markov decision processes categorically, deriving safety
-guarantees from composition structure. Their approach is the closest
-analogue to ours: formalize an optimization paradigm categorically
-and show that composition reveals structure invisible at the
-component level.
+Bakirtzis et al.~\cite{bakirtzis2024compositional} formalized MDPs
+categorically, deriving safety guarantees from composition structure---the
+closest analogue to our approach.
 
 \paragraph{Evolutionary computation: the remaining gap.}
-One major optimization paradigm has remained outside this categorical
-landscape: evolutionary computation. Genetic algorithms have been studied
-extensively for over five decades~\cite{holland1975adaptation,goldberg1989genetic,
-dejong2006evolutionary}, yet their formalization has remained largely
-set-theoretic or statistical. The compositional structure of a GA pipeline---selection,
+One major paradigm remains outside this landscape: evolutionary computation.
+Despite five decades of study~\cite{holland1975adaptation,goldberg1989genetic,
+dejong2006evolutionary}, GA formalization has remained set-theoretic or
+statistical. The compositional structure of a GA pipeline---selection,
 crossover, mutation, composed in sequence---has been treated as an
-implementation detail rather than a mathematical object worthy of study in its
-own right. This paper addresses that gap.
+implementation detail rather than a mathematical object. This paper
+addresses that gap.
 
 \medskip
 
-The common thread is that \emph{how} components compose predicts
-system-level behavior invisible at the component level. This
-observation has a natural categorical formulation. When composition is
-\emph{strict}---meaning it respects component boundaries exactly, with
-information flowing only through defined interfaces---compositional invariants
-are preserved. When composition is \emph{lax}---meaning additional communication
-occurs between components beyond the formal interface---those invariants may
-degrade. This strict/lax distinction is well-studied in category theory (a
-strict monoidal functor preserves structure on the nose; a lax monoidal functor
-preserves it only up to coherent natural transformations), and it connects our
-work to Ghani et al.'s recent formalization of approximate game
-theory~\cite{ghani2025approximate}, where exact Nash equilibria compose cleanly
-but approximate equilibria do not. We conjecture that this pattern is general:
-compositional invariants are preserved under strict composition and disrupted
-under lax composition, across optimization paradigms.
+In categorical terms, the distinction is between \emph{strict} composition
+(respecting component boundaries exactly, information flowing only through
+defined interfaces) and \emph{lax} composition (permitting additional
+communication beyond the formal interface). A strict monoidal functor
+preserves structure on the nose; a lax one only up to coherent natural
+transformations. This connects to Ghani et al.'s approximate game
+theory~\cite{ghani2025approximate}, where exact equilibria compose cleanly
+but $\varepsilon$-approximate equilibria do not. We conjecture the pattern
+is general: compositional invariants are preserved under strict composition
+and disrupted under lax, across optimization paradigms.
 
-Our formalization proceeds via Moggi's framework of monads and Kleisli
-categories~\cite{moggi1991notions}. We model the state of an evolutionary
-computation as a monad $T = \mathit{Reader} \times \mathit{Writer} \times
-\mathit{State}$, capturing configuration, logging, and randomness respectively.
-GA operators become Kleisli morphisms $a \to T\,b$, and the composition of
-operators into pipelines is Kleisli composition. This is not merely a
-notational convenience. By expressing GA pipelines as composed Kleisli
-morphisms, we gain access to the full machinery of categorical
-reasoning---functors, natural transformations, and compositional invariants---and
-can state and test precise claims about how pipeline structure determines
-evolutionary dynamics.
+Our formalization proceeds via Moggi's monads and Kleisli
+categories~\cite{moggi1991notions}. We model evolutionary computation as a
+monad $T = \mathit{Reader} \times \mathit{Writer} \times \mathit{State}$,
+capturing configuration, logging, and randomness. GA operators become
+Kleisli morphisms $a \to T\,b$; pipelines are their Kleisli composites.
+This yields access to functors, natural transformations, and compositional
+invariants---enabling precise, testable claims about how pipeline structure
+determines evolutionary dynamics.
 
 \paragraph{Contributions.}
 This paper makes three contributions:
@@ -181,10 +179,12 @@ This paper makes three contributions:
   population monad, completing the categorical optimization landscape initiated
   by~\cite{gavranovic2024categorical,hedges2024reinforcement,bakirtzis2024compositional}.
 \item We introduce \emph{diversity fingerprints}---compositional invariants that
-  characterize the diversity dynamics of a GA pipeline---and demonstrate
-  empirically that the same composition produces the same fingerprint across
-  two unrelated problem domains (game-playing strategy evolution and maze
-  topology optimization), with effect size $d = 4.34$ and $p < 3.7 \times
+  characterize the diversity dynamics of a GA pipeline---and prove that they
+  are functorial: a domain-change functor preserving composition structure
+  preserves fingerprint shape (Proposition~\ref{prop:functorial},
+  Section~\ref{sec:fp-stability}). Experiments on two unrelated domains
+  (game-playing strategy evolution and maze topology optimization) confirm
+  this prediction, with effect size $d = 4.34$ and $p < 3.7 \times
   10^{-11}$.
 \item We propose a general conjecture: across optimization paradigms,
   compositional structure predicts system-level behavior. Specifically, strict
@@ -193,14 +193,12 @@ This paper makes three contributions:
 \end{enumerate}
 
 \paragraph{Outline.}
-Section~\ref{sec:bridge} describes the disconnected state of the evolutionary
-computation literature and the bridging role of categorical vocabulary.
-Section~\ref{sec:framework} presents our Kleisli formalization of GA operators.
-Section~\ref{sec:domains} instantiates the framework on two domains.
-Section~\ref{sec:fingerprints} presents the diversity fingerprint results.
-Section~\ref{sec:conjecture} states our general conjecture with supporting
-evidence from all four categorical optimization programs.
-Section~\ref{sec:discussion} discusses limitations and future directions.
+Section~\ref{sec:bridge} motivates categorical vocabulary as a bridge between
+disconnected EC communities. Sections~\ref{sec:framework}--\ref{sec:domains}
+present the Kleisli formalization and two domain instantiations.
+Section~\ref{sec:fingerprints} gives the diversity fingerprint results.
+Section~\ref{sec:conjecture} states our general conjecture.
+Section~\ref{sec:discussion} discusses limitations.
 
 %% ============================================================
 %% Section 2: The Knowledge Graph Hole (~1 page)
@@ -218,25 +216,14 @@ connects two concepts that co-occur in the same paper.
 
 \paragraph{The disconnection.}
 The graph reveals a striking structural hole. Game-theoretic coevolution
-shares \emph{zero} concept overlap with three of the four other clusters.
-Its only bridge to the rest of the corpus is the term ``fitness,'' shared
-with morphology-control---a term so generic that it provides no structural
-connection. This isolation is not an artifact of our corpus selection. It
-reflects a genuine disciplinary fragmentation: researchers studying the
-evolution of competitive game strategies and researchers evolving robot
-morphologies use the same algorithmic machinery---population-based search
-with selection, crossover, and mutation---yet cite different foundational
-works, attend different conferences, and employ different vocabularies.
-
-The disconnection is linguistic, not algorithmic. Consider migration:
-in island-model genetic algorithms~\cite{whitley1999island,skolicki2005influence},
-subpopulations exchange individuals periodically to maintain diversity.
-In game-theoretic coevolution, the same mechanism appears as
-``strategy transfer'' between competing populations. In quality-diversity
-archives, it surfaces as ``niche injection.'' The underlying operation---a
-functorial map transporting individuals between subpopulations---is
-identical in all three cases. But because each community names it
-differently, the shared structure remains invisible in the literature graph.
+shares \emph{zero} concept overlap with three of the four other clusters;
+its only bridge is the term ``fitness,'' shared with morphology-control---too
+generic to provide structural connection. The isolation is linguistic, not
+algorithmic. Migration in island-model
+GAs~\cite{whitley1999island,skolicki2005influence}, ``strategy transfer'' in
+coevolution, and ``niche injection'' in quality-diversity are the same
+functorial map transporting individuals between subpopulations, but because
+each community names it differently, the shared structure remains invisible.
 
 \paragraph{Categorical vocabulary as bridge.}
 This paper introduces categorical vocabulary that makes the shared
@@ -254,27 +241,18 @@ different names:
 \item \textbf{Migration} becomes a functorial transformation: a natural
   transformation between population functors on different subpopulations.
 \end{itemize}
-These are not new algorithms. They are new \emph{names} for existing
-algorithms---names drawn from a mathematical vocabulary (category theory)
-that is designed precisely for describing how components compose. The
-bridge we build is linguistic: we do not propose better selection operators
-or faster crossover schemes. We provide a shared formal language in which
-the structural identity across communities becomes a provable fact rather
-than an informal analogy.
+These are not new algorithms but new \emph{names}---drawn from a vocabulary
+designed for describing how components compose. The bridge is linguistic:
+we provide a shared formal language in which the structural identity across
+communities becomes a provable fact rather than an informal analogy.
 
 \paragraph{Plugging the hole.}
-In the knowledge graph, bridge papers are those that span structural
-holes between otherwise disconnected clusters. The most effective bridges
-in our corpus are NEAT~\cite{stanley2002neat}
-(bridging neuroevolution to multiple communities) and novelty
-search~\cite{lehman2011novelty}
-(bridging open-ended evolution to quality-diversity). Our contribution
-bridges the deepest hole: \textbf{game-theoretic coevolution to
-structural optimization}. The categorical vocabulary of Kleisli morphisms,
-functors, and natural transformations provides exactly the shared
-terminology that the knowledge graph lacks. By introducing this vocabulary,
-we do not merely describe a connection that already existed informally---we
-create new edges in the knowledge graph, connecting concepts that were
+The most effective bridge papers in our corpus are
+NEAT~\cite{stanley2002neat} and novelty
+search~\cite{lehman2011novelty}. Our contribution bridges the deepest
+hole: \textbf{game-theoretic coevolution to structural optimization}.
+Kleisli morphisms, functors, and natural transformations provide the shared
+terminology the knowledge graph lacks, creating new edges between concepts
 previously isolated despite denoting the same underlying operations.
 
 %% ============================================================
@@ -283,16 +261,14 @@ previously isolated despite denoting the same underlying operations.
 \section{Genetic Algorithm Operators as Kleisli Morphisms}
 \label{sec:framework}
 
-We formalize the operators of a genetic algorithm as Kleisli morphisms
-over a monad that captures the computational effects inherent in
-evolution: configuration, logging, and randomness. The key ideas are
-due to Moggi~\cite{moggi1991notions}, who showed that computational
-effects---side-effects, nondeterminism, exceptions---are uniformly
-captured by monads. Our contribution is the observation that
-\emph{evolutionary dynamics are computational effects too}: the
-stochastic perturbation of mutation, the stateful threading of a
-pseudorandom generator, the accumulation of diversity metrics over
-generations. The monad $T$ makes these effects explicit and compositional.
+We formalize GA operators as Kleisli morphisms over a monad capturing
+the computational effects of evolution: configuration, logging, and
+randomness. Following Moggi~\cite{moggi1991notions}, who showed that
+computational effects are uniformly captured by monads, our key
+observation is that \emph{evolutionary dynamics are computational
+effects too}: stochastic mutation, stateful PRNG threading, and
+diversity-metric accumulation. The monad $T$ makes these explicit and
+compositional.
 
 \subsection{The Evolution Monad}
 \label{sec:monad}
@@ -508,13 +484,9 @@ pipeline = evaluate fitnessFunc
 
 \noindent
 Because \texttt{pipeline} is itself a \texttt{GeneticOp}, it plugs
-into any strategy combinator---\texttt{sequential}, \texttt{race},
-\texttt{adaptive}, \texttt{islandStrategy}---without modification.
-Changing the fitness function or mutation operator changes the
-\emph{content}; the compositional \emph{structure} is invariant.
-The same strategy code operates unchanged on checkers weight vectors
-(\texttt{[Double]}), maze topologies (\texttt{[Bool]}), and expression
-trees (\texttt{ExprTree}).
+into any strategy combinator without modification. The same code
+operates unchanged on checkers (\texttt{[Double]}), mazes
+(\texttt{[Bool]}), and expression trees (\texttt{ExprTree}).
 
 %% ============================================================
 %% Section 4: Two Domains (~2 pages)
@@ -522,14 +494,11 @@ trees (\texttt{ExprTree}).
 \section{Two Domains, One Category}
 \label{sec:domains}
 
-We instantiate the framework on two domains chosen for maximum
-dissimilarity: checkers (adversarial game strategy, real-valued
-genomes) and mazes (structural design, binary genomes). The point is
-not that either domain is novel, but that the categorical pipeline is
-\emph{identical} across both. Before describing the domains, we define
-the selection mechanism used in all our experiments, since it
-illustrates how a concrete algorithmic operation becomes a Kleisli
-morphism.
+We instantiate the framework on two maximally dissimilar domains:
+checkers (adversarial strategy, real-valued genomes) and mazes
+(structural design, binary genomes). The point is not novelty of either
+domain but that the categorical pipeline is \emph{identical} across both.
+We first define the shared selection mechanism.
 
 \begin{definition}[Tournament selection]
 \label{def:tournament}
@@ -581,11 +550,9 @@ composite (Definition~\ref{def:kleisli-comp}):
 \label{sec:mazes}
 
 The maze domain evolves $6 \times 6$ grid mazes. The genome is a
-60-bit binary vector encoding wall presence on each potential edge of
-the grid graph. Fitness is a composite of three BFS-derived metrics:
-solution path length (longer paths increase difficulty), dead-end
-ratio (more dead ends create confusion), and branching factor (more
-choice points make navigation interesting).
+60-bit binary vector encoding wall presence on each edge of the grid
+graph. Fitness combines three BFS-derived metrics: solution path length,
+dead-end ratio, and branching factor.
 
 Mutation is bit-flip: $\delta(g)_i = 1 - g_i$ with probability $p$
 per bit, read from~$\Gamma$. Crossover is one-point on the
@@ -598,12 +565,10 @@ The generation pipeline is:
   \;:\; \mathsf{Pop}(\{0,1\}^{60}) \to T(\mathsf{Pop}(\{0,1\}^{60})).
 \]
 
-The fitness function $\psi$ measures topological complexity; $\phi$
-measures playing skill. The genome types are incompatible:
-$\mathbb{R}^{10}$ versus $\{0,1\}^{60}$. The mutation operators are
-domain-specific (Gaussian perturbation versus bit-flip). And yet the
-\emph{pipeline shape} is identical: the same four Kleisli morphisms
-composed in the same order.
+Fitness $\psi$ measures topological complexity; $\phi$ measures playing
+skill. Genome types ($\mathbb{R}^{10}$ vs.\ $\{0,1\}^{60}$) and mutation
+operators (Gaussian vs.\ bit-flip) are incompatible, yet the \emph{pipeline
+shape} is identical: the same four Kleisli morphisms in the same order.
 
 \subsection{Four Strategies on Each Domain}
 \label{sec:four-strategies}
@@ -662,14 +627,11 @@ Category laws & Assoc., identity & Same & \textbf{Yes} \\
 \end{tabular}
 \end{table}
 
-Table~\ref{tab:invariance} summarizes the invariance. This is exactly
-what category theory predicts: the structure lives in the arrows and
-their composition, not in the objects. Changing the objects (genome
-types) is a change of \emph{content}; the categorical \emph{structure}
-is preserved. The question then becomes: does this structural
-invariance produce measurable, stable consequences in the evolutionary
-dynamics? The answer is yes, and the evidence is the subject of the
-next section.
+Table~\ref{tab:invariance} summarizes the invariance. Structure lives in
+the arrows and their composition, not in the objects. Changing genome
+types is a change of \emph{content}; the categorical \emph{structure}
+is preserved. Does this structural invariance produce measurable
+consequences in evolutionary dynamics? The next section shows that it does.
 
 %% ============================================================
 %% Section 5: Key Result (~2 pages)
@@ -695,7 +657,11 @@ $\mathbf{d}(\sigma) = (d_0, d_1, \ldots, d_n) \in \mathbb{R}^{n+1}$,
 where $d_i$ is the genotypic diversity of the population at
 generation~$i$. Genotypic diversity is measured as pairwise Hamming
 distance (binary genomes) or pairwise Euclidean distance (real-valued
-genomes), normalized to $[0, 1]$.
+genomes), normalized to $[0, 1]$. This choice of diversity measure
+is consistent with the axiomatic framework of
+Leinster~\cite{leinster2021entropy}, where diversity is characterized
+as a function of pairwise distances satisfying natural compositional
+axioms.
 \end{definition}
 
 A fingerprint captures the \emph{shape} of the diversity trajectory:
@@ -831,38 +797,32 @@ incompatible genome types and fitness functions
   \to 0.46$.
 
 \item \textbf{Island: stable oscillation.} After an initial
-  adjustment, diversity settles into a band maintained by
+  adjustment, genotypic diversity settles into a band maintained by
   migration--isolation dynamics. The island functor
   (Section~\ref{sec:three-level}) maintains higher equilibrium
-  diversity than the flat strategy in both domains.
+  population diversity than the flat strategy in both domains.
 
-\item \textbf{Adaptive: spike--collapse.} On a third domain
-  (symbolic regression with expression trees), the adaptive strategy
-  drives diversity from 22.98 to 52.88 during exploration, then
-  collapses to 1.92 as plateau detection triggers premature convergence.
-  No recovery mechanism exists.  This fourth fingerprint was not tested
-  on checkers and mazes, but the pattern---conditional composition
-  producing irreversible diversity loss---is structurally distinct from
-  the other three.
+\item \textbf{Adaptive: spike--collapse (open problem).} On symbolic
+  regression (expression trees), diversity spikes from 22.98 to 52.88
+  during exploration, then collapses to 1.92 as plateau detection triggers
+  premature convergence. This pattern---conditional composition producing
+  irreversible diversity loss---remains an open problem; the migration
+  natural transformation may admit richer structure (e.g., braided
+  monoidal) governing these dynamics.
 \end{enumerate}
 
 \subsection{Cross-Domain Stability}
 \label{sec:fp-stability}
 
-The key observation is that each fingerprint \emph{shape} is stable
-across domains, despite the domains differing in every
-content-level detail. The flat strategy always declines monotonically.
-The hourglass always shows spike--crash--rebound. The island always
-maintains a stable band. The adaptive always collapses. These
-qualitative patterns hold across real-valued weight vectors
-($\mathbb{R}^{10}$) and binary maze genomes ($\{0,1\}^{60}$), across
-adversarial fitness (win rate) and intrinsic fitness (topological
-complexity), across Gaussian mutation and bit-flip mutation.
+Each fingerprint \emph{shape} is stable across domains despite
+content-level differences: flat always declines monotonically, hourglass
+always shows spike--crash--rebound, island always maintains a stable band.
+These patterns hold across $\mathbb{R}^{10}$ and $\{0,1\}^{60}$ genomes,
+adversarial and intrinsic fitness, Gaussian and bit-flip mutation.
 
-This stability has a categorical explanation. The diversity
-fingerprint is a function of the \emph{composition pattern}---the
-sequence and nesting of Kleisli morphisms---and the composition
-pattern is exactly what is invariant across domains
+The categorical explanation: fingerprints are functions of the
+\emph{composition pattern}---the sequence and nesting of Kleisli
+morphisms---which is exactly what is invariant across domains
 (Table~\ref{tab:invariance}). In categorical terms, the fingerprint
 is \emph{functorial}: it respects composition.
 
@@ -938,31 +898,22 @@ Gen & Strict (mean $\pm$ std) & Lax (mean $\pm$ std) & $d$ & $p$ \\
 \end{tabular}
 \end{table}
 
-Table~\ref{tab:stats} shows the results. By generation~25, the
-separation is already significant ($d = 1.05$, $p < 5 \times
-10^{-4}$). By generation~100, the effect size reaches $d = 4.34$ with
-$p < 3.7 \times 10^{-11}$---the diversity distributions under strict
-and lax composition do not overlap at all across 30~seeds. This is not
-merely a ``large'' effect in the conventional sense; it is a
-\emph{massive} effect, the kind rarely observed in empirical science.
-
-Crucially, both conditions converge to the same optimal fitness
-(20.0/20.0). The divergence is entirely in the diversity dynamics,
-not in solution quality. Strict and lax compositions find equally good
-answers via completely different population structures.
+Table~\ref{tab:stats} shows the results. By generation~100, $d = 4.34$
+with $p < 3.7 \times 10^{-11}$---the diversity distributions under strict
+and lax composition do not overlap across 30~seeds. Crucially, both
+conditions converge to the same optimal fitness (20.0/20.0). The
+divergence is entirely in diversity dynamics, not solution quality.
 
 \subsection{Why This Result Is New}
 \label{sec:fp-new}
 
-Previous work on population diversity~\cite{burke2004diversity,crepinsek2013exploration}
-measures diversity as a function of operator parameters (mutation rate,
-selection pressure). Our result is different: the \emph{composition
-pattern}---how operators are assembled into strategies---determines
-diversity dynamics independently of the operators and the problem
-domain. No prior work has demonstrated that GA composition patterns
-produce stable, measurable invariants across unrelated domains. The
-diversity fingerprint is a property of the Kleisli composite---a
-categorical invariant of the pipeline structure.
+Previous work~\cite{burke2004diversity,crepinsek2013exploration} measures
+diversity as a function of operator parameters, and
+Leinster~\cite{leinster2021entropy} axiomatizes diversity as a
+metric-space invariant. Our result is different in kind: the
+\emph{composition pattern}---how operators are assembled---determines
+diversity dynamics independently of both operators and domain. The
+diversity fingerprint is a categorical invariant of the pipeline structure.
 
 %% ============================================================
 %% Section 6: Conjecture (~0.5 pages)
@@ -984,8 +935,8 @@ interfaces---degrades them.
 
 Five independent observations support this conjecture:
 (1)~\emph{Our experiments} (Section~\ref{sec:fp-stats}): strict
-composition preserves $2.2\times$ higher diversity than lax, with
-$d = 4.34$~\cite{cohen1988statistical}.
+composition preserves $2.2\times$ higher genotypic diversity than lax,
+with $d = 4.34$~\cite{cohen1988statistical}.
 (2)~\emph{Scaling laws}~\cite{chen2025scaling}: strict orchestration
 of LLM agents shows $17.2\times$ error amplification versus
 $4.4\times$ under lax composition.
@@ -995,7 +946,7 @@ on alignment.
 (4)~\emph{Evolved RL}~\cite{alphaevolve2026marl}: modular
 (strict-like) agents generalize; monolithic (lax) agents overfit.
 (5)~\emph{Semantic collapse}~\cite{alpay2025semantic}: unconstrained
-message passing collapses diversity in emergent languages.
+message passing collapses semantic diversity in emergent languages.
 
 This pattern connects directly to Ghani et al.'s approximate game
 theory~\cite{ghani2025approximate}, where exact equilibria compose
@@ -1031,29 +982,20 @@ support but lacks a formal proof.
 \section{Conclusion}
 \label{sec:conclusion}
 
-Four research groups---working on neural networks, reinforcement
-learning, compositional MDPs, and now evolutionary computation---have
-independently discovered that the way optimization components are
-composed determines system-level behavior. We formalized the last
-of these four paradigms: genetic algorithm operators as Kleisli
-morphisms over a population monad, with diversity fingerprints as
-the key compositional invariant. Our experiments show that the same
-composition pattern produces the same fingerprint across unrelated
-domains ($d = 4.34$, $p < 3.7 \times 10^{-11}$), and we conjecture
-that the strict/lax distinction governing this phenomenon is
-general across the optimization landscape.
+We formalized genetic algorithm operators as Kleisli morphisms over a
+population monad, completing the categorical optimization landscape initiated
+by~\cite{gavranovic2024categorical,hedges2024reinforcement,bakirtzis2024compositional}.
+Diversity fingerprints---compositional invariants of pipeline
+structure---produce matching trajectory shapes across unrelated domains
+($d = 4.34$, $p < 3.7 \times 10^{-11}$). We conjecture that strict
+composition preserves such invariants while lax composition degrades them,
+a pattern supported by five independent studies.
 
-Future work includes extending fingerprint analysis to additional
-domains (sorting networks, program synthesis), pursuing a formal
-proof of Conjecture~\ref{conj:strict-lax} via spectral methods on
-the Kleisli composition operator, and exploring heterogeneous island
-models where different subpopulations run different strategies.
-The migration natural transformation may admit a braided monoidal
-structure, connecting island topology to diversity dynamics via the
-coherence conditions of the braiding---a direction we leave for
-future work.
-The optimization zoo is converging. Category theory provides the
-language in which that convergence becomes precise.
+Future work includes extending fingerprints to additional domains, a formal
+proof of Conjecture~\ref{conj:strict-lax} via spectral methods, and
+heterogeneous island models whose migration natural transformation may admit
+braided monoidal structure. The optimization zoo is converging; category
+theory provides the language in which that convergence becomes precise.
 
 %% ============================================================
 %% Acknowledgements
