@@ -95,10 +95,13 @@ structure preserves fingerprint shape. Experiments on two unrelated domains
 prediction, with \emph{strict} composition---isolated subpopulations with no
 inter-island migration---preserving $2.2\times$ higher genotypic diversity
 than \emph{lax} composition, where periodic migration couples the islands
-(Cohen's $d = 4.34$, $p < 3.7 \times 10^{-11}$). We conjecture that this
-\emph{strict/lax dichotomy} is general: strict composition preserves
-compositional invariants while lax composition degrades them---a pattern
-supported by five independent studies across optimization paradigms.
+(Cohen's $d = 4.34$, $p < 3.7 \times 10^{-11}$). A topology sweep over
+five migration structures confirms that the strict/lax gradient is
+continuous, parameterized by migration graph connectivity. We conjecture
+that this \emph{strict/lax dichotomy} is general: strict composition
+preserves compositional invariants while lax composition degrades
+them---a pattern supported by six independent studies across optimization
+paradigms.
 \end{abstract}
 
 %% ============================================================
@@ -933,6 +936,47 @@ and lax composition do not overlap across 30~seeds. Crucially, both
 conditions converge to the same optimal fitness (20.0/20.0). The
 divergence is entirely in diversity dynamics, not solution quality.
 
+\subsection{Topology Parameterizes the Laxator}
+\label{sec:topology}
+
+The laxator of~$\mathcal{I}$ is parameterized not only by migration
+rate but by the \emph{topology} of the migration graph. A topology
+sweep---five topologies on 5-island OneMax ($n = 100$ bits), 30~seeds,
+migration rate $0.1$ every 5~generations---confirms a monotonic
+gradient (Table~\ref{tab:topology}).
+
+\begin{table}[t]
+\centering\small
+\caption{Topology sweep (30 seeds, generation~100). Diversity and
+  divergence decline monotonically with coupling strength. Kruskal--Wallis:
+  $H = 92.8$ ($p < 10^{-6}$).}
+\label{tab:topology}
+\begin{tabular}{@{}l c c c c@{}}
+\toprule
+Topology & Edges & Diversity & Divergence & Fitness \\
+\midrule
+none (strict)      & 0  & $.122 \pm .013$ & $.135 \pm .015$ & $96.1 \pm 1.2$ \\
+ring               & 5  & $.079 \pm .010$ & $.082 \pm .011$ & $98.3 \pm 0.9$ \\
+star               & 4  & $.077 \pm .012$ & $.079 \pm .013$ & $98.4 \pm 1.0$ \\
+random             & 5  & $.073 \pm .012$ & $.074 \pm .013$ & $98.4 \pm 0.9$ \\
+fully connected    & 10 & $.062 \pm .009$ & $.060 \pm .010$ & $99.3 \pm 0.7$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+All pairwise differences between the endpoints (none vs.\ fully
+connected) and the intermediate topologies are significant at
+$p < 0.001$ (Mann--Whitney~$U$, Bonferroni-corrected); ring, star, and
+random form a middle cluster not internally resolvable at this sample
+size. The laxator norm is thus continuous, not binary. Notably, star
+(4~edges) yields less diversity than ring (5~edges): the hub's
+broadcast effect homogenizes more than ring's local exchanges,
+showing that the laxator depends on \emph{graph structure}---connectivity
+and diameter---not edge count alone. Random topology exhibits the
+highest coefficient of variation (CV = 0.160 vs.\ 0.103 for strict),
+the expected signature of a stochastic laxator whose natural
+transformation is itself drawn from a distribution.
+
 \subsection{Why This Result Is New}
 \label{sec:fp-new}
 
@@ -941,8 +985,7 @@ diversity as a function of operator parameters, and
 Leinster~\cite{leinster2021entropy} axiomatizes diversity as a
 metric-space invariant. Our result is different in kind: the
 \emph{composition pattern}---how operators are assembled---determines
-diversity dynamics independently of both operators and domain. The
-diversity fingerprint is a categorical invariant of the pipeline structure.
+diversity dynamics independently of both operators and domain.
 
 %% ============================================================
 %% Section 6: Conjecture (~0.5 pages)
@@ -962,7 +1005,7 @@ composition---permitting information flow beyond formal
 interfaces---degrades them.
 \end{conjecture}
 
-Five independent observations support this conjecture:
+Six independent observations support this conjecture:
 (1)~\emph{Our experiments} (Section~\ref{sec:fp-stats}): strict
 composition preserves $2.2\times$ higher genotypic diversity than lax,
 with $d = 4.34$~\cite{cohen1988statistical}.
@@ -976,55 +1019,39 @@ on alignment.
 (strict-like) agents generalize; monolithic (lax) agents overfit.
 (5)~\emph{Semantic collapse}~\cite{alpay2025semantic}: unconstrained
 message passing collapses semantic diversity in emergent languages.
+(6)~\emph{CodeEvolve}~\cite{assumpcao2025codeevolve}: three
+LLM-based operators spanning the strict/lax spectrum produce
+superadditive fitness gains when composed, consistent with our
+prediction that well-typed Kleisli composition yields emergent effects.
 
-This pattern connects directly to Ghani et al.'s approximate game
+This pattern connects to Ghani et al.'s approximate game
 theory~\cite{ghani2025approximate}, where exact equilibria compose
 cleanly but $\varepsilon$-approximate equilibria do not---the same
-lax degradation in a game-theoretic setting. A formal proof unifying
-both instances is future work.
+lax degradation in a game-theoretic setting.
 
 %% ============================================================
-%% Section 7: Discussion (~0.3 pages)
+%% Section 7: Discussion and Conclusion
 %% ============================================================
-\section{Discussion}
+\section{Discussion and Conclusion}
 \label{sec:discussion}
 
-The Kleisli formalization gives practitioners a Rosetta stone:
-populations become $T$-algebras, operators become Kleisli morphisms,
-pipelines become Kleisli composites, island models become functors,
-and migration becomes a natural transformation. Diversity
-fingerprints are the key practical tool: given a composition pattern,
-one can predict qualitative diversity dynamics \emph{before} running
-experiments on a new domain.
-
-\paragraph{Limitations.}
-We tested two domains; more are needed (sorting networks, symbolic
-regression). The Haskell implementation is faithful but not
-mechanically verified. Only Levels~1 and~3 of the composition
-hierarchy (Section~\ref{sec:three-level}) are empirically
-demonstrated. Conjecture~\ref{conj:strict-lax} has strong empirical
-support but lacks a formal proof.
-
-%% ============================================================
-%% Section 8: Conclusion (~0.25 pages)
-%% ============================================================
-\section{Conclusion}
-\label{sec:conclusion}
-
 We formalized genetic algorithm operators as Kleisli morphisms over a
-population monad, completing the categorical optimization landscape initiated
+population monad, completing the categorical optimization landscape
+initiated
 by~\cite{gavranovic2024categorical,hedges2024reinforcement,bakirtzis2024compositional}.
 Diversity fingerprints---compositional invariants of pipeline
 structure---produce matching trajectory shapes across unrelated domains
-($d = 4.34$, $p < 3.7 \times 10^{-11}$). We conjecture that strict
+($d = 4.34$, $p < 3.7 \times 10^{-11}$), and a topology sweep confirms
+that the strict/lax gradient is continuous. We conjecture that strict
 composition preserves such invariants while lax composition degrades them,
-a pattern supported by five independent studies.
+a pattern supported by six independent studies.
 
-Future work includes extending fingerprints to additional domains, a formal
-proof of Conjecture~\ref{conj:strict-lax} via spectral methods, and
-heterogeneous island models whose migration natural transformation may admit
-braided monoidal structure. The optimization zoo is converging; category
-theory provides the language in which that convergence becomes precise.
+\paragraph{Limitations and future work.}
+We tested two domains; more are needed. The Haskell implementation is
+faithful but not mechanically verified. Future directions include a
+formal proof of Conjecture~\ref{conj:strict-lax} via spectral methods
+and heterogeneous island models whose migration may admit braided
+monoidal structure.
 
 %% ============================================================
 %% Acknowledgements
