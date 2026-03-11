@@ -74,26 +74,30 @@ Lyra Vega
 Four independent research programs have recently converged on the same
 structural insight: in optimization, \emph{how} components compose determines
 system-level behavior more than the components themselves. Gavranovi\'{c} et
-al.\ formalized neural network architectures categorically; Hedges and
-Sakamoto cast reinforcement learning in categorical cybernetics; Bakirtzis et
-al.\ derived safety guarantees for compositional MDPs. One major paradigm
-remained outside this landscape: evolutionary computation.
+al.~\cite{gavranovic2024categorical} formalized neural network architectures
+categorically; Hedges and Sakamoto~\cite{hedges2024reinforcement} cast
+reinforcement learning in categorical cybernetics; Bakirtzis et
+al.~\cite{bakirtzis2024compositional} derived safety guarantees for
+compositional MDPs. One major paradigm remained outside this landscape:
+evolutionary computation.
 
 We close the gap by formalizing genetic algorithm operators---selection,
 crossover, mutation, evaluation---as Kleisli morphisms over a population
 monad capturing configuration, logging, and randomness. Pipelines, strategies,
-and island models arise as compositions at three hierarchical levels in the
-Kleisli category, providing the first categorical formalization of genetic
-algorithms. We introduce \emph{diversity fingerprints}: compositional
+and island-model migration arise as compositions at three hierarchical levels
+in the Kleisli category, providing the first categorical formalization of
+genetic algorithms. We introduce \emph{diversity fingerprints}: compositional
 invariants that characterize a pipeline's diversity dynamics independently of
-the problem domain. Our main result (Proposition~1) establishes that diversity fingerprints are
-functorial: a domain-change functor preserving composition structure preserves
-fingerprint shape. Experiments on two unrelated domains (checkers strategy
-evolution and maze topology optimization) confirm this prediction, with strict
-composition preserving $2.2\times$ higher genotypic diversity than lax
-(Cohen's $d = 4.34$, $p < 3.7 \times 10^{-11}$). We conjecture that strict
-composition preserves compositional invariants while lax composition degrades
-them---a pattern
+the problem domain. Our main result (Proposition~1) establishes that diversity
+fingerprints are functorial: a domain-change functor preserving composition
+structure preserves fingerprint shape. Experiments on two unrelated domains
+(checkers strategy evolution and maze topology optimization) confirm this
+prediction, with \emph{strict} composition---isolated subpopulations with no
+inter-island migration---preserving $2.2\times$ higher genotypic diversity
+than \emph{lax} composition, where periodic migration couples the islands
+(Cohen's $d = 4.34$, $p < 3.7 \times 10^{-11}$). We conjecture that this
+\emph{strict/lax dichotomy} is general: strict composition preserves
+compositional invariants while lax composition degrades them---a pattern
 supported by five independent studies across optimization paradigms.
 \end{abstract}
 
@@ -147,8 +151,33 @@ Despite five decades of study~\cite{holland1975adaptation,goldberg1989genetic,
 dejong2006evolutionary}, GA formalization has remained set-theoretic or
 statistical. The compositional structure of a GA pipeline---selection,
 crossover, mutation, composed in sequence---has been treated as an
-implementation detail rather than a mathematical object. This paper
-addresses that gap.
+implementation detail rather than a mathematical object. That this
+deficit is recognized is evidenced by recent multi-agent evolutionary
+work rejected at a top venue specifically for insufficient mathematical
+structure~-- the gap we address here.
+
+\paragraph{A Rosetta Stone.}
+Part of the barrier is linguistic: practitioners and category theorists
+describe the same phenomena differently (Table~\ref{tab:rosetta}).
+
+\begin{table}[t]
+\centering\small
+\caption{Practitioner--category-theory translation.}
+\label{tab:rosetta}
+\begin{tabular}{@{}ll@{}}
+\toprule
+Practitioner term & Category theory term \\
+\midrule
+Reliability failure & Non-associative composition \\
+Compound error      & Laxator norm \\
+Orchestration       & Composition \\
+Topology            & Categorical structure \\
+Delegation          & Morphism with authority \\
+Composability       & Compositionality \\
+Modular system      & Strict functor \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \medskip
 
