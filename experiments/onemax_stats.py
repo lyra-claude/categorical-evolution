@@ -22,7 +22,7 @@ import os
 import sys
 import time
 from dataclasses import dataclass, field
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Callable
 
 import numpy as np
 from scipy import stats
@@ -783,14 +783,27 @@ def analyze_experiment_d(results: List[dict]) -> dict:
 # ---------------------------------------------------------------------------
 
 def run_experiment_e_single(seed: int, config: GAConfig,
-                            topology: str) -> List[dict]:
+                            topology: str,
+                            evaluate_fn: Callable = None,
+                            init_fn: Callable = None) -> List[dict]:
     """Run a single seed of Experiment E for one topology.
 
     Tracks per-generation metrics: hamming diversity, population divergence
     (mean pairwise inter-island), and best fitness.
 
+    Args:
+        evaluate_fn: Function (pop: np.ndarray) -> np.ndarray of fitnesses.
+                     Defaults to OneMax evaluate().
+        init_fn:     Function (rng, pop_size, genome_length) -> np.ndarray.
+                     Defaults to random_population().
+
     Returns a list of dicts, one per generation.
     """
+    if evaluate_fn is None:
+        evaluate_fn = evaluate
+    if init_fn is None:
+        init_fn = random_population
+
     cfg = GAConfig(
         population_size=config.population_size,
         genome_length=config.genome_length,
@@ -805,7 +818,7 @@ def run_experiment_e_single(seed: int, config: GAConfig,
     )
 
     rng = np.random.default_rng(seed)
-    init_pop = random_population(rng, cfg.population_size, cfg.genome_length)
+    init_pop = init_fn(rng, cfg.population_size, cfg.genome_length)
     islands = split_population(init_pop, cfg.num_islands)
 
     rows = []
@@ -813,7 +826,7 @@ def run_experiment_e_single(seed: int, config: GAConfig,
         # Evolve each island for one generation
         new_islands = []
         for isl in islands:
-            fitnesses = evaluate(isl)
+            fitnesses = evaluate_fn(isl)
             selected = tournament_select(rng, isl, fitnesses, cfg.tournament_size)
             crossed = one_point_crossover(rng, selected, cfg.crossover_rate)
             mutated = point_mutate(rng, crossed, cfg.mutation_rate)
@@ -827,7 +840,7 @@ def run_experiment_e_single(seed: int, config: GAConfig,
 
         # Compute metrics
         all_pop = merge_populations(islands)
-        all_fit = evaluate(all_pop)
+        all_fit = evaluate_fn(all_pop)
         ham_div = hamming_diversity(all_pop)
         best_fit = float(np.max(all_fit))
 
@@ -847,7 +860,7 @@ def run_experiment_e_single(seed: int, config: GAConfig,
         island_diversities = [hamming_diversity(isl) for isl in islands]
 
         # Per-island best fitness
-        island_fitnesses = [float(np.max(evaluate(isl))) for isl in islands]
+        island_fitnesses = [float(np.max(evaluate_fn(isl))) for isl in islands]
 
         # Build row with base metrics
         row = {
@@ -877,7 +890,9 @@ def run_experiment_e_single(seed: int, config: GAConfig,
 
 
 def run_experiment_e(seeds: List[int], config: GAConfig,
-                     topologies: List[str] = None) -> List[dict]:
+                     topologies: List[str] = None,
+                     evaluate_fn: Callable = None,
+                     init_fn: Callable = None) -> List[dict]:
     """Run Experiment E: topology sweep."""
     if topologies is None:
         topologies = ["none", "ring", "star", "fully_connected", "random"]
@@ -888,7 +903,9 @@ def run_experiment_e(seeds: List[int], config: GAConfig,
 
     for topology in topologies:
         for seed in seeds:
-            rows = run_experiment_e_single(seed, config, topology)
+            rows = run_experiment_e_single(seed, config, topology,
+                                           evaluate_fn=evaluate_fn,
+                                           init_fn=init_fn)
             results.extend(rows)
             done += 1
             if done % 10 == 0 or done == total:
@@ -1115,6 +1132,8 @@ def main():
                         help='Output directory for CSV files (default: same as script)')
     parser.add_argument('--csv-name', type=str, default=None,
                         help='Override CSV filename for experiment output (e.g. experiment_e_per_island.csv)')
+    parser.add_argument('--domain', choices=['onemax', 'maze'], default='onemax',
+                        help='Problem domain (default: onemax). Only applies to Experiment E.')
     args = parser.parse_args()
 
     # Determine output directory
@@ -1168,25 +1187,48 @@ def main():
 
     # --- Experiment E ---
     if args.exp == 'E':
-        config_e = GAConfig(
-            population_size=50,
-            genome_length=100,
-            num_islands=5,
-            tournament_size=3,
-            crossover_rate=0.8,
-            mutation_rate=1.0 / 100.0,  # 1/L
-            max_generations=100,
-            migration_freq=5,
-            migration_rate=0.1,
-        )
-        print(f"\nExperiment E config: pop={config_e.population_size}, "
+        # Domain-specific configuration
+        eval_fn = None  # default: OneMax
+        init_fn = None  # default: random_population (uniform binary)
+
+        if args.domain == 'maze':
+            from maze_domain import (evaluate_maze, random_maze_population,
+                                     MAZE_GENOME_LENGTH)
+            eval_fn = evaluate_maze
+            init_fn = random_maze_population
+            config_e = GAConfig(
+                population_size=80,
+                genome_length=MAZE_GENOME_LENGTH,  # 60
+                num_islands=5,
+                tournament_size=3,
+                crossover_rate=0.8,
+                mutation_rate=1.0 / MAZE_GENOME_LENGTH,  # 1/L
+                max_generations=100,
+                migration_freq=5,
+                migration_rate=0.1,
+            )
+        else:
+            config_e = GAConfig(
+                population_size=50,
+                genome_length=100,
+                num_islands=5,
+                tournament_size=3,
+                crossover_rate=0.8,
+                mutation_rate=1.0 / 100.0,  # 1/L
+                max_generations=100,
+                migration_freq=5,
+                migration_rate=0.1,
+            )
+
+        print(f"\nExperiment E config ({args.domain}): pop={config_e.population_size}, "
               f"L={config_e.genome_length}, islands={config_e.num_islands}, "
               f"mig_freq={config_e.migration_freq}, mig_rate={config_e.migration_rate}")
-        print("\n--- Experiment E: Topology Sweep ---")
-        results_e = run_experiment_e(seeds, config_e)
+        print(f"\n--- Experiment E: Topology Sweep ({args.domain}) ---")
+        results_e = run_experiment_e(seeds, config_e,
+                                     evaluate_fn=eval_fn, init_fn=init_fn)
         analysis_e = analyze_experiment_e(results_e, config_e.max_generations)
         print_experiment_e_summary(analysis_e)
-        csv_name = args.csv_name or 'experiment_e_raw.csv'
+        csv_name = args.csv_name or f'experiment_e_{args.domain}.csv'
         save_csv(results_e, os.path.join(outdir, csv_name))
 
     elapsed = time.time() - t0
