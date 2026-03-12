@@ -841,15 +841,37 @@ def run_experiment_e_single(seed: int, config: GAConfig,
             pop_div = float(np.mean(divs))
         else:
             pop_div = 0.0
+            divs = []
 
-        rows.append({
+        # Per-island diversity
+        island_diversities = [hamming_diversity(isl) for isl in islands]
+
+        # Per-island best fitness
+        island_fitnesses = [float(np.max(evaluate(isl))) for isl in islands]
+
+        # Build row with base metrics
+        row = {
             'topology': topology,
             'seed': seed,
             'generation': gen,
             'hamming_diversity': ham_div,
             'population_divergence': pop_div,
             'best_fitness': best_fit,
-        })
+        }
+
+        # Per-island diversity and fitness columns
+        for k in range(n_isl):
+            row[f'island_{k}_diversity'] = island_diversities[k]
+            row[f'island_{k}_fitness'] = island_fitnesses[k]
+
+        # Full pairwise divergence matrix (upper triangle)
+        div_idx = 0
+        for i in range(n_isl):
+            for j in range(i + 1, n_isl):
+                row[f'div_{i}_{j}'] = divs[div_idx] if divs else 0.0
+                div_idx += 1
+
+        rows.append(row)
 
     return rows
 
@@ -1091,6 +1113,8 @@ def main():
                         help='Run single seed for validation (overrides --seeds)')
     parser.add_argument('--outdir', type=str, default=None,
                         help='Output directory for CSV files (default: same as script)')
+    parser.add_argument('--csv-name', type=str, default=None,
+                        help='Override CSV filename for experiment output (e.g. experiment_e_per_island.csv)')
     args = parser.parse_args()
 
     # Determine output directory
@@ -1162,7 +1186,8 @@ def main():
         results_e = run_experiment_e(seeds, config_e)
         analysis_e = analyze_experiment_e(results_e, config_e.max_generations)
         print_experiment_e_summary(analysis_e)
-        save_csv(results_e, os.path.join(outdir, 'experiment_e_raw.csv'))
+        csv_name = args.csv_name or 'experiment_e_raw.csv'
+        save_csv(results_e, os.path.join(outdir, csv_name))
 
     elapsed = time.time() - t0
     print(f"\nTotal time: {elapsed:.1f}s")
