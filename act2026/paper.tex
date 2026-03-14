@@ -29,6 +29,13 @@
   keepspaces=true
 }
 
+% Tighten float spacing
+\setlength{\floatsep}{6pt plus 2pt minus 2pt}
+\setlength{\textfloatsep}{8pt plus 2pt minus 2pt}
+\setlength{\intextsep}{6pt plus 2pt minus 2pt}
+\setlength{\abovecaptionskip}{4pt}
+\setlength{\belowcaptionskip}{2pt}
+
 % Tikz for diagrams
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta,positioning,cd}
@@ -117,18 +124,12 @@ dynamics more than the components themselves. This convergence is not
 coincidental. It reflects a deep mathematical regularity that category theory
 is uniquely positioned to articulate.
 
-Consider the octopus. Each of its eight arms contains an independent neural
-cluster capable of local sensory processing and motor control; a severed arm
-will still reach for food. Yet in the intact animal, the central brain
-coordinates the arms through modulatory signals, allowing information
-discovered by one arm to influence the behavior of another. This is precisely
-the distinction our framework formalizes. When the arms compute in
-isolation---strict composition---each preserves its internal dynamics. When a
-coordination channel couples them---lax composition---information migrates
-across component boundaries, altering convergence and diversity in ways that
-depend not on what the arms are doing, but on how tightly they are coupled.
-The same structural dichotomy, we will argue, governs every compositional
-optimization system, from genetic algorithms to gradient descent.
+The distinction our framework formalizes is between components that compute
+in isolation---\emph{strict} composition, where each preserves its internal
+dynamics---and components coupled by a coordination channel---\emph{lax}
+composition, where information migrates across boundaries, altering
+convergence and diversity in ways that depend on coupling structure rather
+than component content.
 
 \paragraph{Neural networks.}
 Gavranovi\'{c} et al.~\cite{gavranovic2024categorical} showed that deep learning
@@ -182,7 +183,7 @@ Modular system      & Strict functor \\
 \end{tabular}
 \end{table}
 
-\medskip
+A network analysis of 76 evolutionary computation papers reveals zero concept overlap between major subcommunities despite substantial methodological convergence, underscoring the need for a unifying formal vocabulary.
 
 In categorical terms, the distinction is between \emph{strict} composition
 (respecting component boundaries exactly, information flowing only through
@@ -224,71 +225,8 @@ This paper makes three contributions:
   disrupts them.
 \end{enumerate}
 
-\paragraph{Outline.}
-Section~\ref{sec:bridge} motivates categorical vocabulary as a bridge between
-disconnected EC communities. Sections~\ref{sec:framework}--\ref{sec:domains}
-present the Kleisli formalization and two domain instantiations.
-Section~\ref{sec:fingerprints} gives the diversity fingerprint results.
-Section~\ref{sec:conjecture} states our general conjecture.
-Section~\ref{sec:discussion} discusses limitations.
-
 %% ============================================================
-%% Section 2: The Knowledge Graph Hole (~1 page)
-%% ============================================================
-\section{Bridging Disconnected Communities}
-\label{sec:bridge}
-
-The convergence described in Section~\ref{sec:intro} is invisible from
-within any single community. To understand why, we constructed a knowledge
-graph of the evolutionary computation literature. Our corpus comprises 76
-papers spanning five research communities---neuroevolution, morphology-control
-co-evolution, open-ended evolution, quality-diversity, and game-theoretic
-coevolution---yielding 555 concept nodes and 446 edges, where an edge
-connects two concepts that co-occur in the same paper.
-
-\paragraph{The disconnection.}
-The graph reveals a striking structural hole. Game-theoretic coevolution
-shares \emph{zero} concept overlap with three of the four other clusters;
-its only bridge is the term ``fitness,'' shared with morphology-control---too
-generic to provide structural connection. The isolation is linguistic, not
-algorithmic. Migration in island-model
-GAs~\cite{whitley1999island,skolicki2005influence}, ``strategy transfer'' in
-coevolution, and ``niche injection'' in quality-diversity are the same
-functorial map transporting individuals between subpopulations, but because
-each community names it differently, the shared structure remains invisible.
-
-\paragraph{Categorical vocabulary as bridge.}
-This paper introduces categorical vocabulary that makes the shared
-structure explicit. In our framework (Section~\ref{sec:framework}), each
-GA operator is a Kleisli morphism $a \to T\,b$ over a population monad $T$.
-This single formalization captures what the communities already do under
-different names:
-\begin{itemize}
-\item \textbf{Mutation} becomes an endomorphism $a \to T\,a$: a Kleisli
-  arrow whose domain and codomain coincide.
-\item \textbf{Selection} becomes a projection: a morphism that reduces the
-  population by discarding individuals according to a fitness criterion.
-\item \textbf{Crossover} becomes a product construction: a morphism that
-  combines information from two parent individuals into offspring.
-\item \textbf{Migration} becomes a functorial transformation: a natural
-  transformation between population functors on different subpopulations.
-\end{itemize}
-These are not new algorithms but new \emph{names}---drawn from a vocabulary
-designed for describing how components compose. The bridge is linguistic:
-we provide a shared formal language in which the structural identity across
-communities becomes a provable fact rather than an informal analogy.
-
-\paragraph{Plugging the hole.}
-The most effective bridge papers in our corpus are
-NEAT~\cite{stanley2002neat} and novelty
-search~\cite{lehman2011novelty}. Our contribution bridges the deepest
-hole: \textbf{game-theoretic coevolution to structural optimization}.
-Kleisli morphisms, functors, and natural transformations provide the shared
-terminology the knowledge graph lacks, creating new edges between concepts
-previously isolated despite denoting the same underlying operations.
-
-%% ============================================================
-%% Section 3: Framework (~2 pages)
+%% Section 2: Framework
 %% ============================================================
 \section{Genetic Algorithm Operators as Kleisli Morphisms}
 \label{sec:framework}
@@ -384,17 +322,8 @@ The standard GA operators are Kleisli morphisms:
   island---underlies the strict/lax dichotomy (Section~\ref{sec:conjecture}).
 \end{itemize}
 
-\begin{definition}[Kleisli composition]
-\label{def:kleisli-comp}
-Given $f : A \to T\,B$ and $g : B \to T\,C$,
-their Kleisli composite $g \circ_K f : A \to T\,C$ is
-$g \circ_K f = \mu_C \circ T(g) \circ f$,
-where $\mu : T^2 \Rightarrow T$ is the monad multiplication.
-The monad laws guarantee associativity and identity, so
-$\mathbf{Kl}(T)$ is a category.
-Figure~\ref{fig:kleisli-pipeline} illustrates this mechanism and the
-resulting pipeline structure.
-\end{definition}
+Operators compose via standard Kleisli composition~\cite{moggi1991notions} in the usual way.
+Figure~\ref{fig:kleisli-pipeline} illustrates the resulting pipeline structure.
 
 \begin{figure}[t]
 \centering
@@ -411,23 +340,10 @@ resulting pipeline structure.
   \arrow[r, "\mathsf{mut}_\delta"]
 & P
 \end{tikzcd}
-
-\medskip
-
-\begin{tikzcd}[column sep=3.5em, row sep=3em]
-A \arrow[r, "f"] \arrow[rr, bend right=20, "g \circ_K f"']
-& TB \arrow[r, "T\!g"] & T^2 C \arrow[d, "\mu_C"] \\
-& & TC
-\end{tikzcd}
-\caption{Top: the single-generation pipeline in the Kleisli category
+\caption{The single-generation pipeline in the Kleisli category
   $\mathbf{Kl}(T)$, where $P = \mathsf{Pop}(\Sigma)$.  Each arrow is a
   Kleisli morphism $P \to T\!P$ and the curved arrow is their composite
-  $\pi$---itself a Kleisli morphism.  Bottom: the Kleisli composition
-  mechanism (Definition~\ref{def:kleisli-comp}).  Given $f : A \to T\!B$
-  and $g : B \to T\!C$, the composite $g \circ_K f = \mu_C \circ T\!g
-  \circ f$ first applies $f$, lifts $g$ into $T$, then flattens via the
-  monad multiplication~$\mu$.  This mechanism is applied three times to
-  build $\pi$ from the four operators above.}
+  $\pi$---itself a Kleisli morphism.}
 \label{fig:kleisli-pipeline}
 \end{figure}
 
@@ -478,7 +394,6 @@ composition---i.e., whether $\mathcal{I}(\sigma_1 \circ_K \sigma_2) =
 \mathcal{I}(\sigma_1) \circ_K \mathcal{I}(\sigma_2)$---depends on
 whether any migration occurs (Section~\ref{sec:conjecture}).
 
-\medskip
 At each level, the composite has the same type as its parts: a
 pipeline of operators is itself an operator; a sequence of strategies
 is itself a strategy; an island model containing independent GAs is
@@ -521,7 +436,7 @@ operates unchanged on checkers (\texttt{[Double]}), mazes
 (\texttt{[Bool]}), and expression trees (\texttt{ExprTree}).
 
 %% ============================================================
-%% Section 4: Two Domains (~2 pages)
+%% Section 3: Two Domains
 %% ============================================================
 \section{Two Domains, One Category}
 \label{sec:domains}
@@ -578,13 +493,7 @@ a genome but of a genome \emph{relative to its co-evolving opponents}.
 Strategy A may beat B, B may beat C, yet C may beat A---there is no global
 fitness gradient. Migration between islands therefore introduces not just
 genetic material but new \emph{competitive context}, making the topology
-sweep a particularly demanding test of our invariance claim. In the
-categorical framework, a single generation is the Kleisli composite:
-\[
-  \pi_{\mathrm{ck}} \;=\; \mathsf{mut}_\delta \circ_K \mathsf{cross}
-    \circ_K \mathsf{sel}_k \circ_K \mathsf{eval}_\phi
-  \;:\; \mathsf{Pop}(\{0,1\}^{64}) \to T(\mathsf{Pop}(\{0,1\}^{64})).
-\]
+sweep a particularly demanding test of our invariance claim. The checkers pipeline $\pi_{\mathrm{ck}}$ has the same Kleisli composite structure as the general pipeline (Figure~\ref{fig:kleisli-pipeline}), instantiated over $\mathsf{Pop}(\{0,1\}^{64})$.
 
 \subsection{Mazes: Evolving Topological Structures}
 \label{sec:mazes}
@@ -598,15 +507,7 @@ Mutation is bit-flip: $\delta(g)_i = 1 - g_i$ with probability $p$
 per bit, read from~$\Gamma$. Crossover is one-point on the
 binary vector.
 
-The generation pipeline is:
-\[
-  \pi_{\mathrm{mz}} \;=\; \mathsf{mut}_\delta \circ_K \mathsf{cross}
-    \circ_K \mathsf{sel}_k \circ_K \mathsf{eval}_\psi
-  \;:\; \mathsf{Pop}(\{0,1\}^{60}) \to T(\mathsf{Pop}(\{0,1\}^{60})).
-\]
-
-Fitness $\psi$ measures topological complexity; $\phi$ measures playing
-skill. Genome lengths ($\{0,1\}^{64}$ vs.\ $\{0,1\}^{60}$) and fitness
+The maze pipeline $\pi_{\mathrm{mz}}$ has the same Kleisli composite structure, instantiated over $\mathsf{Pop}(\{0,1\}^{60})$ with fitness $\psi$ measuring topological complexity (vs.\ $\phi$ measuring playing skill in checkers). Genome lengths ($\{0,1\}^{64}$ vs.\ $\{0,1\}^{60}$) and fitness
 functions (tournament win rate vs.\ BFS composite) differ entirely, yet the
 \emph{pipeline shape} is identical: the same four Kleisli morphisms in the
 same order.
@@ -645,10 +546,8 @@ to a distinct way of composing pipelines in~$\mathbf{Kl}(T)$:
 
 \begin{table}[t]
 \centering
-\caption{Invariance across domains. The categorical structure (pipeline
-shape, monad stack, composition operator, strategy combinators) is
-identical; only the domain-specific content (genome type, fitness
-function, mutation operator) changes.}
+\caption{Invariance across domains: categorical structure is identical;
+only domain-specific content changes.}
 \label{tab:invariance}
 \begin{tabular}{@{}lllc@{}}
 \toprule
@@ -675,7 +574,7 @@ is preserved. Does this structural invariance produce measurable
 consequences in evolutionary dynamics? The next section shows that it does.
 
 %% ============================================================
-%% Section 5: Key Result (~2 pages)
+%% Section 4: Key Result
 %% ============================================================
 \section{Diversity Fingerprints: Composition Determines Dynamics}
 \label{sec:fingerprints}
@@ -721,12 +620,9 @@ fingerprints emerge:
 
 \begin{table}[t]
 \centering
-\caption{Genotypic diversity (normalized pairwise distance) over time
-for three of four strategies tested on both domains. Diversity is
-sampled every 5~generations. Three distinct trajectory shapes emerge,
-each consistent across domains. The fourth strategy (adaptive) was
-tested only on symbolic regression; its spike--collapse fingerprint is
-discussed in the text but omitted from this table.}
+\caption{Genotypic diversity (normalized pairwise distance) sampled every
+5~generations for three strategies on both domains. Three distinct trajectory
+shapes emerge, each consistent across domains.}
 \label{tab:fingerprints}
 \begin{tabular}{@{}r rr rr rr@{}}
 \toprule
@@ -750,7 +646,7 @@ Gen & Ck & Mz & Ck & Mz & Ck & Mz \\
 \begin{axis}[
   name=left,
   width=0.48\textwidth,
-  height=0.32\textwidth,
+  height=0.28\textwidth,
   xlabel={Generation},
   ylabel={Diversity},
   title={\small Checkers ($\mathbb{R}^{10}$)},
@@ -783,7 +679,7 @@ Gen & Ck & Mz & Ck & Mz & Ck & Mz \\
   anchor=west,
   xshift=12pt,
   width=0.48\textwidth,
-  height=0.32\textwidth,
+  height=0.28\textwidth,
   xlabel={Generation},
   ylabel={},
   title={\small Mazes ($\{0,1\}^{60}$)},
@@ -812,15 +708,10 @@ Gen & Ck & Mz & Ck & Mz & Ck & Mz \\
 \legend{Flat, Hourglass, Island}
 \end{axis}
 \end{tikzpicture}
-\caption{Cross-domain diversity fingerprints. Each panel shows the
-same three composition strategies applied to an unrelated domain:
-checkers (left, real-valued genomes) and mazes (right, binary genomes).
-The fingerprint \emph{shapes}---monotonic decline (Flat), oscillation
-with recovery (Hourglass), migration-maintained band (Island)---are
-determined by the composition pattern, not the domain. Identical
-Kleisli composites produce matching trajectory shapes across
-incompatible genome types and fitness functions
-(Table~\ref{tab:fingerprints}).}
+\caption{Cross-domain diversity fingerprints. The same three composition
+strategies on checkers (left) and mazes (right) produce matching trajectory
+shapes---monotonic decline, oscillation, migration-maintained band---despite
+incompatible genome types and fitness functions.}
 \label{fig:fingerprints}
 \end{figure}
 
@@ -843,11 +734,8 @@ incompatible genome types and fitness functions
   (Section~\ref{sec:three-level}) maintains higher equilibrium
   population diversity than the flat strategy in both domains.
 
-\item \textbf{Adaptive: spike--collapse (open problem).} On symbolic
-  regression (expression trees), diversity spikes from 22.98 to 52.88
-  during exploration, then collapses to 1.92 as plateau detection triggers
-  premature convergence. This pattern---conditional composition producing
-  irreversible diversity loss---remains an open problem; the migration
+\item \textbf{Adaptive: spike--collapse (open problem).} Conditional
+  composition can produce irreversible diversity loss; the migration
   natural transformation may admit richer structure (e.g., braided
   monoidal) governing these dynamics.
 \end{enumerate}
@@ -910,21 +798,13 @@ To move from qualitative observation to statistical rigor, we ran
 four independent subpopulations) against lax composition (migration
 every 5~generations, same four subpopulations) on 20-bit
 OneMax~\cite{mitchell1992royal} for 100~generations.
-
-\begin{definition}[Cohen's $d$]
-Cohen's $d$ measures effect size as the difference in means divided by
-the pooled standard deviation:
-$d = (\bar{x}_1 - \bar{x}_2) / s_p$.
-By convention, $d > 0.8$ is a ``large'' effect.
-\end{definition}
+Effect size is reported as Cohen's~$d$ (the standardized mean difference).
 
 \begin{table}[t]
 \centering
-\caption{Strict vs.\ lax composition over 30~seeds. Diversity is
-  normalized pairwise Hamming distance.  By generation~50, the
-  distributions barely overlap ($d = 2.55$). By generation~100,
-  they are completely separated ($d = 4.34$, $p < 3.7 \times
-  10^{-11}$).  Both conditions converge to the same optimal fitness.}
+\caption{Strict vs.\ lax composition (30~seeds). By generation~100,
+  distributions are completely separated ($d = 4.34$, $p < 3.7 \times
+  10^{-11}$) yet both converge to optimal fitness.}
 \label{tab:stats}
 \begin{tabular}{@{}r cc cc@{}}
 \toprule
@@ -981,28 +861,25 @@ yields less diversity than ring (5~edges)---the hub's broadcast
 homogenizes more than ring's local exchanges---showing that the laxator
 depends on \emph{graph structure}, not edge count alone.
 
+\paragraph{Why ring is unique: cyclic sparsity.}
+Define $R(d)$ as the mean pairwise coherence ($R = 1 - \text{divergence}$) between islands at graph distance~$d$. Traveling-wave dynamics require a topology that is simultaneously sparse (spatial locality) and cyclic (no boundary reflections). Ring uniquely satisfies both: star is sparse but acyclic (hub collapses distance to binary), fully connected is cyclic but structureless ($R(d)$ degenerates to a single point). Ring alone yields monotone distance-decay in $R(d)$---nearer islands synchronize more strongly (Figure~\ref{fig:rd-two-panel}).
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.78\textwidth]{../experiments/plots/rd_two_panel_maze.pdf}
+\caption{Left: global coherence $\bar{R}$ by topology (strict/lax gradient).
+  Right: distance-resolved $R(d)$ showing ring's monotone decay (traveling-wave
+  signature), star's step function, and fully connected's collapse to a single point.}
+\label{fig:rd-two-panel}
+\end{figure}
+
 The coexistence of converged and diverged subpopulations at intermediate
-topologies echoes a phenomenon from coupled oscillator physics: \emph{chimera
-states}, where synchronized and desynchronized groups persist side by side in a
-single network~\cite{zhou2026defect}. In this analogy, the none-to-ring
-transition marks the onset of chimera-forming potential---the first coupling
-that breaks island independence---while denser topologies select which
-coexistence pattern the system occupies. This connection, developed formally
-elsewhere, suggests that the categorical framework may interface productively
-with the dynamical systems theory of coupled oscillators.
-
-\subsection{Why This Result Is New}
-\label{sec:fp-new}
-
-Previous work~\cite{burke2004diversity,crepinsek2013exploration} measures
-diversity as a function of operator parameters, and
-Leinster~\cite{leinster2021entropy} axiomatizes diversity as a
-metric-space invariant. Our result is different in kind: the
-\emph{composition pattern}---how operators are assembled---determines
-diversity dynamics independently of both operators and domain.
+topologies echoes \emph{chimera states} from coupled oscillator
+physics~\cite{zhou2026defect}, where the none-to-ring transition marks
+the onset of chimera-forming potential.
 
 %% ============================================================
-%% Section 6: Conjecture (~0.5 pages)
+%% Section 5: Conjecture
 %% ============================================================
 \section{Towards a General Conjecture}
 \label{sec:conjecture}
@@ -1020,31 +897,16 @@ interfaces---degrades them.
 \end{conjecture}
 
 Six independent observations support this conjecture:
-(1)~\emph{Our experiments} (Section~\ref{sec:fp-stats}): strict
-composition preserves $2.2\times$ higher genotypic diversity than lax,
-with $d = 4.34$~\cite{cohen1988statistical}.
-(2)~\emph{Scaling laws}~\cite{chen2025scaling}: strict orchestration
-of LLM agents shows $17.2\times$ error amplification versus
-$4.4\times$ under lax composition.
-(3)~\emph{Constitutional evolution}~\cite{kumar2026constitutional}:
-near-strict agents ($0.9\%$ communication) outperform lax ($62.2\%$)
-on alignment.
-(4)~\emph{Evolved RL}~\cite{alphaevolve2026marl}: modular
-(strict-like) agents generalize; monolithic (lax) agents overfit.
-(5)~\emph{Semantic collapse}~\cite{alpay2025semantic}: unconstrained
-message passing collapses semantic diversity in emergent languages.
-(6)~\emph{CodeEvolve}~\cite{assumpcao2025codeevolve}: three
-LLM-based operators spanning the strict/lax spectrum produce
-superadditive fitness gains when composed, consistent with our
-prediction that well-typed Kleisli composition yields emergent effects.
-
-This pattern connects to Ghani et al.'s approximate game
-theory~\cite{ghani2025approximate}, where exact equilibria compose
-cleanly but $\varepsilon$-approximate equilibria do not---the same
-lax degradation in a game-theoretic setting.
+(1)~our experiments ($d = 4.34$, Section~\ref{sec:fp-stats});
+(2)~LLM agent scaling~\cite{chen2025scaling} ($17.2\times$ vs.\ $4.4\times$ error amplification);
+(3)~constitutional evolution~\cite{kumar2026constitutional} ($0.9\%$ communication beats $62.2\%$);
+(4)~evolved RL~\cite{alphaevolve2026marl} (modular generalizes, monolithic overfits);
+(5)~semantic collapse~\cite{alpay2025semantic} (unconstrained passing destroys diversity);
+(6)~CodeEvolve~\cite{assumpcao2025codeevolve} (superadditive gains from well-typed composition).
+This connects to Ghani et al.'s approximate game theory~\cite{ghani2025approximate}: exact equilibria compose cleanly, $\varepsilon$-approximate ones do not.
 
 %% ============================================================
-%% Section 7: Discussion and Conclusion
+%% Section 6: Discussion and Conclusion
 %% ============================================================
 \section{Discussion and Conclusion}
 \label{sec:discussion}
@@ -1063,9 +925,9 @@ a pattern supported by six independent studies.
 \paragraph{Limitations and future work.}
 We tested two domains; more are needed. The Haskell implementation is
 faithful but not mechanically verified. Future directions include a
-formal proof of Conjecture~\ref{conj:strict-lax} via spectral methods
-and heterogeneous island models whose migration may admit braided
-monoidal structure. A natural extension is to treat search depth as an additional axis of the domain taxonomy: our depth-zero checkers evaluation provides a lower bound on the topology effect, and a testable prediction is whether the ordering sharpens monotonically with depth or emerges only beyond a threshold where intransitivity becomes visible.
+formal proof of Conjecture~\ref{conj:strict-lax} via spectral methods,
+heterogeneous island models with braided monoidal migration, and
+treating search depth as an additional taxonomy axis.
 
 %% ============================================================
 %% Acknowledgements
@@ -1073,7 +935,9 @@ monoidal structure. A natural extension is to treat search depth as an additiona
 %% ============================================================
 %% Bibliography
 %% ============================================================
+{\small
 \bibliographystyle{eptcs}
 \bibliography{references}
+}
 
 \end{document}
