@@ -730,8 +730,19 @@ def main():
     # Print results
     print_results(results, label=label)
 
+    # Derive output suffix from input filename
+    input_basename = os.path.splitext(os.path.basename(args.csv))[0]
+    if 'maze' in input_basename:
+        out_suffix = '_maze'
+    elif 'checkers' in input_basename:
+        out_suffix = '_checkers'
+    elif 'per_island' in input_basename:
+        out_suffix = ''  # original OneMax
+    else:
+        out_suffix = f'_{input_basename}'
+
     # Save CSV
-    csv_out = os.path.join(script_dir, 'pairwise_coherence_results.csv')
+    csv_out = os.path.join(script_dir, f'pairwise_coherence{out_suffix}_results.csv')
     save_csv(results, csv_out)
 
     # Statistical tests
@@ -747,7 +758,7 @@ def main():
     if not args.no_plot:
         print(f"\nComputing time series...")
         ts = compute_coherence_over_time(data)
-        plot_path = os.path.join(plot_dir, 'pairwise_coherence.png')
+        plot_path = os.path.join(plot_dir, f'pairwise_coherence{out_suffix}.png')
         plot_results(results, ts, plot_path)
 
     print(f"\nDone.")
