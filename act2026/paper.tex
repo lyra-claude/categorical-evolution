@@ -526,11 +526,20 @@ operates unchanged on checkers (\texttt{[Double]}), mazes
 \section{Two Domains, One Category}
 \label{sec:domains}
 
-We instantiate the framework on two maximally dissimilar domains:
-checkers (adversarial strategy, real-valued genomes) and mazes
-(structural design, binary genomes). The point is not novelty of either
-domain but that the categorical pipeline is \emph{identical} across both.
-We first define the shared selection mechanism.
+To test whether compositional structure determines dynamics independently
+of fitness landscape, we select domains that are maximally dissimilar along
+three axes: \emph{landscape structure} (monotone vs.\ intransitive),
+\emph{representation} (fixed-length vs.\ variable-length), and
+\emph{constraint type} (unconstrained, hard, soft). Mazes occupy the
+monotone--fixed-length--soft-constraint cell: fitness improves smoothly with
+topological complexity, genomes are fixed-length bitstrings, and
+connectivity constraints are penalized but not enforced. Checkers occupies
+the intransitive--fixed-length--unconstrained cell: fitness is
+context-dependent (strategy A beats B, B beats C, C can beat A), genomes
+are fixed-length bitstrings, and the search space is unconstrained. If the
+same topology ordering emerges across these two cells, the invariance claim
+extends beyond monotone landscapes to the hardest case: fitness that depends
+on co-evolutionary context rather than any absolute measure.
 
 \begin{definition}[Tournament selection]
 \label{def:tournament}
@@ -555,27 +564,26 @@ tournament selection defined, we describe the two domains.
 \subsection{Checkers: Evolving Evaluation Functions}
 \label{sec:checkers}
 
-Following Samuel's pioneering work~\cite{samuel1959checkers}, we
-evolve a population of 30 weight vectors, each encoding 10 features
-of an 8$\times$8 checkers board position: material advantage, king
-count, back-row defense, center control, advancement toward promotion,
-mobility, vulnerability (pieces under threat), protection (pieces
-defended by allies), king centrality, and edge positioning. Each
-weight $w_i \in [-5, 5]$ determines the relative importance of
-feature~$i$ in a linear evaluation function $\phi(\mathbf{w}, b) =
-\sum_i w_i \cdot x_i(b)$ for board position~$b$.
+Each individual encodes a checkers-playing strategy as a 64-bit binary
+genome: eight 8-bit fields decode to weights for board-evaluation features
+(material, kings, center control, advancement, back-row defense, mobility,
+edge safety, threat). A greedy player evaluates each legal move by the
+weighted sum $\phi(\mathbf{w}, b) = \sum_i w_i \cdot x_i(b)$ and selects
+the highest-scoring board position. Fitness is determined by round-robin
+tournament within each island: every pair plays one game and fitness is the
+normalized win rate, $f_j = \text{points}_j / (n{-}1)$.
 
-Fitness is win rate against two fixed opponent strategies (two games
-each, alternating colors). Mutation is Gaussian perturbation
-$\delta(\mathbf{w}) = \mathbf{w} + \mathcal{N}(0, \sigma^2 I)$;
-crossover is one-point on the weight vector.
-
-In the categorical framework, a single generation is the Kleisli
-composite (Definition~\ref{def:kleisli-comp}):
+This creates an \emph{intransitive} landscape: fitness is not a property of
+a genome but of a genome \emph{relative to its co-evolving opponents}.
+Strategy A may beat B, B may beat C, yet C may beat A---there is no global
+fitness gradient. Migration between islands therefore introduces not just
+genetic material but new \emph{competitive context}, making the topology
+sweep a particularly demanding test of our invariance claim. In the
+categorical framework, a single generation is the Kleisli composite:
 \[
   \pi_{\mathrm{ck}} \;=\; \mathsf{mut}_\delta \circ_K \mathsf{cross}
     \circ_K \mathsf{sel}_k \circ_K \mathsf{eval}_\phi
-  \;:\; \mathsf{Pop}(\mathbb{R}^{10}) \to T(\mathsf{Pop}(\mathbb{R}^{10})).
+  \;:\; \mathsf{Pop}(\{0,1\}^{64}) \to T(\mathsf{Pop}(\{0,1\}^{64})).
 \]
 
 \subsection{Mazes: Evolving Topological Structures}
@@ -598,9 +606,10 @@ The generation pipeline is:
 \]
 
 Fitness $\psi$ measures topological complexity; $\phi$ measures playing
-skill. Genome types ($\mathbb{R}^{10}$ vs.\ $\{0,1\}^{60}$) and mutation
-operators (Gaussian vs.\ bit-flip) are incompatible, yet the \emph{pipeline
-shape} is identical: the same four Kleisli morphisms in the same order.
+skill. Genome lengths ($\{0,1\}^{64}$ vs.\ $\{0,1\}^{60}$) and fitness
+functions (tournament win rate vs.\ BFS composite) differ entirely, yet the
+\emph{pipeline shape} is identical: the same four Kleisli morphisms in the
+same order.
 
 \subsection{Four Strategies on Each Domain}
 \label{sec:four-strategies}
@@ -645,9 +654,9 @@ function, mutation operator) changes.}
 \toprule
 Aspect & Checkers & Mazes & Invariant? \\
 \midrule
-Genome type & $\mathbb{R}^{10}$ & $\{0,1\}^{60}$ & No \\
+Genome type & $\{0,1\}^{64}$ & $\{0,1\}^{60}$ & No \\
 Fitness function & Win rate & BFS composite & No \\
-Mutation & Gaussian & Bit-flip & No \\
+Mutation & Bit-flip & Bit-flip & No \\
 \midrule
 Pipeline shape & $\mathsf{mut} \circ_K \mathsf{cross} \circ_K
   \mathsf{sel} \circ_K \mathsf{eval}$ & Same & \textbf{Yes} \\
@@ -1056,7 +1065,7 @@ We tested two domains; more are needed. The Haskell implementation is
 faithful but not mechanically verified. Future directions include a
 formal proof of Conjecture~\ref{conj:strict-lax} via spectral methods
 and heterogeneous island models whose migration may admit braided
-monoidal structure.
+monoidal structure. A natural extension is to treat search depth as an additional axis of the domain taxonomy: our depth-zero checkers evaluation provides a lower bound on the topology effect, and a testable prediction is whether the ordering sharpens monotonically with depth or emerges only beyond a threshold where intransitivity becomes visible.
 
 %% ============================================================
 %% Acknowledgements
