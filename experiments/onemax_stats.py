@@ -892,24 +892,57 @@ def run_experiment_e_single(seed: int, config: GAConfig,
 def run_experiment_e(seeds: List[int], config: GAConfig,
                      topologies: List[str] = None,
                      evaluate_fn: Callable = None,
-                     init_fn: Callable = None) -> List[dict]:
-    """Run Experiment E: topology sweep."""
+                     init_fn: Callable = None,
+                     incremental_csv: str = None,
+                     resume: bool = False) -> List[dict]:
+    """Run Experiment E: topology sweep.
+
+    Args:
+        incremental_csv: If provided, append results to this CSV after each run.
+        resume: If True and incremental_csv exists, skip already-completed
+                (topology, seed) pairs.
+    """
     if topologies is None:
         topologies = ["none", "ring", "star", "fully_connected", "random"]
 
+    # Determine which (topology, seed) pairs to skip
+    completed = set()
+    file_exists = False
+    if incremental_csv:
+        file_exists = os.path.exists(incremental_csv)
+        if resume and file_exists:
+            completed = load_completed_pairs(incremental_csv)
+            print(f"  Resume: found {len(completed)} completed (topology, seed) pairs",
+                  flush=True)
+
     results = []
     total = len(topologies) * len(seeds)
+    skipped = 0
     done = 0
 
     for topology in topologies:
         for seed in seeds:
+            done += 1
+            if (topology, seed) in completed:
+                skipped += 1
+                continue
+
             rows = run_experiment_e_single(seed, config, topology,
                                            evaluate_fn=evaluate_fn,
                                            init_fn=init_fn)
             results.extend(rows)
-            done += 1
-            if done % 10 == 0 or done == total:
-                print(f"  Experiment E: {done}/{total} runs complete", flush=True)
+
+            # Incremental save: append this run's rows immediately
+            if incremental_csv and rows:
+                need_header = not file_exists
+                append_csv(rows, incremental_csv, write_header=need_header)
+                file_exists = True  # header written, don't write again
+
+            if (done - skipped) % 10 == 0 or done == total:
+                print(f"  Experiment E: {done - skipped}/{total - skipped} runs complete"
+                      f" (skipped {skipped})" if skipped else
+                      f"  Experiment E: {done}/{total} runs complete",
+                      flush=True)
 
     return results
 
@@ -1005,6 +1038,35 @@ def save_csv(results: List[dict], filename: str):
         writer.writeheader()
         writer.writerows(results)
     print(f"  Saved: {filename}")
+
+
+def append_csv(rows: List[dict], filepath: str, write_header: bool = False):
+    """Append rows to a CSV file. Writes header if write_header=True.
+
+    Flushes immediately so data survives crashes.
+    """
+    if not rows:
+        return
+    keys = rows[0].keys()
+    with open(filepath, 'a', newline='') as f:
+        writer = csv.DictWriter(f, fieldnames=keys)
+        if write_header:
+            writer.writeheader()
+        writer.writerows(rows)
+        f.flush()
+        os.fsync(f.fileno())
+
+
+def load_completed_pairs(filepath: str) -> set:
+    """Read an existing CSV and return the set of (topology, seed) pairs present."""
+    completed = set()
+    if not os.path.exists(filepath):
+        return completed
+    with open(filepath, 'r', newline='') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            completed.add((row['topology'], int(row['seed'])))
+    return completed
 
 
 def print_experiment_c_summary(analysis: dict):
@@ -1132,8 +1194,11 @@ def main():
                         help='Output directory for CSV files (default: same as script)')
     parser.add_argument('--csv-name', type=str, default=None,
                         help='Override CSV filename for experiment output (e.g. experiment_e_per_island.csv)')
-    parser.add_argument('--domain', choices=['onemax', 'maze'], default='onemax',
+    parser.add_argument('--domain', choices=['onemax', 'maze', 'graph_coloring', 'sorting_network', 'knapsack', 'checkers'],
+                        default='onemax',
                         help='Problem domain (default: onemax). Only applies to Experiment E.')
+    parser.add_argument('--resume', action='store_true', default=False,
+                        help='Resume experiment E from existing CSV (skip completed runs)')
     args = parser.parse_args()
 
     # Determine output directory
@@ -1207,6 +1272,74 @@ def main():
                 migration_freq=5,
                 migration_rate=0.1,
             )
+        elif args.domain == 'graph_coloring':
+            from graph_coloring_domain import (
+                evaluate_graph_coloring, random_graph_coloring_population,
+                GRAPH_COLORING_GENOME_LENGTH)
+            eval_fn = evaluate_graph_coloring
+            init_fn = random_graph_coloring_population
+            config_e = GAConfig(
+                population_size=80,
+                genome_length=GRAPH_COLORING_GENOME_LENGTH,  # 40
+                num_islands=5,
+                tournament_size=3,
+                crossover_rate=0.8,
+                mutation_rate=1.0 / GRAPH_COLORING_GENOME_LENGTH,  # 1/40 = 0.025
+                max_generations=100,
+                migration_freq=5,
+                migration_rate=0.1,
+            )
+        elif args.domain == 'sorting_network':
+            from sorting_network_domain import (
+                evaluate_sorting_network, random_sorting_network_population,
+                SORTING_NETWORK_GENOME_LENGTH)
+            eval_fn = evaluate_sorting_network
+            init_fn = random_sorting_network_population
+            config_e = GAConfig(
+                population_size=80,
+                genome_length=SORTING_NETWORK_GENOME_LENGTH,  # 28
+                num_islands=5,
+                tournament_size=3,
+                crossover_rate=0.8,
+                mutation_rate=1.0 / SORTING_NETWORK_GENOME_LENGTH,  # 1/28 ≈ 0.036
+                max_generations=100,
+                migration_freq=5,
+                migration_rate=0.1,
+            )
+        elif args.domain == 'knapsack':
+            from knapsack_domain import (
+                evaluate_knapsack, random_knapsack_population,
+                KNAPSACK_GENOME_LENGTH)
+            eval_fn = evaluate_knapsack
+            init_fn = random_knapsack_population
+            config_e = GAConfig(
+                population_size=80,
+                genome_length=KNAPSACK_GENOME_LENGTH,  # 50
+                num_islands=5,
+                tournament_size=3,
+                crossover_rate=0.8,
+                mutation_rate=1.0 / KNAPSACK_GENOME_LENGTH,  # 1/50 = 0.02
+                max_generations=100,
+                migration_freq=5,
+                migration_rate=0.1,
+            )
+        elif args.domain == 'checkers':
+            from checkers_domain import (
+                evaluate_checkers, random_checkers_population,
+                CHECKERS_GENOME_LENGTH)
+            eval_fn = evaluate_checkers
+            init_fn = random_checkers_population
+            config_e = GAConfig(
+                population_size=80,
+                genome_length=CHECKERS_GENOME_LENGTH,  # 64
+                num_islands=5,
+                tournament_size=3,
+                crossover_rate=0.8,
+                mutation_rate=1.0 / CHECKERS_GENOME_LENGTH,  # 1/64 ≈ 0.016
+                max_generations=100,
+                migration_freq=5,
+                migration_rate=0.1,
+            )
         else:
             config_e = GAConfig(
                 population_size=50,
@@ -1224,12 +1357,20 @@ def main():
               f"L={config_e.genome_length}, islands={config_e.num_islands}, "
               f"mig_freq={config_e.migration_freq}, mig_rate={config_e.migration_rate}")
         print(f"\n--- Experiment E: Topology Sweep ({args.domain}) ---")
+        csv_name = args.csv_name or f'experiment_e_{args.domain}.csv'
+        csv_path = os.path.join(outdir, csv_name)
+
+        # When not resuming and not using incremental saves, clear any existing file
+        if not args.resume and os.path.exists(csv_path):
+            os.remove(csv_path)
+
         results_e = run_experiment_e(seeds, config_e,
-                                     evaluate_fn=eval_fn, init_fn=init_fn)
+                                     evaluate_fn=eval_fn, init_fn=init_fn,
+                                     incremental_csv=csv_path,
+                                     resume=args.resume)
         analysis_e = analyze_experiment_e(results_e, config_e.max_generations)
         print_experiment_e_summary(analysis_e)
-        csv_name = args.csv_name or f'experiment_e_{args.domain}.csv'
-        save_csv(results_e, os.path.join(outdir, csv_name))
+        print(f"  Results saved incrementally to: {csv_path}")
 
     elapsed = time.time() - t0
     print(f"\nTotal time: {elapsed:.1f}s")
