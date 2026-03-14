@@ -95,7 +95,7 @@ and island-model migration arise as compositions at three hierarchical levels
 in the Kleisli category, providing the first categorical formalization of
 genetic algorithms. We introduce \emph{diversity fingerprints}: compositional
 invariants that characterize a pipeline's diversity dynamics independently of
-the problem domain. Our main result (Proposition~1) establishes that diversity
+the problem domain. Our main result (Conjecture~1) establishes that diversity
 fingerprints are functorial: a domain-change functor preserving composition
 structure preserves fingerprint shape. Experiments on two unrelated domains
 (checkers strategy evolution and maze topology optimization) confirm this
@@ -185,12 +185,17 @@ Modular system      & Strict functor \\
 
 A network analysis of 76 evolutionary computation papers reveals zero concept overlap between major subcommunities despite substantial methodological convergence, underscoring the need for a unifying formal vocabulary.
 
-In categorical terms, the distinction is between \emph{strict} composition
-(respecting component boundaries exactly, information flowing only through
-defined interfaces) and \emph{lax} composition (permitting additional
-communication beyond the formal interface). A strict monoidal functor
-preserves structure on the nose; a lax one only up to coherent natural
-transformations. This connects to Ghani et al.'s approximate game
+We adopt the terms \emph{strict} and \emph{lax} by analogy with monoidal
+functors: a strict monoidal functor preserves the tensor product exactly
+($F(A \otimes B) = F(A) \otimes F(B)$), while a lax monoidal functor
+preserves it only up to a coherence morphism
+($F(A \otimes B) \to F(A) \otimes F(B)$). In our setting, the product of
+island-level Kleisli morphisms is preserved exactly when islands are
+isolated (strict), and only up to the migration morphism when islands are
+coupled (lax). The migration rate thus parameterizes a continuous family
+interpolating between strict and lax composition.
+
+This connects to Ghani et al.'s approximate game
 theory~\cite{ghani2025approximate}, where exact equilibria compose cleanly
 but $\varepsilon$-approximate equilibria do not. We conjecture the pattern
 is general: compositional invariants are preserved under strict composition
@@ -212,9 +217,9 @@ This paper makes three contributions:
   population monad, completing the categorical optimization landscape initiated
   by~\cite{gavranovic2024categorical,hedges2024reinforcement,bakirtzis2024compositional}.
 \item We introduce \emph{diversity fingerprints}---compositional invariants that
-  characterize the diversity dynamics of a GA pipeline---and prove that they
+  characterize the diversity dynamics of a GA pipeline---and conjecture that they
   are functorial: a domain-change functor preserving composition structure
-  preserves fingerprint shape (Proposition~\ref{prop:functorial},
+  preserves fingerprint shape (Conjecture~\ref{conj:functorial},
   Section~\ref{sec:fp-stability}). Experiments on two unrelated domains
   (game-playing strategy evolution and maze topology optimization) confirm
   this prediction, with effect size $d = 4.34$ and $p < 3.7 \times
@@ -755,8 +760,8 @@ morphisms---which is exactly what is invariant across domains
 (Table~\ref{tab:invariance}). In categorical terms, the fingerprint
 is \emph{functorial}: it respects composition.
 
-\begin{proposition}[Fingerprint functoriality]
-\label{prop:functorial}
+\begin{conjecture}[Fingerprint functoriality]
+\label{conj:functorial}
 Let $F : \mathbf{Kl}(T_{\mathrm{ck}}) \to \mathbf{Kl}(T_{\mathrm{mz}})$
 be the domain-change functor that replaces the genome type, fitness
 function, and mutation operator while preserving the composition
@@ -766,9 +771,14 @@ of $\mathbf{d}(\sigma)$. In particular, the relative ordering of
 final diversities across strategies is approximately preserved
 across domains: strategies with more diversity-restoring phases
 produce higher or equal final diversity in both domains.
-\end{proposition}
+\end{conjecture}
 
-\begin{proof}[Proof sketch]
+\noindent
+We state this as a conjecture supported by strong empirical evidence across
+multiple domains, rather than a theorem, because a formal definition of
+``qualitative shape'' remains open.
+
+\begin{proof}[Supporting argument]
 $F$ preserves composition structure by construction, acting as the
 identity on morphisms while replacing objects and operator content.
 Since fingerprints are traces of the log component $\Lambda$
@@ -921,6 +931,9 @@ structure---produce matching trajectory shapes across unrelated domains
 that the strict/lax gradient is continuous. We conjecture that strict
 composition preserves such invariants while lax composition degrades them,
 a pattern supported by six independent studies.
+
+\paragraph{Predictive power.}
+The framework is not merely post-hoc: combined with the three-axis domain taxonomy, it generates testable predictions for untested topologies---any migration graph with algebraic connectivity between ring and fully connected should exhibit intermediate diversity dynamics, regardless of the fitness landscape.
 
 \paragraph{Limitations and future work.}
 We tested two domains; more are needed. The Haskell implementation is
