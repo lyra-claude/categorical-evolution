@@ -107,7 +107,7 @@ five migration structures confirms that the strict/lax gradient is
 continuous, parameterized by migration graph connectivity. We conjecture
 that this \emph{strict/lax dichotomy} is general: strict composition
 preserves compositional invariants while lax composition degrades
-them---a pattern supported by six independent studies across optimization
+them---a pattern supported by eight independent studies across optimization
 paradigms.
 \end{abstract}
 
@@ -906,13 +906,15 @@ composition---permitting information flow beyond formal
 interfaces---degrades them.
 \end{conjecture}
 
-Six independent observations support this conjecture:
+Eight independent observations support this conjecture:
 (1)~our experiments ($d = 4.34$, Section~\ref{sec:fp-stats});
 (2)~LLM agent scaling~\cite{chen2025scaling} ($17.2\times$ vs.\ $4.4\times$ error amplification);
 (3)~constitutional evolution~\cite{kumar2026constitutional} ($0.9\%$ communication beats $62.2\%$);
 (4)~evolved RL~\cite{alphaevolve2026marl} (modular generalizes, monolithic overfits);
 (5)~semantic collapse~\cite{alpay2025semantic} (unconstrained passing destroys diversity);
-(6)~CodeEvolve~\cite{assumpcao2025codeevolve} (superadditive gains from well-typed composition).
+(6)~CodeEvolve~\cite{assumpcao2025codeevolve} (superadditive gains from well-typed composition);
+(7)~oscillator synchronization~\cite{sanz2026algebraic} ($\lambda_2$ governs coupling onset);
+(8)~LLM conformity dynamics~\cite{han2026conformity} (hub topology yields fast but fragile convergence, distributed yields slow but robust).
 This connects to Ghani et al.'s approximate game theory~\cite{ghani2025approximate}: exact equilibria compose cleanly, $\varepsilon$-approximate ones do not.
 
 %% ============================================================
@@ -930,10 +932,10 @@ structure---produce matching trajectory shapes across unrelated domains
 ($d = 4.34$, $p < 3.7 \times 10^{-11}$), and a topology sweep confirms
 that the strict/lax gradient is continuous. We conjecture that strict
 composition preserves such invariants while lax composition degrades them,
-a pattern supported by six independent studies.
+a pattern supported by eight independent studies.
 
 \paragraph{Predictive power.}
-The framework is not merely post-hoc: combined with the three-axis domain taxonomy, it generates testable predictions for untested topologies---any migration graph with algebraic connectivity between ring and fully connected should exhibit intermediate diversity dynamics, regardless of the fitness landscape.
+The framework is not merely post-hoc: combined with the three-axis domain taxonomy, it generates testable predictions for untested topologies---any migration graph with algebraic connectivity between ring and fully connected should exhibit intermediate diversity dynamics, regardless of the fitness landscape. This prediction aligns with independent results in oscillator physics, where algebraic connectivity $\lambda_2$ universally governs synchronization onset~\cite{sanz2026algebraic}.
 
 \paragraph{Limitations and future work.}
 We tested two domains; more are needed. The Haskell implementation is
