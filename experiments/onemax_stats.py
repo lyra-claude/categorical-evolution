@@ -785,7 +785,11 @@ def analyze_experiment_d(results: List[dict]) -> dict:
 def run_experiment_e_single(seed: int, config: GAConfig,
                             topology: str,
                             evaluate_fn: Callable = None,
-                            init_fn: Callable = None) -> List[dict]:
+                            init_fn: Callable = None,
+                            crossover_fn: Callable = None,
+                            mutate_fn: Callable = None,
+                            diversity_fn: Callable = None,
+                            divergence_fn: Callable = None) -> List[dict]:
     """Run a single seed of Experiment E for one topology.
 
     Tracks per-generation metrics: hamming diversity, population divergence
@@ -796,6 +800,14 @@ def run_experiment_e_single(seed: int, config: GAConfig,
                      Defaults to OneMax evaluate().
         init_fn:     Function (rng, pop_size, genome_length) -> np.ndarray.
                      Defaults to random_population().
+        crossover_fn: Function (rng, pop, rate) -> np.ndarray.
+                      Defaults to one_point_crossover (binary).
+        mutate_fn:    Function (rng, pop, rate) -> np.ndarray.
+                      Defaults to point_mutate (bit-flip).
+        diversity_fn: Function (pop) -> float.
+                      Defaults to hamming_diversity (binary).
+        divergence_fn: Function (pop1, pop2) -> float.
+                       Defaults to population_divergence (binary).
 
     Returns a list of dicts, one per generation.
     """
@@ -803,6 +815,14 @@ def run_experiment_e_single(seed: int, config: GAConfig,
         evaluate_fn = evaluate
     if init_fn is None:
         init_fn = random_population
+    if crossover_fn is None:
+        crossover_fn = one_point_crossover
+    if mutate_fn is None:
+        mutate_fn = point_mutate
+    if diversity_fn is None:
+        diversity_fn = hamming_diversity
+    if divergence_fn is None:
+        divergence_fn = population_divergence
 
     cfg = GAConfig(
         population_size=config.population_size,
@@ -828,8 +848,8 @@ def run_experiment_e_single(seed: int, config: GAConfig,
         for isl in islands:
             fitnesses = evaluate_fn(isl)
             selected = tournament_select(rng, isl, fitnesses, cfg.tournament_size)
-            crossed = one_point_crossover(rng, selected, cfg.crossover_rate)
-            mutated = point_mutate(rng, crossed, cfg.mutation_rate)
+            crossed = crossover_fn(rng, selected, cfg.crossover_rate)
+            mutated = mutate_fn(rng, crossed, cfg.mutation_rate)
             new_islands.append(mutated)
 
         islands = new_islands
@@ -841,7 +861,7 @@ def run_experiment_e_single(seed: int, config: GAConfig,
         # Compute metrics
         all_pop = merge_populations(islands)
         all_fit = evaluate_fn(all_pop)
-        ham_div = hamming_diversity(all_pop)
+        ham_div = diversity_fn(all_pop)
         best_fit = float(np.max(all_fit))
 
         # Inter-island divergence: mean pairwise divergence across all island pairs
@@ -850,14 +870,14 @@ def run_experiment_e_single(seed: int, config: GAConfig,
             divs = []
             for i in range(n_isl):
                 for j in range(i + 1, n_isl):
-                    divs.append(population_divergence(islands[i], islands[j]))
+                    divs.append(divergence_fn(islands[i], islands[j]))
             pop_div = float(np.mean(divs))
         else:
             pop_div = 0.0
             divs = []
 
         # Per-island diversity
-        island_diversities = [hamming_diversity(isl) for isl in islands]
+        island_diversities = [diversity_fn(isl) for isl in islands]
 
         # Per-island best fitness
         island_fitnesses = [float(np.max(evaluate_fn(isl))) for isl in islands]
@@ -893,6 +913,10 @@ def run_experiment_e(seeds: List[int], config: GAConfig,
                      topologies: List[str] = None,
                      evaluate_fn: Callable = None,
                      init_fn: Callable = None,
+                     crossover_fn: Callable = None,
+                     mutate_fn: Callable = None,
+                     diversity_fn: Callable = None,
+                     divergence_fn: Callable = None,
                      incremental_csv: str = None,
                      resume: bool = False) -> List[dict]:
     """Run Experiment E: topology sweep.
@@ -901,6 +925,10 @@ def run_experiment_e(seeds: List[int], config: GAConfig,
         incremental_csv: If provided, append results to this CSV after each run.
         resume: If True and incremental_csv exists, skip already-completed
                 (topology, seed) pairs.
+        crossover_fn: Custom crossover operator (default: one_point_crossover).
+        mutate_fn: Custom mutation operator (default: point_mutate).
+        diversity_fn: Custom diversity metric (default: hamming_diversity).
+        divergence_fn: Custom divergence metric (default: population_divergence).
     """
     if topologies is None:
         topologies = ["none", "ring", "star", "fully_connected", "random"]
@@ -929,7 +957,11 @@ def run_experiment_e(seeds: List[int], config: GAConfig,
 
             rows = run_experiment_e_single(seed, config, topology,
                                            evaluate_fn=evaluate_fn,
-                                           init_fn=init_fn)
+                                           init_fn=init_fn,
+                                           crossover_fn=crossover_fn,
+                                           mutate_fn=mutate_fn,
+                                           diversity_fn=diversity_fn,
+                                           divergence_fn=divergence_fn)
             results.extend(rows)
 
             # Incremental save: append this run's rows immediately
@@ -1194,7 +1226,7 @@ def main():
                         help='Output directory for CSV files (default: same as script)')
     parser.add_argument('--csv-name', type=str, default=None,
                         help='Override CSV filename for experiment output (e.g. experiment_e_per_island.csv)')
-    parser.add_argument('--domain', choices=['onemax', 'maze', 'graph_coloring', 'sorting_network', 'knapsack', 'checkers'],
+    parser.add_argument('--domain', choices=['onemax', 'maze', 'graph_coloring', 'sorting_network', 'knapsack', 'checkers', 'nothanks'],
                         default='onemax',
                         help='Problem domain (default: onemax). Only applies to Experiment E.')
     parser.add_argument('--resume', action='store_true', default=False,
@@ -1255,6 +1287,10 @@ def main():
         # Domain-specific configuration
         eval_fn = None  # default: OneMax
         init_fn = None  # default: random_population (uniform binary)
+        cx_fn = None    # default: one_point_crossover (binary)
+        mut_fn = None   # default: point_mutate (bit-flip)
+        div_fn = None   # default: hamming_diversity (binary)
+        dvg_fn = None   # default: population_divergence (binary)
 
         if args.domain == 'maze':
             from maze_domain import (evaluate_maze, random_maze_population,
@@ -1340,6 +1376,29 @@ def main():
                 migration_freq=5,
                 migration_rate=0.1,
             )
+        elif args.domain == 'nothanks':
+            from nothanks_domain import (
+                evaluate_nothanks_fast, random_nothanks_population,
+                NOTHANKS_GENOME_LENGTH,
+                gaussian_mutate, uniform_crossover,
+                euclidean_diversity, euclidean_divergence)
+            eval_fn = evaluate_nothanks_fast
+            init_fn = random_nothanks_population
+            cx_fn = uniform_crossover
+            mut_fn = gaussian_mutate
+            div_fn = euclidean_diversity
+            dvg_fn = euclidean_divergence
+            config_e = GAConfig(
+                population_size=80,
+                genome_length=NOTHANKS_GENOME_LENGTH,  # 13
+                num_islands=5,
+                tournament_size=3,
+                crossover_rate=0.8,
+                mutation_rate=1.0 / NOTHANKS_GENOME_LENGTH,  # 1/13 ≈ 0.077
+                max_generations=100,
+                migration_freq=5,
+                migration_rate=0.1,
+            )
         else:
             config_e = GAConfig(
                 population_size=50,
@@ -1366,6 +1425,8 @@ def main():
 
         results_e = run_experiment_e(seeds, config_e,
                                      evaluate_fn=eval_fn, init_fn=init_fn,
+                                     crossover_fn=cx_fn, mutate_fn=mut_fn,
+                                     diversity_fn=div_fn, divergence_fn=dvg_fn,
                                      incremental_csv=csv_path,
                                      resume=args.resume)
         analysis_e = analyze_experiment_e(results_e, config_e.max_generations)
