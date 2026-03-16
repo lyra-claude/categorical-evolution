@@ -958,6 +958,37 @@ a pattern supported by eight independent studies.
 \paragraph{Predictive power.}
 The framework is not merely post-hoc: combined with the three-axis domain taxonomy, it generates testable predictions for untested topologies---any migration graph with algebraic connectivity between ring and fully connected should exhibit intermediate diversity dynamics, regardless of the fitness landscape. This prediction aligns with independent results in oscillator physics, where algebraic connectivity $\lambda_2$ universally governs synchronization onset~\cite{sanz2026algebraic}, and in evolutionary graph theory, where consensus time scales as $N^2$ on the complete graph but $N^3$ on the cycle~\cite{brewster2025diversity}---precisely the topology ordering our laxator predicts.
 
+\paragraph{Fixed versus time-varying topologies.}
+For \emph{fixed} migration graphs (none, ring, star, fully connected),
+the snapshot algebraic connectivity $\lambda_2(G)$ perfectly predicts the
+diversity ordering: higher $\lambda_2$ yields a larger laxator
+$\|\varphi_G\|$ and correspondingly lower diversity
+(Remark~\ref{rem:laxator-topology}), a relationship confirmed
+independently by spectral synchronization theory~\cite{sanz2026algebraic}
+and evolutionary consensus dynamics~\cite{brewster2025diversity}.
+For the \emph{time-varying} random topology, however, $\lambda_2$ fails:
+the per-generation snapshot mean ($\bar{\lambda}_2 = 0.36$) is the
+\emph{lowest} of all connected topologies, yet random exhibits
+fourth-highest diversity, not the highest.
+The resolution lies in coupling accumulation.
+The time-averaged adjacency matrix---aggregating all realized migration
+events---yields an effective $\lambda_2 = 39.74$, a factor of $110\times$
+above the snapshot mean.
+After normalization, the ordering is recovered:
+none~(0) $<$ star~(20) $<$ ring~(27.6) $<$ random~(39.7)
+$<$ fully connected~(100).
+Categorically, the distinction is clean: a fixed topology makes
+$\mathcal{I}_G$ a strict endofunctor on the strategy category---the
+migration graph commutes with temporal composition exactly, and
+$\lambda_2$ suffices as a proxy for $\|\varphi_G\|$.
+A time-varying topology like random produces a genuinely \emph{lax}
+endofunctor whose laxator is nonzero precisely because composing
+distinct per-generation graphs does not factor through any single
+snapshot.
+The $5.5\times$ per-event inflation from snapshot to time-averaged
+$\lambda_2$ is the numerical signature of this laxator, capturing a
+compositional effect that no single-snapshot spectral analysis can detect.
+
 \paragraph{Limitations and future work.}
 We tested two domains; more are needed. The Haskell implementation is
 faithful but not mechanically verified. Future directions include a
