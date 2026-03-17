@@ -419,9 +419,9 @@ making $\mathcal{I}_G$ lax.
 
 \begin{remark}[Topology parameterizes laxity]
 \label{rem:laxator-topology}
-The laxator magnitude $\|\varphi_G\|$ scales inversely with the
+The laxator magnitude $\|\varphi_G\|$ grows with the
 algebraic connectivity $\lambda_2(G)$ of the migration graph:
-sparse topologies (ring, $\lambda_2 \approx 0.38$) yield small
+sparse topologies (ring, $\lambda_2 \approx 1.38$) yield small
 laxators, while dense topologies (fully connected, $\lambda_2 = 5$)
 yield large ones. The strict/lax dichotomy is thus a \emph{continuous}
 family indexed by $\lambda_2$---a connection confirmed independently
@@ -904,11 +904,6 @@ Define $R(d)$ as the mean pairwise coherence ($R = 1 - \text{divergence}$) betwe
 \label{fig:rd-two-panel}
 \end{figure}
 
-The coexistence of converged and diverged subpopulations at intermediate
-topologies echoes \emph{chimera states} from coupled oscillator
-physics~\cite{zhou2026defect}, where the none-to-ring transition marks
-the onset of chimera-forming potential.
-
 %% ============================================================
 %% Section 5: Conjecture
 %% ============================================================
@@ -988,6 +983,9 @@ snapshot.
 The $5.5\times$ per-event inflation from snapshot to time-averaged
 $\lambda_2$ is the numerical signature of this laxator, capturing a
 compositional effect that no single-snapshot spectral analysis can detect.
+
+\paragraph{Chimera-like asymmetry.}
+Our per-island analysis reveals structural asymmetry at intermediate topologies consistent with chimera states from coupled oscillator theory~\cite{zhou2026defect}; full per-island time series and analysis scripts are available in the companion repository.
 
 \paragraph{Limitations and future work.}
 We tested two domains; more are needed. The Haskell implementation is
