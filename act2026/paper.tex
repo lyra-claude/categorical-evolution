@@ -963,7 +963,7 @@ Eight independent observations support this conjecture:
 (6)~CodeEvolve~\cite{assumpcao2025codeevolve};
 (7)~oscillator synchronization~\cite{sanz2026algebraic};
 (8)~LLM conformity dynamics~\cite{han2026conformity}.
-Each exhibits the same pattern: strict composition preserves invariants; lax composition degrades them---connecting to Ghani et al.~\cite{ghani2025approximate} (exact equilibria compose; approximate ones do not) and Li et al.~\cite{li2023emergence} (emergence as cohomological obstruction, paralleling the laxator).
+Each exhibits the same pattern: strict composition preserves invariants; lax composition degrades them---connecting to Ghani et al.~\cite{ghani2025approximate} (exact equilibria compose; approximate ones do not). Li et al.~\cite{li2023emergence} provide the sharpest parallel from homological algebra: their derived-functor framework identifies $H^1$ cohomological obstructions to local-to-global composition---precisely what the laxator $\varphi_G$ measures in our setting. The obstruction vanishes when the functor is strict; it accumulates otherwise. Four independent traditions (categorical lax functors, spectral graph theory, oscillator synchronization~\cite{sanz2026algebraic}, and homological algebra~\cite{li2023emergence}) have converged on the same mathematical structure from entirely different starting points.
 
 %% ============================================================
 %% Section 6: Discussion and Conclusion
@@ -986,10 +986,14 @@ a pattern supported by eight independent studies.
 \paragraph{Predictive power.}
 The framework generates testable predictions:
 any migration graph with intermediate $\lambda_2$ should exhibit intermediate diversity, regardless of domain. Four independent lines confirm this: $\lambda_2$ governs
-synchronization onset~\cite{sanz2026algebraic}, consensus time scales as $N^3$ on
-cycles versus $N^2$ on complete graphs~\cite{brewster2025diversity}, threshold graphs are globally
-synchronizing~\cite{wu2025threshold}, and local structure determines
-topologically protected synchronization~\cite{ostilli2025topological}.
+synchronization onset~\cite{sanz2026algebraic}; consensus time scales as $N^3$ on
+cycles versus $N^2$ on complete graphs~\cite{brewster2025diversity}; Wu \&
+Brandes~\cite{wu2025threshold} prove that threshold graphs---a class containing
+the complete graph---are globally synchronizing, providing a formal proof (not
+merely an empirical observation) that fully connected is maximally lax; and
+Ostilli~\cite{ostilli2025topological} shows that key synchronization properties
+are topologically protected, directly supporting the robustness of our ring--star
+spectral boundary result against graph perturbations.
 
 \paragraph{Spectral prediction at the boundary.}
 Remark~\ref{rem:laxator-topology} connects the
