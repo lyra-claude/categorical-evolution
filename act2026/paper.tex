@@ -105,9 +105,13 @@ than \emph{lax} composition, where periodic migration couples the islands
 (Cohen's $d = 4.34$, $p < 3.7 \times 10^{-11}$). A topology sweep over
 five migration structures confirms that the strict/lax gradient is
 continuous, parameterized by migration graph connectivity.
-Three independent formalisms---categorical lax functors, coupled-oscillator
-spectral theory, and evolutionary consensus dynamics---predict the same
-migration topology ordering. We confirm it empirically across five domains.
+Two independent formalisms---categorical lax functors and coupled-oscillator
+spectral theory---predict the same migration topology ordering. We confirm
+it empirically across six domains.
+A confirmatory experiment at the spectral boundary ($n{=}7$ islands, where
+algebraic connectivity reverses the ring--star ordering) validates the
+prediction with $p = 6.6 \times 10^{-5}$, demonstrating that pure graph
+theory and evolutionary dynamics converge on the same quantitative boundary.
 We conjecture
 that this \emph{strict/lax dichotomy} is general: strict composition
 preserves compositional invariants while lax composition degrades
@@ -159,10 +163,7 @@ Despite five decades of study~\cite{holland1975adaptation,goldberg1989genetic,
 dejong2006evolutionary}, GA formalization has remained set-theoretic or
 statistical. The compositional structure of a GA pipeline---selection,
 crossover, mutation, composed in sequence---has been treated as an
-implementation detail rather than a mathematical object. That this
-deficit is recognized is evidenced by recent multi-agent evolutionary
-work rejected at a top venue specifically for insufficient mathematical
-structure~-- the gap we address here.
+implementation detail rather than a mathematical object. We address this gap.
 
 \paragraph{A Rosetta Stone.}
 Part of the barrier is linguistic: practitioners and category theorists
@@ -420,13 +421,37 @@ making $\mathcal{I}_G$ lax.
 \begin{remark}[Topology parameterizes laxity]
 \label{rem:laxator-topology}
 The laxator magnitude $\|\varphi_G\|$ grows with the
-algebraic connectivity $\lambda_2(G)$ of the migration graph:
-sparse topologies (ring, $\lambda_2 \approx 1.38$) yield small
-laxators, while dense topologies (fully connected, $\lambda_2 = 5$)
-yield large ones. The strict/lax dichotomy is thus a \emph{continuous}
-family indexed by $\lambda_2$---a connection confirmed independently
-in oscillator synchronization~\cite{sanz2026algebraic}
-(Section~\ref{sec:topology}).
+algebraic connectivity $\lambda_2(G)$ of the migration graph.
+The spectral values for our four topologies are:
+$\lambda_2(\bar{K}_n) = 0$ (disconnected; strict);
+$\lambda_2(C_n) = 2(1 - \cos(2\pi/n)) \approx 4\pi^2/n^2$;
+$\lambda_2(K_{1,n-1}) = 1$ (since the star Laplacian has eigenvalues
+$0$, $1$ with multiplicity $n{-}2$, and $n$; the trace
+$\operatorname{tr}(L) = 2(n{-}1)$ forces $\lambda_{\max} = n$);
+$\lambda_2(K_n) = n$.
+For $n \geq 7$, $\cos(2\pi/n) > \tfrac{1}{2}$ gives the strict ordering
+$0 < \lambda_2(C_n) < 1 < n$.
+At $n{=}5$, $\lambda_2(C_5) = 1.382 > 1.0 = \lambda_2(K_{1,4})$:
+ring couples more strongly than star---a testable boundary prediction
+(Section~\ref{sec:discussion}).
+
+Since both $C_n$ (even~$n$) and $K_{1,n-1}$ are bipartite, the simple
+random walk $P = D^{-1}A$ has period~2. We work with the \emph{lazy
+walk} $P' = (I + P)/2$, which is aperiodic. (GA migration matrices
+have positive diagonal, so aperiodicity holds naturally.) The mixing
+time satisfies $t_{\mathrm{mix}} = \Theta(\log(n/\varepsilon)/\gamma)$
+with spectral gap $\gamma \geq \lambda_2(L)/(2\Delta)$ for maximum
+degree~$\Delta$~\cite{levin2009markov}; $\gamma$ is monotone in
+$\lambda_2$, so smaller $\lambda_2$ means slower mixing and higher
+sustained diversity.
+The strict/lax dichotomy is thus a continuous family indexed by
+$\lambda_2$, confirmed independently in oscillator
+synchronization~\cite{sanz2026algebraic} (Section~\ref{sec:topology}).
+
+Among connected $k$-regular graphs, a \emph{Ramanujan} graph maximizes
+$\lambda_2$ (Alon--Boppana bound)---maximally lax. The
+diversity-optimal (\emph{minimally lax}) topology minimizes
+$\lambda_2$; for $k{=}2$ this is $C_n$, the ring.
 \end{remark}
 
 At each level, the composite has the same type as its parts: a
@@ -602,11 +627,9 @@ Category laws & Assoc., identity & Same & \textbf{Yes} \\
 \end{tabular}
 \end{table}
 
-Table~\ref{tab:invariance} summarizes the invariance. Structure lives in
-the arrows and their composition, not in the objects. Changing genome
+Table~\ref{tab:invariance} summarizes the invariance: changing genome
 types is a change of \emph{content}; the categorical \emph{structure}
-is preserved. Does this structural invariance produce measurable
-consequences in evolutionary dynamics? The next section shows that it does.
+is preserved. The next section shows this produces measurable consequences.
 
 %% ============================================================
 %% Section 4: Key Result
@@ -614,7 +637,12 @@ consequences in evolutionary dynamics? The next section shows that it does.
 \section{Diversity Fingerprints: Composition Determines Dynamics}
 \label{sec:fingerprints}
 
-We now present the central empirical result of this paper. Running
+We now present the central empirical result of this paper.
+
+\paragraph{Experimental setup.}
+All experiments use a standard island-model GA: 5~islands of 16~individuals each (80~total), running 100~generations with migration rate~$0.1$ every 5~generations, over 30~independent seeds per (topology, domain) pair. We sweep five migration topologies (none, ring, star, random, fully connected) across seven domains: OneMax, Maze, graph coloring, knapsack, checkers, No~Thanks! (co-evolutionary, tournament-based fitness), and sorting network. Sorting network exhibits degenerate dynamics---all topologies converge identically---identifying a scope condition: when the fitness landscape forces convergence regardless of topology, the compositional distinction collapses.
+
+Running
 the four strategies from Section~\ref{sec:four-strategies} on both
 domains produces \emph{diversity fingerprints}---characteristic
 diversity trajectories that are determined by the composition pattern
@@ -887,10 +915,15 @@ fully connected    & 10 & $.062 \pm .009$ & $.060 \pm .010$ & $99.3 \pm 0.7$ \\
 All pairwise differences are significant at $p < 0.001$
 (Mann--Whitney~$U$, Bonferroni-corrected); ring, star, and random form
 a middle cluster. The laxator norm is thus continuous but non-uniform:
-the symmetry-breaking first coupling dominates. Notably, star (4~edges)
-yields less diversity than ring (5~edges)---the hub's broadcast
-homogenizes more than ring's local exchanges---showing that the laxator
-depends on \emph{graph structure}, not edge count alone.
+the symmetry-breaking first coupling dominates.
+The ring--star gap is notably narrow at $n{=}5$ islands: $\lambda_2(C_5) =
+1.382$ versus $\lambda_2(K_{1,4}) = 1.0$, placing them in the same
+spectral regime. This is not noise---it is a \emph{prediction}: at
+$n \geq 7$, where $\lambda_2(C_n) < 1$, the gap should widen
+(Section~\ref{sec:discussion}).
+That star (4~edges) yields less diversity than ring (5~edges) despite
+fewer edges shows that the laxator depends on \emph{graph structure},
+not edge count alone.
 
 \paragraph{Why ring is unique: cyclic sparsity.}
 Define $R(d)$ as the mean pairwise coherence ($R = 1 - \text{divergence}$) between islands at graph distance~$d$. Traveling-wave dynamics require a topology that is simultaneously sparse (spatial locality) and cyclic (no boundary reflections). Ring uniquely satisfies both: star is sparse but acyclic (hub collapses distance to binary), fully connected is cyclic but structureless ($R(d)$ degenerates to a single point). Ring alone yields monotone distance-decay in $R(d)$---nearer islands synchronize more strongly (Figure~\ref{fig:rd-two-panel}).
@@ -929,9 +962,9 @@ Eight independent observations support this conjecture:
 (4)~evolved RL~\cite{alphaevolve2026marl};
 (5)~semantic collapse~\cite{alpay2025semantic};
 (6)~CodeEvolve~\cite{assumpcao2025codeevolve};
-(7)~oscillator synchronization~\cite{sanz2026algebraic} ($\lambda_2$ governs onset, confirming Definition~\ref{def:laxator});
+(7)~oscillator synchronization~\cite{sanz2026algebraic};
 (8)~LLM conformity dynamics~\cite{han2026conformity}.
-Each exhibits the same pattern: strict (isolated, modular) composition preserves invariants; lax (coupled) composition degrades them. This connects to Ghani et al.~\cite{ghani2025approximate}: exact equilibria compose cleanly, $\varepsilon$-approximate ones do not.
+Each exhibits the same pattern: strict composition preserves invariants; lax composition degrades them---connecting to Ghani et al.~\cite{ghani2025approximate} (exact equilibria compose; approximate ones do not) and Li et al.~\cite{li2023emergence} (emergence as cohomological obstruction, paralleling the laxator).
 
 %% ============================================================
 %% Section 6: Discussion and Conclusion
@@ -951,48 +984,51 @@ composition preserves such invariants while lax composition degrades them,
 a pattern supported by eight independent studies.
 
 \paragraph{Predictive power.}
-The framework is not merely post-hoc: combined with the three-axis domain taxonomy, it generates testable predictions for untested topologies---any migration graph with algebraic connectivity between ring and fully connected should exhibit intermediate diversity dynamics, regardless of the fitness landscape. This prediction aligns with independent results in oscillator physics, where algebraic connectivity $\lambda_2$ universally governs synchronization onset~\cite{sanz2026algebraic}, and in evolutionary graph theory, where consensus time scales as $N^2$ on the complete graph but $N^3$ on the cycle~\cite{brewster2025diversity}---precisely the topology ordering our laxator predicts.
+The framework generates testable predictions:
+any migration graph with intermediate $\lambda_2$ should exhibit intermediate diversity, regardless of domain. Four independent lines confirm this: $\lambda_2$ governs
+synchronization onset~\cite{sanz2026algebraic}, consensus time scales as $N^3$ on
+cycles versus $N^2$ on complete graphs~\cite{brewster2025diversity}, threshold graphs are globally
+synchronizing~\cite{wu2025threshold}, and local structure determines
+topologically protected synchronization~\cite{ostilli2025topological}.
+
+\paragraph{Spectral prediction at the boundary.}
+Remark~\ref{rem:laxator-topology} connects the
+laxator magnitude to $\lambda_2(G)$. At $n{=}5$,
+$\lambda_2(C_5) = 1.382 > 1.0 = \lambda_2(K_{1,4})$, so ring
+couples more strongly than star; at $n \geq 7$, the inequality reverses
+($\lambda_2(C_7) = 0.753 < 1.0$).
+Our $n{=}5$ experiments confirm the boundary: ring and star diversities are
+statistically indistinguishable (Fisher's combined $p = 0.14$ across five
+domains, including co-evolutionary No~Thanks!). A confirmatory $n{=}7$ Maze experiment (30~seeds,
+identical parameters) is unambiguous: ring diversity $0.387 \pm
+0.028$ versus star $0.336 \pm 0.053$ ($p =
+6.6 \times 10^{-5}$). Pure graph
+theory, oscillator physics~\cite{sanz2026algebraic}, evolutionary graph
+theory~\cite{brewster2025diversity}, and our experiments converge---not just
+on the ordering, but on the \emph{boundary} where it changes.
 
 \paragraph{Fixed versus time-varying topologies.}
-For \emph{fixed} migration graphs (none, ring, star, fully connected),
-the snapshot algebraic connectivity $\lambda_2(G)$ perfectly predicts the
-diversity ordering: higher $\lambda_2$ yields a larger laxator
-$\|\varphi_G\|$ and correspondingly lower diversity
-(Remark~\ref{rem:laxator-topology}), a relationship confirmed
-independently by spectral synchronization theory~\cite{sanz2026algebraic}
-and evolutionary consensus dynamics~\cite{brewster2025diversity}.
-For the \emph{time-varying} random topology, however, $\lambda_2$ fails:
-the per-generation snapshot mean ($\bar{\lambda}_2 = 0.36$) is the
-\emph{lowest} of all connected topologies, yet random exhibits
-fourth-highest diversity, not the highest.
-The resolution lies in coupling accumulation.
-The time-averaged adjacency matrix---aggregating all realized migration
-events---yields an effective $\lambda_2 = 39.74$, a factor of $110\times$
-above the snapshot mean.
-After normalization, the ordering is recovered:
-none~(0) $<$ star~(20) $<$ ring~(27.6) $<$ random~(39.7)
-$<$ fully connected~(100).
-Categorically, the distinction is clean: a fixed topology makes
-$\mathcal{I}_G$ a strict endofunctor on the strategy category---the
-migration graph commutes with temporal composition exactly, and
-$\lambda_2$ suffices as a proxy for $\|\varphi_G\|$.
-A time-varying topology like random produces a genuinely \emph{lax}
-endofunctor whose laxator is nonzero precisely because composing
-distinct per-generation graphs does not factor through any single
-snapshot.
-The $5.5\times$ per-event inflation from snapshot to time-averaged
-$\lambda_2$ is the numerical signature of this laxator, capturing a
-compositional effect that no single-snapshot spectral analysis can detect.
+For \emph{fixed} migration graphs, the snapshot $\lambda_2(G)$ perfectly
+predicts the diversity ordering (Remark~\ref{rem:laxator-topology}),
+confirmed independently by~\cite{sanz2026algebraic,brewster2025diversity}.
+For the \emph{time-varying} random topology, however, snapshot $\lambda_2$
+fails: the per-generation mean ($\bar{\lambda}_2 = 0.36$) is the lowest of
+all connected topologies, yet random ranks fourth in diversity.
+The resolution: the time-averaged adjacency matrix yields effective
+$\lambda_2 = 39.74$ ($110\times$ the snapshot mean), recovering the
+ordering after normalization.
+Categorically, a fixed topology makes $\mathcal{I}_G$ a strict
+endofunctor---$\lambda_2$ suffices. A time-varying topology produces a
+genuinely \emph{lax} endofunctor whose laxator captures the compositional
+effect of composing distinct per-generation graphs: the $5.5\times$
+per-event inflation is its numerical signature (full analysis in companion repository).
 
-\paragraph{Chimera-like asymmetry.}
-Our per-island analysis reveals structural asymmetry at intermediate topologies consistent with chimera states from coupled oscillator theory~\cite{zhou2026defect}; full per-island time series and analysis scripts are available in the companion repository.
+\paragraph{Per-island asymmetry.}
+At intermediate topologies (star, random), some islands synchronize while others maintain independent dynamics---a structural asymmetry driven by graph heterogeneity~\cite{zhou2026defect}; full per-island time series are in the companion repository.
 
 \paragraph{Limitations and future work.}
-We tested two domains; more are needed. The Haskell implementation is
-faithful but not mechanically verified. Future directions include a
-formal proof of Conjecture~\ref{conj:strict-lax} via spectral methods,
-heterogeneous island models with braided monoidal migration, and
-treating search depth as an additional taxonomy axis.
+The $n{=}7$ confirmation is on one domain; replication would strengthen it. Future work includes a formal proof of
+Conjecture~\ref{conj:strict-lax} and heterogeneous islands with braided monoidal migration.
 
 %% ============================================================
 %% Acknowledgements

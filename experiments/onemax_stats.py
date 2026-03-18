@@ -1231,6 +1231,10 @@ def main():
                         help='Problem domain (default: onemax). Only applies to Experiment E.')
     parser.add_argument('--resume', action='store_true', default=False,
                         help='Resume experiment E from existing CSV (skip completed runs)')
+    parser.add_argument('--islands', type=int, default=None,
+                        help='Override number of islands (default: domain-specific)')
+    parser.add_argument('--topologies', type=str, default=None,
+                        help='Comma-separated list of topologies to test (default: all five)')
     args = parser.parse_args()
 
     # Determine output directory
@@ -1412,9 +1416,25 @@ def main():
                 migration_rate=0.1,
             )
 
+        # CLI overrides for island count and topology list
+        if args.islands is not None:
+            config_e.num_islands = args.islands
+            # Ensure population is divisible by island count
+            if config_e.population_size % args.islands != 0:
+                old_pop = config_e.population_size
+                # Round up to nearest multiple
+                config_e.population_size = ((old_pop + args.islands - 1) // args.islands) * args.islands
+                print(f"  Adjusted population {old_pop} -> {config_e.population_size} "
+                      f"(divisible by {args.islands} islands)")
+        topo_list = None
+        if args.topologies is not None:
+            topo_list = [t.strip() for t in args.topologies.split(',')]
+
         print(f"\nExperiment E config ({args.domain}): pop={config_e.population_size}, "
               f"L={config_e.genome_length}, islands={config_e.num_islands}, "
               f"mig_freq={config_e.migration_freq}, mig_rate={config_e.migration_rate}")
+        if topo_list:
+            print(f"  Topologies: {topo_list}")
         print(f"\n--- Experiment E: Topology Sweep ({args.domain}) ---")
         csv_name = args.csv_name or f'experiment_e_{args.domain}.csv'
         csv_path = os.path.join(outdir, csv_name)
@@ -1424,6 +1444,7 @@ def main():
             os.remove(csv_path)
 
         results_e = run_experiment_e(seeds, config_e,
+                                     topologies=topo_list,
                                      evaluate_fn=eval_fn, init_fn=init_fn,
                                      crossover_fn=cx_fn, mutate_fn=mut_fn,
                                      diversity_fn=div_fn, divergence_fn=dvg_fn,
