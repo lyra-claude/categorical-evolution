@@ -13,7 +13,27 @@ This creates a COEVOLUTIONARY landscape: fitness is relative to opponents,
 making it inherently topology-sensitive as migration introduces new strategies.
 """
 
+import os
+from multiprocessing import Pool
+
 import numpy as np
+
+_NUM_WORKERS = min(8, os.cpu_count() or 4)
+_pool = None
+
+
+def _get_pool():
+    global _pool
+    if _pool is None:
+        _pool = Pool(_NUM_WORKERS)
+    return _pool
+
+
+def _play_game_pair(args):
+    """Play one checkers game between two weight vectors. For Pool.map."""
+    weights_i, weights_j, seed = args
+    rng = np.random.default_rng(seed)
+    return play_game(weights_i, weights_j, rng)
 
 
 # ---------------------------------------------------------------------------
@@ -513,27 +533,42 @@ def evaluate_checkers(pop: np.ndarray) -> np.ndarray:
     games_played = np.zeros(n, dtype=np.float64)
 
     if n <= 20:
-        # Full round-robin for island-sized populations
+        # Full round-robin — parallelized across worker pool
+        tasks = []
+        pair_indices = []
         for i in range(n):
             for j in range(i + 1, n):
-                result = play_game(all_weights[i], all_weights[j], rng)
-                points[i] += result
-                points[j] += (1.0 - result)
-                games_played[i] += 1
-                games_played[j] += 1
+                seed = int((cache_key + i * n + j) % (2**31))
+                tasks.append((all_weights[i], all_weights[j], seed))
+                pair_indices.append((i, j))
+
+        results = _get_pool().map(_play_game_pair, tasks)
+
+        for (i, j), result in zip(pair_indices, results):
+            points[i] += result
+            points[j] += (1.0 - result)
+            games_played[i] += 1
+            games_played[j] += 1
     else:
-        # Swiss-style: each individual plays SWISS_ROUNDS random opponents
+        # Swiss-style — parallelized across worker pool
+        tasks = []
+        pair_list = []
         for i in range(n):
             opponents = rng.choice(n - 1, size=min(_SWISS_ROUNDS, n - 1),
                                    replace=False)
-            # Map indices: skip self
             for opp_idx in opponents:
-                j = opp_idx if opp_idx < i else opp_idx + 1
-                result = play_game(all_weights[i], all_weights[j], rng)
-                points[i] += result
-                points[j] += (1.0 - result)
-                games_played[i] += 1
-                games_played[j] += 1
+                j = int(opp_idx if opp_idx < i else opp_idx + 1)
+                seed = int(rng.integers(0, 2**31))
+                tasks.append((all_weights[i], all_weights[j], seed))
+                pair_list.append((i, j))
+
+        results = _get_pool().map(_play_game_pair, tasks)
+
+        for (i, j), result in zip(pair_list, results):
+            points[i] += result
+            points[j] += (1.0 - result)
+            games_played[i] += 1
+            games_played[j] += 1
 
     # Normalize to [0, 1]
     fitnesses = points / np.maximum(1, games_played)
