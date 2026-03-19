@@ -4,6 +4,27 @@
 
 A Haskell library that composes genetic operators (selection, mutation, crossover) as morphisms in a Kleisli category, with MTL monad transformers providing the effect context.
 
+## ACT 2026 Paper — Navigation
+
+Branch: `feat/act2026-paper`
+
+| What | Where |
+|------|-------|
+| **Paper (LaTeX)** | `act2026/paper.tex` |
+| **Paper build files** | `act2026/` (eptcs.cls, eptcs.bst, references.bib, etc.) |
+| **Restructuring plan** | `act2026/RESTRUCTURING-PLAN.md` |
+| **Haskell domain code** | `src/Evolution/Examples/` — one file per domain (Checkers.hs, GraphColoring.hs, Knapsack.hs, Maze.hs, SortingNetwork.hs, SymbolicRegression.hs) |
+| **Haskell backbone** | `src/Evolution/` — Category.hs, Effects.hs, Island.hs, Operators.hs, Pipeline.hs, Strategy.hs |
+| **Python sweep code** | `experiments/` — one file per domain (checkers_domain.py, graph_coloring_domain.py, knapsack_domain.py, maze_domain.py, nothanks_domain.py) plus analysis scripts |
+| **Raw experimental data** | `experiments/experiment_e_*.csv` |
+| **Paper outline** | `paper-outline.md` (root) |
+
+**To build the paper:**
+```bash
+cd act2026
+pdflatex paper.tex && bibtex paper && pdflatex paper.tex && pdflatex paper.tex
+```
+
 ## The Idea
 
 ### category-printf: composing format specs
