@@ -979,6 +979,7 @@ We formalized genetic algorithm operators as Kleisli morphisms over a
 population monad, completing the categorical optimization landscape
 initiated
 by~\cite{gavranovic2024categorical,hedges2024reinforcement,bakirtzis2024compositional}.
+Concurrent work by Zhang et al.~\cite{zhang2024mce} applies monadic composition to agent systems; our approach is distinguished by treating migration topology as the primary variable, enabling spectral analysis of diversity dynamics.
 Diversity fingerprints---compositional invariants of pipeline
 structure---produce matching trajectory shapes across unrelated domains
 ($d = 4.34$, $p < 3.7 \times 10^{-11}$), and the topology ordering
@@ -1029,6 +1030,9 @@ per-event inflation is its numerical signature (full analysis in companion repos
 
 \paragraph{Per-island asymmetry.}
 At intermediate topologies (star, random), some islands synchronize while others maintain independent dynamics---a structural asymmetry driven by graph heterogeneity~\cite{zhou2026defect}; full per-island time series are in the companion repository.
+
+\paragraph{Disconnected versus connected topologies.}
+Our canonical ordering places \emph{none} (independent runs, $\lambda_2 = 0$) above ring for diversity preservation, but a disconnected topology lies outside the scope of the laxator theory, which applies only to connected graphs. Among connected topologies, ring is optimal: it has the smallest algebraic connectivity, hence the smallest laxator, and preserves the most diversity while still enabling information flow between populations. The practical recommendation is clear: ring topology maximizes diversity subject to the constraint of a connected population structure.
 
 \paragraph{Limitations and future work.}
 The $n{=}7$ confirmation is on one domain; replication would strengthen it. Future work includes a formal proof of
