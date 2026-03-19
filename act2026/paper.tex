@@ -78,45 +78,31 @@ Lyra Vega
 \maketitle
 
 \begin{abstract}
-Four independent research programs have recently converged on the same
-structural insight: in optimization, \emph{how} components compose determines
-system-level behavior more than the components themselves. Gavranovi\'{c} et
-al.~\cite{gavranovic2024categorical} formalized neural network architectures
-categorically; Hedges and Sakamoto~\cite{hedges2024reinforcement} cast
-reinforcement learning in categorical cybernetics; Bakirtzis et
-al.~\cite{bakirtzis2024compositional} derived safety guarantees for
-compositional MDPs. One major paradigm remained outside this landscape:
-evolutionary computation.
+We present the first categorical formalization of genetic algorithms,
+modeling selection, crossover, mutation, and evaluation as Kleisli morphisms
+over a population monad. Pipelines compose at three hierarchical
+levels---operators into generations, generations into strategies, strategies
+into island models---closing over the same Kleisli category. This completes
+the categorical optimization landscape: neural networks ($\mathbf{Para}$),
+reinforcement learning (categorical cybernetics), compositional MDPs, and now
+evolutionary computation (Kleisli).
 
-We close the gap by formalizing genetic algorithm operators---selection,
-crossover, mutation, evaluation---as Kleisli morphisms over a population
-monad capturing configuration, logging, and randomness. Pipelines, strategies,
-and island-model migration arise as compositions at three hierarchical levels
-in the Kleisli category, providing the first categorical formalization of
-genetic algorithms. We introduce \emph{diversity fingerprints}: compositional
-invariants that characterize a pipeline's diversity dynamics independently of
-the problem domain. Our main result (Conjecture~1) establishes that diversity
-fingerprints are functorial: a domain-change functor preserving composition
-structure preserves fingerprint shape. Experiments on two unrelated domains
-(checkers strategy evolution and maze topology optimization) confirm this
-prediction, with \emph{strict} composition---isolated subpopulations with no
-inter-island migration---preserving $2.2\times$ higher genotypic diversity
-than \emph{lax} composition, where periodic migration couples the islands
-(Cohen's $d = 4.34$, $p < 3.7 \times 10^{-11}$). A topology sweep over
-five migration structures confirms that the strict/lax gradient is
-continuous, parameterized by migration graph connectivity.
-Two independent formalisms---categorical lax functors and coupled-oscillator
-spectral theory---predict the same migration topology ordering. We confirm
-it empirically across six domains.
-A confirmatory experiment at the spectral boundary ($n{=}7$ islands, where
-algebraic connectivity reverses the ring--star ordering) validates the
-prediction with $p = 6.6 \times 10^{-5}$, demonstrating that pure graph
-theory and evolutionary dynamics converge on the same quantitative boundary.
-We conjecture
-that this \emph{strict/lax dichotomy} is general: strict composition
-preserves compositional invariants while lax composition degrades
-them---a pattern supported by eight independent studies across optimization
-paradigms.
+The island functor, lifting strategies to multi-population systems, is strict
+monoidal when subpopulations evolve independently and lax when coupled by
+migration. We define the \emph{laxator} as the natural transformation
+measuring deviation from strict composition and show its magnitude grows with
+algebraic connectivity of the migration graph. Since algebraic connectivity
+governs mixing time, this connects categorical structure to spectral graph
+theory: topology determines the strict-to-lax continuum, which determines
+diversity dynamics.
+
+This connection yields testable predictions. We confirm domain independence
+of the topology ordering across five unrelated fitness landscapes---OneMax,
+maze generation, graph coloring, knapsack, and co-evolutionary game
+play---with perfect rank correlation ($\rho = 1.0$). The spectral theorem
+predicts that at $n{=}7$ islands, ring topology preserves more diversity than
+star, reversing their $n{=}5$ relationship. A prospective experiment confirms
+this with $p < 0.0001$.
 \end{abstract}
 
 %% ============================================================
