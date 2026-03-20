@@ -637,8 +637,44 @@ All experiments use a standard island-model GA: 5~islands of 16~individuals each
 Across the six non-degenerate domains, the canonical ordering
 none~$>$~ring~$>$~star~$>$~random~$>$~FC holds with perfect concordance
 (Kendall's $W = 1.0$, $\chi^2 = 24.0$, $p = 0.00008$;
-all 15~pairwise Spearman $\rho = 1.0$; Figure~\ref{fig:topology-ordering}). A two-way ANOVA confirms
-topology explains $28.7\times$ more variance than domain. Checkers---our only co-evolutionary domain with
+all 15~pairwise Spearman $\rho = 1.0$; Figure~\ref{fig:multi-domain-topology}). A two-way ANOVA confirms
+topology explains $28.7\times$ more variance than domain.
+Table~\ref{tab:domain-topology} shows mean genotypic diversity at generation~99 across all domain--topology combinations; the ordering is invariant.
+
+\begin{table}[t]
+\centering\small
+\caption{Mean genotypic diversity (generation~99, 30~seeds) across six domains and five topologies.
+  Canonical ordering none~$>$~ring~$>$~star~$>$~random~$>$~FC holds in every domain
+  (Kendall's $W = 1.0$, $p = 0.00008$). Sorting network is omitted (degenerate: all topologies converge identically).}
+\label{tab:domain-topology}
+\begin{tabular}{@{}l ccccc@{}}
+\toprule
+Domain & none & ring & star & random & FC \\
+\midrule
+Maze            & .411 & .316 & .278 & .247 & .197 \\
+Checkers        & .418 & .371 & .362 & .353 & .343 \\
+Graph coloring  & .426 & .283 & .248 & .185 & .156 \\
+Knapsack        & .202 & .173 & .170 & .169 & .154 \\
+No Thanks!      & .237 & .109 & .098 & .082 & .072 \\
+OneMax          & .128 & .087 & .080 & .076 & .060 \\
+\midrule
+\textit{Ordering} & \textit{1st} & \textit{2nd} & \textit{3rd} & \textit{4th} & \textit{5th} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.92\textwidth]{../experiments/plots/multi_domain_topology_ordering.pdf}
+\caption{Diversity at generation~99 across six domains and five topologies.
+  The canonical ordering none~$>$~ring~$>$~star~$>$~random~$>$~FC holds
+  in every domain (Kendall's $W = 1.0$, $p = 0.00008$).
+  Topology explains $28.7\times$ more variance than domain (two-way ANOVA).
+  Sorting network (degenerate) omitted.}
+\label{fig:multi-domain-topology}
+\end{figure}
+
+Checkers---our only co-evolutionary domain with
 intransitive, opponent-relative fitness---shows the smallest phase transition
 ($11.1\%$ none-to-ring drop) yet preserves the full ordering
 (ring vs.\ star: $d = 0.577$, $p = 0.029$; none vs.\ FC: $d = 5.76$).
