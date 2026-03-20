@@ -494,19 +494,12 @@ operates unchanged on checkers (\texttt{[Double]}), mazes
 \label{sec:domains}
 
 To test whether compositional structure determines dynamics independently
-of fitness landscape, we select domains that are maximally dissimilar along
-three axes: \emph{landscape structure} (monotone vs.\ intransitive),
+of fitness landscape, we select six domains spanning three axes:
+\emph{landscape structure} (monotone vs.\ intransitive),
 \emph{representation} (fixed-length vs.\ variable-length), and
-\emph{constraint type} (unconstrained, hard, soft). Mazes occupy the
-monotone--fixed-length--soft-constraint cell: fitness improves smoothly with
-topological complexity, genomes are fixed-length bitstrings, and
-connectivity constraints are penalized but not enforced. Checkers occupies
-the intransitive--fixed-length--unconstrained cell: fitness is
-context-dependent (strategy A beats B, B beats C, C can beat A), genomes
-are fixed-length bitstrings, and the search space is unconstrained. If the
-same topology ordering emerges across these two cells, the invariance claim
-extends beyond monotone landscapes to the hardest case: fitness that depends
-on co-evolutionary context rather than any absolute measure.
+\emph{constraint type} (unconstrained, hard, soft). We describe two
+in detail; the remaining four (OneMax, graph coloring, knapsack,
+No~Thanks!) are described in the companion repository.
 
 \begin{definition}[Tournament selection]
 \label{def:tournament}
@@ -567,31 +560,18 @@ same order.
 \subsection{Four Strategies on Each Domain}
 \label{sec:four-strategies}
 
-We run four composition strategies on each domain, each corresponding
-to a distinct way of composing pipelines in~$\mathbf{Kl}(T)$:
-
-\begin{enumerate}
-\item \textbf{Flat generational.} The pipeline~$\pi$ applied for
-  50~generations: $\pi^{50}$. A single morphism iterated.
-
-\item \textbf{Hourglass.} A three-phase sequential composition:
+We run four composition strategies, each a distinct way of composing
+pipelines in~$\mathbf{Kl}(T)$:
+(1)~\textbf{Flat}: $\pi^{50}$, a single morphism iterated;
+(2)~\textbf{Hourglass}: three-phase sequential composition
   $\sigma_{\mathrm{hg}} = \pi_{\mathrm{div}}^{25} \circ_K
-  \pi_{\mathrm{conv}}^{10} \circ_K \pi_{\mathrm{exp}}^{15}$, where
-  the phases use different mutation rates and tournament sizes
-  (exploration: high mutation, large $k$; convergence: low mutation,
-  small $k$; diversification: medium mutation, large $k$).
-
-\item \textbf{Island model.} Four subpopulations with ring-topology
-  migration every 5~generations, implemented via the island
-  functor~$\mathcal{I}$ from Section~\ref{sec:three-level}.
-
-\item \textbf{Adaptive.} Exploration with plateau detection: run
-  $\pi_{\mathrm{exp}}$, monitor fitness improvement, and switch to
-  $\pi_{\mathrm{focus}}$ when improvement stalls for 5 consecutive
-  generations. This is a conditional composition
+  \pi_{\mathrm{conv}}^{10} \circ_K \pi_{\mathrm{exp}}^{15}$;
+(3)~\textbf{Island}: four subpopulations with ring migration every
+  5~generations via~$\mathcal{I}$ (Section~\ref{sec:three-level});
+(4)~\textbf{Adaptive}: conditional composition
   $\sigma_{\mathrm{ad}} = \mathsf{cond}(\mathsf{plateau},
-  \pi_{\mathrm{focus}}, \pi_{\mathrm{exp}})$.
-\end{enumerate}
+  \pi_{\mathrm{focus}}, \pi_{\mathrm{exp}})$, switching on plateau
+  detection.
 
 \subsection{What Changes, What Stays}
 \label{sec:invariance}
@@ -632,45 +612,20 @@ is preserved. The next section shows this produces measurable consequences.
 We now present the central empirical result of this paper.
 
 \paragraph{Experimental setup.}
-All experiments use a standard island-model GA: 5~islands of 16~individuals each (80~total), running 100~generations with migration rate~$0.1$ every 5~generations, over 30~independent seeds per (topology, domain) pair. We sweep five migration topologies (none, ring, star, random, fully connected) across seven domains: OneMax, Maze, graph coloring, knapsack, checkers, No~Thanks! (co-evolutionary, tournament-based fitness), and sorting network. Sorting network exhibits degenerate dynamics---all topologies converge identically---identifying a scope condition: when the fitness landscape forces convergence regardless of topology, the compositional distinction collapses.
-
-Across the six non-degenerate domains, the canonical ordering
+All experiments: 5~islands $\times$ 16~individuals, 100~generations, migration rate~$0.1$ every 5~generations, 30~seeds per (topology, domain) pair. We sweep five topologies (none, ring, star, random, fully connected) across seven domains. Sorting network is degenerate (all topologies converge identically), identifying a scope condition. Across the six non-degenerate domains, the canonical ordering
 none~$>$~ring~$>$~star~$>$~random~$>$~FC holds with perfect concordance
 (Kendall's $W = 1.0$, $\chi^2 = 24.0$, $p = 0.00008$;
 all 15~pairwise Spearman $\rho = 1.0$; Figure~\ref{fig:multi-domain-topology}). A two-way ANOVA confirms
 topology explains $28.7\times$ more variance than domain.
-Table~\ref{tab:domain-topology} shows mean genotypic diversity at generation~99 across all domain--topology combinations; the ordering is invariant.
-
-\begin{table}[t]
-\centering\small
-\caption{Mean genotypic diversity (generation~99, 30~seeds) across six domains and five topologies.
-  Canonical ordering none~$>$~ring~$>$~star~$>$~random~$>$~FC holds in every domain
-  (Kendall's $W = 1.0$, $p = 0.00008$). Sorting network is omitted (degenerate: all topologies converge identically).}
-\label{tab:domain-topology}
-\begin{tabular}{@{}l ccccc@{}}
-\toprule
-Domain & none & ring & star & random & FC \\
-\midrule
-Maze            & .411 & .316 & .278 & .247 & .197 \\
-Checkers        & .418 & .371 & .362 & .353 & .343 \\
-Graph coloring  & .426 & .283 & .248 & .185 & .156 \\
-Knapsack        & .202 & .173 & .170 & .169 & .154 \\
-No Thanks!      & .237 & .109 & .098 & .082 & .072 \\
-OneMax          & .128 & .087 & .080 & .076 & .060 \\
-\midrule
-\textit{Ordering} & \textit{1st} & \textit{2nd} & \textit{3rd} & \textit{4th} & \textit{5th} \\
-\bottomrule
-\end{tabular}
-\end{table}
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.92\textwidth]{../experiments/plots/multi_domain_topology_ordering.pdf}
-\caption{Diversity at generation~99 for four of the six experimental domains
-  (OneMax, Maze, Graph Coloring, Knapsack). The canonical ordering
-  none~$>$~ring~$>$~star~$>$~random~$>$~FC holds in every domain;
-  all six domains (including No~Thanks!\ and checkers) show the same ordering
-  (Table~\ref{tab:domain-topology}; Kendall's $W = 1.0$, $p = 0.00008$).
+\caption{Diversity (mean $\pm$ SE, 30~seeds, generation~99) across all six
+  experimental domains: OneMax, Maze, Graph Coloring, Knapsack, No~Thanks!,
+  and Checkers. The canonical ordering
+  none~$>$~ring~$>$~star~$>$~random~$>$~FC is identical in every domain
+  (Kendall's $W = 1.0$, $p = 0.00008$).
   Topology explains $28.7\times$ more variance than domain (two-way ANOVA).}
 \label{fig:multi-domain-topology}
 \end{figure}
@@ -846,17 +801,11 @@ incompatible genome types and fitness functions.}
 \subsection{Cross-Domain Stability}
 \label{sec:fp-stability}
 
-Each fingerprint \emph{shape} is stable across domains despite
-content-level differences: flat always declines monotonically, hourglass
-always shows spike--crash--rebound, island always maintains a stable band.
-These patterns hold across $\{0,1\}^{64}$ and $\{0,1\}^{60}$ genomes,
-adversarial and intrinsic fitness, Gaussian and bit-flip mutation.
-
-The categorical explanation: fingerprints are functions of the
-\emph{composition pattern}---the sequence and nesting of Kleisli
-morphisms---which is exactly what is invariant across domains
-(Table~\ref{tab:invariance}). In categorical terms, the fingerprint
-is \emph{functorial}: it respects composition.
+Each fingerprint shape is stable across domains: flat always declines
+monotonically, hourglass always shows spike--crash--rebound, island
+always maintains a stable band. The categorical explanation: fingerprints
+are functions of the \emph{composition pattern} (Table~\ref{tab:invariance}),
+which is invariant across domains. The fingerprint is \emph{functorial}.
 
 \begin{conjecture}[Fingerprint functoriality]
 \label{conj:functorial}
@@ -892,12 +841,9 @@ converge to $0.30$ while island remains higher ($0.34$).
 \subsection{Statistical Confirmation}
 \label{sec:fp-stats}
 
-To move from qualitative observation to statistical rigor, we ran
-30~independent seeds comparing strict composition (no migration,
-four independent subpopulations) against lax composition (migration
-every 5~generations, same four subpopulations) on 20-bit
-OneMax~\cite{mitchell1992royal} for 100~generations.
-Effect size is reported as Cohen's~$d$ (the standardized mean difference).
+We compare strict (no migration) versus lax (migration every
+5~generations) composition on 20-bit OneMax~\cite{mitchell1992royal},
+30~seeds, 100~generations (Cohen's~$d$ for effect size).
 
 \begin{table}[t]
 \centering
@@ -918,10 +864,9 @@ Gen & Strict (mean $\pm$ std) & Lax (mean $\pm$ std) & $d$ & $p$ \\
 \end{tabular}
 \end{table}
 
-By generation~100, $d = 4.34$ with $p < 3.7 \times 10^{-11}$: the
-diversity distributions under strict and lax composition do not overlap
-across 30~seeds, yet both converge to the same optimal fitness. The
-divergence is entirely in diversity dynamics, not solution quality.
+By generation~100, $d = 4.34$ ($p < 3.7 \times 10^{-11}$): strict
+and lax distributions do not overlap, yet both converge to optimal
+fitness---divergence is entirely in diversity dynamics.
 
 \subsection{Topology Parameterizes the Laxator}
 \label{sec:topology}
@@ -953,20 +898,17 @@ fully connected    & 10 & $.062 \pm .009$ & $.060 \pm .010$ & $99.3 \pm 0.7$ \\
 \end{table}
 
 All pairwise differences are significant at $p < 0.001$
-(Mann--Whitney~$U$, Bonferroni-corrected); ring, star, and random form
-a middle cluster. The laxator norm is thus continuous but non-uniform:
+(Mann--Whitney~$U$, Bonferroni-corrected). The laxator norm is continuous but non-uniform:
 the symmetry-breaking first coupling dominates.
-The ring--star gap is notably narrow at $n{=}5$ islands: $\lambda_2(C_5) =
-1.382$ versus $\lambda_2(K_{1,4}) = 1.0$, placing them in the same
-spectral regime. This is not noise---it is a \emph{prediction}: at
-$n \geq 7$, where $\lambda_2(C_n) < 1$, the gap should widen
-(Section~\ref{sec:discussion}).
-That star (4~edges) yields less diversity than ring (5~edges) despite
-fewer edges shows that the laxator depends on \emph{graph structure},
-not edge count alone.
+The ring--star gap is narrow at $n{=}5$: $\lambda_2(C_5) =
+1.382$ versus $\lambda_2(K_{1,4}) = 1.0$ (same spectral regime). At
+$n \geq 7$, $\lambda_2(C_n) < 1$ and the gap widens
+(Section~\ref{sec:discussion}). That star (4~edges) yields less diversity
+than ring (5~edges) shows the laxator depends on \emph{graph structure},
+not edge count.
 
 \paragraph{Why ring is unique: cyclic sparsity.}
-Define $R(d)$ as the mean pairwise coherence ($R = 1 - \text{divergence}$) between islands at graph distance~$d$. Traveling-wave dynamics require a topology that is simultaneously sparse (spatial locality) and cyclic (no boundary reflections). Ring uniquely satisfies both: star is sparse but acyclic (hub collapses distance to binary), fully connected is cyclic but structureless ($R(d)$ degenerates to a single point). Ring alone yields monotone distance-decay in $R(d)$---nearer islands synchronize more strongly (Figure~\ref{fig:rd-two-panel}).
+Define $R(d)$ as the mean pairwise coherence between islands at graph distance~$d$. Traveling-wave dynamics require simultaneous sparsity (locality) and cyclicity (no boundary reflections). Ring uniquely satisfies both: star is sparse but acyclic, fully connected is cyclic but structureless. Ring alone yields monotone distance-decay in $R(d)$ (Figure~\ref{fig:rd-two-panel}).
 
 \begin{figure}[t]
 \centering
@@ -1012,22 +954,15 @@ Each exhibits the same pattern: strict composition preserves invariants; lax com
 \section{Discussion and Conclusion}
 \label{sec:discussion}
 
-We formalized genetic algorithm operators as Kleisli morphisms over a
-population monad, completing the categorical optimization landscape
-initiated
-by~\cite{gavranovic2024categorical,hedges2024reinforcement,bakirtzis2024compositional}.
-Concurrent work by Zhang et al.~\cite{zhang2024mce} applies monadic composition to agent systems; our approach is distinguished by treating migration topology as the primary variable, enabling spectral analysis of diversity dynamics.
-Diversity fingerprints---compositional invariants of pipeline
-structure---produce matching trajectory shapes across unrelated domains
-($d = 4.34$, $p < 3.7 \times 10^{-11}$), and the topology ordering
-none~$>$~ring~$>$~star~$>$~random~$>$~FC holds identically across six
-domains (Kendall's $W = 1.0$, $p = 0.00008$). We conjecture that strict
-composition preserves such invariants while lax composition degrades them,
-a pattern supported by eight independent studies.
+We formalized GA operators as Kleisli morphisms over a population monad,
+completing the categorical optimization landscape
+of~\cite{gavranovic2024categorical,hedges2024reinforcement,bakirtzis2024compositional}.
+Concurrent work by Zhang et al.~\cite{zhang2024mce} applies monadic
+composition to agent systems; our approach treats migration topology as
+the primary variable, enabling spectral analysis of diversity dynamics.
 
 \paragraph{Predictive power.}
-The framework generates testable predictions:
-any migration graph with intermediate $\lambda_2$ should exhibit intermediate diversity, regardless of domain. Four independent lines confirm this: $\lambda_2$ governs
+Any migration graph with intermediate $\lambda_2$ should exhibit intermediate diversity, regardless of domain. Four independent lines confirm this: $\lambda_2$ governs
 synchronization onset~\cite{sanz2026algebraic}, consensus time scales as $N^3$ on
 cycles versus $N^2$ on complete graphs~\cite{brewster2025diversity}, threshold graphs are globally
 synchronizing~\cite{wu2025threshold}, and local structure determines
@@ -1050,26 +985,22 @@ theory~\cite{brewster2025diversity}, and our experiments converge---not just
 on the ordering, but on the \emph{boundary} where it changes.
 
 \paragraph{Fixed versus time-varying topologies.}
-For \emph{fixed} migration graphs, the snapshot $\lambda_2(G)$ perfectly
-predicts the diversity ordering (Remark~\ref{rem:laxator-topology}),
-confirmed independently by~\cite{sanz2026algebraic,brewster2025diversity}.
-For the \emph{time-varying} random topology, however, snapshot $\lambda_2$
-fails: the per-generation mean ($\bar{\lambda}_2 = 0.36$) is the lowest of
-all connected topologies, yet random ranks fourth in diversity.
-The resolution: the time-averaged adjacency matrix yields effective
+For \emph{fixed} graphs, snapshot $\lambda_2(G)$ perfectly predicts the
+diversity ordering~\cite{sanz2026algebraic,brewster2025diversity}.
+For the \emph{time-varying} random topology, snapshot $\lambda_2$ fails
+($\bar{\lambda}_2 = 0.36$, lowest of all connected topologies, yet random
+ranks fourth). The time-averaged adjacency matrix yields effective
 $\lambda_2 = 39.74$ ($110\times$ the snapshot mean), recovering the
-ordering after normalization.
-Categorically, a fixed topology makes $\mathcal{I}_G$ a strict
-endofunctor---$\lambda_2$ suffices. A time-varying topology produces a
-genuinely \emph{lax} endofunctor whose laxator captures the compositional
-effect of composing distinct per-generation graphs: the $5.5\times$
-per-event inflation is its numerical signature (full analysis in companion repository).
+ordering. Categorically, fixed topology makes $\mathcal{I}_G$ a strict
+endofunctor; time-varying topology produces a genuinely \emph{lax}
+endofunctor whose $5.5\times$ per-event inflation is the laxator's
+numerical signature.
 
 \paragraph{Per-island asymmetry.}
-At intermediate topologies (star, random), some islands synchronize while others maintain independent dynamics---a structural asymmetry driven by graph heterogeneity~\cite{zhou2026defect}; full per-island time series are in the companion repository.
+At intermediate topologies (star, random), graph heterogeneity produces per-island synchronization asymmetry~\cite{zhou2026defect}; full time series are in the companion repository.
 
 \paragraph{Disconnected versus connected topologies.}
-Our canonical ordering places \emph{none} (independent runs, $\lambda_2 = 0$) above ring for diversity preservation, but a disconnected topology lies outside the scope of the laxator theory, which applies only to connected graphs. Among connected topologies, ring is optimal: it has the smallest algebraic connectivity, hence the smallest laxator, and preserves the most diversity while still enabling information flow between populations. The practical recommendation is clear: ring topology maximizes diversity subject to the constraint of a connected population structure.
+The \emph{none} topology ($\lambda_2 = 0$) preserves the most diversity but lies outside the laxator theory (connected graphs only). Among connected topologies, ring is optimal: smallest $\lambda_2$, hence smallest laxator, maximizing diversity subject to connectivity.
 
 \paragraph{Limitations and future work.}
 The $n{=}7$ confirmation is on one domain; replication would strengthen it. Future work includes a formal proof of
