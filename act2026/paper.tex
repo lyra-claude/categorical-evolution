@@ -663,6 +663,17 @@ OneMax          & .128 & .087 & .080 & .076 & .060 \\
 \end{tabular}
 \end{table}
 
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.92\textwidth]{../experiments/plots/multi_domain_topology_ordering.pdf}
+\caption{Diversity at generation~99 across six domains and five topologies.
+  The canonical ordering none~$>$~ring~$>$~star~$>$~random~$>$~FC holds
+  in every domain (Kendall's $W = 1.0$, $p = 0.00008$).
+  Topology explains $28.7\times$ more variance than domain (two-way ANOVA).
+  Sorting network (degenerate) omitted.}
+\label{fig:multi-domain-topology}
+\end{figure}
+
 Checkers---our only co-evolutionary domain with
 intransitive, opponent-relative fitness---shows the smallest phase transition
 ($11.1\%$ none-to-ring drop) yet preserves the full ordering
