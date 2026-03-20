@@ -637,13 +637,25 @@ All experiments use a standard island-model GA: 5~islands of 16~individuals each
 Across the six non-degenerate domains, the canonical ordering
 none~$>$~ring~$>$~star~$>$~random~$>$~FC holds with perfect concordance
 (Kendall's $W = 1.0$, $\chi^2 = 24.0$, $p = 0.00008$;
-all 15~pairwise Spearman $\rho = 1.0$). A two-way ANOVA confirms
+all 15~pairwise Spearman $\rho = 1.0$; Figure~\ref{fig:topology-ordering}). A two-way ANOVA confirms
 topology explains $28.7\times$ more variance than domain. Checkers---our only co-evolutionary domain with
 intransitive, opponent-relative fitness---shows the smallest phase transition
 ($11.1\%$ none-to-ring drop) yet preserves the full ordering
 (ring vs.\ star: $d = 0.577$, $p = 0.029$; none vs.\ FC: $d = 5.76$).
 The small transition is consistent with co-evolutionary buffering:
 migrant fitness depends on local context, diluting the coupling signal.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{../experiments/plots/multi_domain_topology_ordering.pdf}
+\caption{Multi-domain topology ordering (mean $\pm$ SE across 30 seeds,
+  generation~99). Final-generation Hamming diversity decreases monotonically
+  from none (strict) to fully connected (lax) in every domain. Despite
+  order-of-magnitude differences in absolute diversity, the ordering
+  none~$>$~ring~$>$~star~$>$~random~$>$~FC is identical across all domains
+  (Kendall's $W = 1.0$, $p = 0.00008$).}
+\label{fig:topology-ordering}
+\end{figure}
 
 Running
 the four strategies from Section~\ref{sec:four-strategies} on both
