@@ -78,6 +78,12 @@ DOMAIN_SPECS = [
         "marker": "v",
     },
     {
+        "key": "nothanks",
+        "data_files": ["experiment_e_nothanks.csv"],
+        "label": "No Thanks!",
+        "marker": "X",
+    },
+    {
         "key": "checkers",
         "data_files": ["experiment_e_checkers.csv"],
         "label": "Checkers",
@@ -120,11 +126,12 @@ DOMAIN_COLORS = [
     "#59A14F",  # Sorting Networks -- green
     "#E15759",  # Graph Coloring -- red
     "#B07AA1",  # Knapsack -- purple
+    "#EDC948",  # No Thanks! -- gold
     "#76B7B2",  # Checkers -- teal
 ]
 
 # Domain hatching patterns (for additional differentiation in bar chart)
-DOMAIN_HATCHES = ["", "//", "\\\\", "xx", "..", "OO"]
+DOMAIN_HATCHES = ["", "//", "\\\\", "xx", "..", "++", "oo"]
 
 
 # ---------------------------------------------------------------------------

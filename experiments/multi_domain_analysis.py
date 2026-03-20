@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Multi-domain analysis: 4-domain comparison (OneMax, Maze, Graph Coloring, Knapsack).
+Multi-domain analysis: 6-domain comparison (OneMax, Maze, Graph Coloring, Knapsack, No Thanks!, Checkers).
 
 Generates three publication-quality figures:
   1. Multi-domain topology ordering -- bar chart of final-generation mean diversity
@@ -19,6 +19,8 @@ Data:
   experiment_e_maze.csv           (Maze)
   experiment_e_graph_coloring.csv (Graph Coloring)
   experiment_e_knapsack.csv       (Knapsack)
+  experiment_e_nothanks.csv       (No Thanks!)
+  experiment_e_checkers.csv       (Checkers)
   experiment_e_sorting_network.csv (Sorting Network -- diagnostic only)
 
 Output:
@@ -83,10 +85,24 @@ DOMAIN_CONFIGS = {
         'marker': 'v',
         'hatch': '..',
     },
+    'nothanks': {
+        'path': os.path.join(SCRIPT_DIR, 'experiment_e_nothanks.csv'),
+        'label': 'No Thanks!',
+        'color': '#59A14F',
+        'marker': 'P',
+        'hatch': '++',
+    },
+    'checkers': {
+        'path': os.path.join(SCRIPT_DIR, 'experiment_e_checkers.csv'),
+        'label': 'Checkers',
+        'color': '#76B7B2',
+        'marker': 'X',
+        'hatch': 'oo',
+    },
 }
 
 # Canonical domain order for consistent plotting
-DOMAIN_ORDER = ['onemax', 'maze', 'graph_coloring', 'knapsack']
+DOMAIN_ORDER = ['onemax', 'maze', 'graph_coloring', 'knapsack', 'nothanks', 'checkers']
 
 TOPO_ORDER = ['none', 'ring', 'star', 'random', 'fully_connected']
 COUPLED_TOPOS = ['ring', 'star', 'random', 'fully_connected']
@@ -319,14 +335,15 @@ def compute_final_stats(df):
 
 def plot_topology_ordering(all_final_stats, output_prefix):
     """Grouped bar chart: final-generation diversity by topology, one group per domain."""
-    n_domains = len(DOMAIN_ORDER)
+    available = [dk for dk in DOMAIN_ORDER if dk in all_final_stats]
+    n_domains = len(available)
     n_topos = len(TOPO_ORDER)
-    bar_width = 0.8 / n_domains
+    bar_width = 0.85 / n_domains
     x_base = np.arange(n_topos)
 
-    fig, ax = plt.subplots(figsize=(10, 5))
+    fig, ax = plt.subplots(figsize=(12, 5.5))
 
-    for i, dk in enumerate(DOMAIN_ORDER):
+    for i, dk in enumerate(available):
         cfg = DOMAIN_CONFIGS[dk]
         fs = all_final_stats[dk]
 
@@ -337,24 +354,24 @@ def plot_topology_ordering(all_final_stats, output_prefix):
 
         ax.bar(
             x_offset, means, width=bar_width * 0.88,
-            yerr=ses, capsize=3,
+            yerr=ses, capsize=2,
             color=cfg['color'], hatch=cfg['hatch'],
-            edgecolor='white', linewidth=0.6,
+            edgecolor='white', linewidth=0.5,
             label=cfg['label'],
-            error_kw={'linewidth': 1.0, 'color': '0.3'},
+            error_kw={'linewidth': 0.8, 'color': '0.3'},
         )
 
     ax.set_xticks(x_base)
     ax.set_xticklabels([TOPO_LABELS[t] for t in TOPO_ORDER], fontsize=9)
     ax.set_ylabel('Final-generation Hamming diversity')
     ax.set_title(
-        'Multi-Domain Topology Ordering\n'
+        f'Multi-Domain Topology Ordering ({n_domains} domains)\n'
         '(mean $\\pm$ SE across 30 seeds, generation 99)',
         fontsize=12, fontweight='bold',
     )
     ax.legend(
         frameon=True, framealpha=0.95, edgecolor='0.8',
-        loc='upper right', fontsize=9,
+        loc='upper right', fontsize=8, ncol=2,
     )
 
     # Strict -> Lax arrow
@@ -385,18 +402,18 @@ def plot_topology_ordering(all_final_stats, output_prefix):
 # =========================================================================== #
 
 def plot_coupling_onset(all_onset_results, output_prefix):
-    """4-domain coupling onset comparison: ensemble onset by topology."""
+    """Multi-domain coupling onset comparison: ensemble onset by topology."""
     n_domains = len(DOMAIN_ORDER)
     available = [dk for dk in DOMAIN_ORDER if dk in all_onset_results]
 
-    fig, axes = plt.subplots(1, 2, figsize=(14, 5.5))
+    fig, axes = plt.subplots(1, 2, figsize=(15, 5.5))
 
     # ---- Panel A: Ensemble onset by topology ----
     ax = axes[0]
     ax.set_title('(a) Coupling Onset by Topology', fontsize=12, fontweight='bold')
 
     x = np.arange(len(COUPLED_TOPOS))
-    width = 0.18
+    width = 0.85 / max(len(available), 1)
     offsets = np.linspace(-width * (len(available) - 1) / 2,
                           width * (len(available) - 1) / 2,
                           len(available))
@@ -639,8 +656,8 @@ def plot_variance_decomposition(var_decomp, output_prefix):
                        edgecolor='0.7'))
 
     fig.suptitle(
-        'Variance Decomposition of Coupling Onset Timing\n'
-        '(4 domains, 4 coupled topologies, 30 seeds each)',
+        f'Variance Decomposition of Coupling Onset Timing\n'
+        f'({len(DOMAIN_ORDER)} domains, 4 coupled topologies, 30 seeds each)',
         fontsize=13, fontweight='bold',
     )
     plt.tight_layout()
@@ -865,7 +882,7 @@ def main():
 
     print("=" * 90)
     print("  MULTI-DOMAIN ANALYSIS")
-    print("  4 domains: OneMax, Maze, Graph Coloring, Knapsack")
+    print("  6 domains: OneMax, Maze, Graph Coloring, Knapsack, No Thanks!, Checkers")
     print("  5 topologies: none, ring, star, random, fully_connected")
     print("  30 seeds each, 100 generations")
     print("=" * 90)
