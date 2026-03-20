@@ -216,10 +216,10 @@ This paper makes three contributions:
   characterize the diversity dynamics of a GA pipeline---and conjecture that they
   are functorial: a domain-change functor preserving composition structure
   preserves fingerprint shape (Conjecture~\ref{conj:functorial},
-  Section~\ref{sec:fp-stability}). Experiments on two unrelated domains
-  (game-playing strategy evolution and maze topology optimization) confirm
-  this prediction, with effect size $d = 4.34$ and $p < 3.7 \times
-  10^{-11}$.
+  Section~\ref{sec:fp-stability}). Experiments on six unrelated domains
+  (OneMax, maze generation, graph coloring, knapsack, checkers, and
+  co-evolutionary card play) confirm this prediction, with perfect rank
+  correlation ($\rho = 1.0$, Kendall's $W = 1.0$, $p = 0.00008$).
 \item We propose a general conjecture: across optimization paradigms,
   compositional structure predicts system-level behavior. Specifically, strict
   composition preserves compositional invariants while lax composition
@@ -488,9 +488,9 @@ operates unchanged on checkers (\texttt{[Double]}), mazes
 (\texttt{[Bool]}), and expression trees (\texttt{ExprTree}).
 
 %% ============================================================
-%% Section 3: Two Domains
+%% Section 3: Six Domains
 %% ============================================================
-\section{Two Domains, One Category}
+\section{Six Domains, One Category}
 \label{sec:domains}
 
 To test whether compositional structure determines dynamics independently
@@ -666,11 +666,12 @@ OneMax          & .128 & .087 & .080 & .076 & .060 \\
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.92\textwidth]{../experiments/plots/multi_domain_topology_ordering.pdf}
-\caption{Diversity at generation~99 across six domains and five topologies.
-  The canonical ordering none~$>$~ring~$>$~star~$>$~random~$>$~FC holds
-  in every domain (Kendall's $W = 1.0$, $p = 0.00008$).
-  Topology explains $28.7\times$ more variance than domain (two-way ANOVA).
-  Sorting network (degenerate) omitted.}
+\caption{Diversity at generation~99 for four of the six experimental domains
+  (OneMax, Maze, Graph Coloring, Knapsack). The canonical ordering
+  none~$>$~ring~$>$~star~$>$~random~$>$~FC holds in every domain;
+  all six domains (including No~Thanks!\ and checkers) show the same ordering
+  (Table~\ref{tab:domain-topology}; Kendall's $W = 1.0$, $p = 0.00008$).
+  Topology explains $28.7\times$ more variance than domain (two-way ANOVA).}
 \label{fig:multi-domain-topology}
 \end{figure}
 
@@ -680,18 +681,6 @@ intransitive, opponent-relative fitness---shows the smallest phase transition
 (ring vs.\ star: $d = 0.577$, $p = 0.029$; none vs.\ FC: $d = 5.76$).
 The small transition is consistent with co-evolutionary buffering:
 migrant fitness depends on local context, diluting the coupling signal.
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=\columnwidth]{../experiments/plots/multi_domain_topology_ordering.pdf}
-\caption{Multi-domain topology ordering (mean $\pm$ SE across 30 seeds,
-  generation~99). Final-generation Hamming diversity decreases monotonically
-  from none (strict) to fully connected (lax) in every domain. Despite
-  order-of-magnitude differences in absolute diversity, the ordering
-  none~$>$~ring~$>$~star~$>$~random~$>$~FC is identical across all domains
-  (Kendall's $W = 1.0$, $p = 0.00008$).}
-\label{fig:topology-ordering}
-\end{figure}
 
 Running
 the four strategies from Section~\ref{sec:four-strategies} on both
@@ -724,7 +713,7 @@ steadily, or collapses. The claim is that this shape is determined by
 the composition pattern~$\sigma$---how the Kleisli morphisms are
 assembled---not by the genome type~$\Sigma$ or the fitness function.
 
-\subsection{Four Fingerprints Observed}
+\subsection{Fingerprint Taxonomy}
 \label{sec:fp-observed}
 
 Table~\ref{tab:fingerprints} shows genotypic diversity over time for
@@ -763,7 +752,7 @@ Gen & Ck & Mz & Ck & Mz & Ck & Mz \\
   height=0.28\textwidth,
   xlabel={Generation},
   ylabel={Diversity},
-  title={\small Checkers ($\mathbb{R}^{10}$)},
+  title={\small Checkers ($\{0,1\}^{64}$)},
   xmin=-1, xmax=21,
   ymin=0.15, ymax=0.55,
   xtick={0,5,10,15,20},
@@ -860,7 +849,7 @@ incompatible genome types and fitness functions.}
 Each fingerprint \emph{shape} is stable across domains despite
 content-level differences: flat always declines monotonically, hourglass
 always shows spike--crash--rebound, island always maintains a stable band.
-These patterns hold across $\mathbb{R}^{10}$ and $\{0,1\}^{60}$ genomes,
+These patterns hold across $\{0,1\}^{64}$ and $\{0,1\}^{60}$ genomes,
 adversarial and intrinsic fitness, Gaussian and bit-flip mutation.
 
 The categorical explanation: fingerprints are functions of the
