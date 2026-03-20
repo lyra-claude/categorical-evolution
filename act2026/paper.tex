@@ -79,7 +79,7 @@ Lyra Vega
 \begin{abstract}
 Migration topology determines diversity dynamics independently of fitness
 landscape. Across six unrelated domains---OneMax, maze generation, graph
-coloring, knapsack, checkers, and co-evolutionary card play
+coloring, knapsack, checkers, and co-evolutionary card game
 (No~Thanks!)---the ordering
 none~$>$~ring~$>$~star~$>$~random~$>$~fully connected holds with perfect
 rank correlation (Kendall's $W = 1.0$, $p = 0.00008$). We establish this
@@ -118,7 +118,7 @@ six fundamentally different domains with perfect rank correlation
 (Kendall's $W = 1.0$, all 15 pairwise Spearman $\rho = 1.0$,
 $p = 0.00008$). A two-way ANOVA confirms topology explains
 $28.7\times$ more variance in diversity than domain. This ordering is
-not an artifact of any particular fitness landscape; it is a
+not an artefact of any particular fitness landscape; it is a
 structural invariant of the compositional framework.
 
 \paragraph{Related work.}
@@ -186,7 +186,7 @@ the computational effects of evolution: configuration, logging, and
 randomness. Following Moggi~\cite{moggi1991notions}, who showed that
 computational effects are uniformly captured by monads, our key
 observation is that \emph{evolutionary dynamics are computational
-effects too}: stochastic mutation, stateful PRNG threading, and
+effects too}: stochastic mutation, stateful pseudorandom number generator (PRNG) threading, and
 diversity-metric accumulation.
 
 \subsection{The Evolution Monad}
@@ -225,7 +225,7 @@ structure.
 \label{def:island-monad}
 For an island model with $n$ islands, we define
 $T^n = T \times T \times \cdots \times T$ ($n$~copies) as the
-product monad on $\mathbf{Meas}^n$, representing $n$~independent
+product monad on $\mathbf{Set}^n$, representing $n$~independent
 evolutionary populations. Each component $(T^n X)_i = T\!X_i$
 carries its own probability distribution over genomes, with
 independent PRNG states but shared algorithmic parameters (mutation
@@ -396,7 +396,7 @@ The spectral values for our four connected topologies are:
 For random graphs, $\lambda_2$ depends on the realization.
 Among connected topologies, the predicted ordering from smallest to
 largest $\lambda_2$ (hence highest to lowest diversity) is:
-ring~$>$~star~$>$~random~$>$~FC for $n \geq 7$.
+ring~$>$~star~$>$~random~$>$~fully connected (FC) for $n \geq 7$.
 
 \subsection{The \texorpdfstring{$n{=}5$}{n=5} Boundary}
 
@@ -453,8 +453,8 @@ framework~\cite{leinster2021entropy}.
 \subsection{Six Domains}
 
 We select six domains spanning three axes: landscape structure
-(monotone vs.\ intransitive), representation (fixed-length vs.\
-variable-length), and constraint type (unconstrained, hard, soft).
+(monotone vs.\ deceptive vs.\ intransitive), representation size
+(20-bit to 192-bit), and constraint type (unconstrained, hard, soft).
 The categorical structure---monad stack, pipeline shape, composition
 operator---is identical across all domains; only genome type and
 fitness function change.
@@ -685,7 +685,7 @@ Kleisli morphisms over a population monad, with the island functor's
 laxator measuring migration-induced coupling. A spectral bridge
 connects the laxator to $\lambda_2(G)$, predicting the diversity
 ordering. The prediction is confirmed at $n{=}5$ (ring/star
-indistinguishable, $p = 0.14$) and $n{=}7$ (ring clearly
+indistinguishable, $p = 0.087$) and $n{=}7$ (ring clearly
 outperforms star, $p = 6.6 \times 10^{-5}$)---the theory predicts
 not just the ordering but the boundary where it changes.
 
