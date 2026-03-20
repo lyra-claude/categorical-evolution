@@ -334,35 +334,58 @@ def compute_final_stats(df):
 # =========================================================================== #
 
 def plot_topology_ordering(all_final_stats, output_prefix):
-    """Grouped bar chart: final-generation diversity by topology, one group per domain."""
+    """Grouped bar chart: domains on x-axis, one bar per topology within each group.
+
+    Shows the same none > ring > star > random > FC ordering repeating
+    in every domain — the paper's central visual claim.
+    """
     available = [dk for dk in DOMAIN_ORDER if dk in all_final_stats]
     n_domains = len(available)
     n_topos = len(TOPO_ORDER)
-    bar_width = 0.85 / n_domains
-    x_base = np.arange(n_topos)
+    bar_width = 0.85 / n_topos
+    x_base = np.arange(n_domains)
+
+    # Topology colors
+    topo_colors = {
+        'none':             '#2166AC',
+        'ring':             '#67A9CF',
+        'star':             '#5AB4AC',
+        'random':           '#F4A582',
+        'fully_connected':  '#B2182B',
+    }
+    topo_display = {
+        'none': 'None (isolated)',
+        'ring': 'Ring',
+        'star': 'Star',
+        'random': 'Random',
+        'fully_connected': 'Fully connected',
+    }
 
     fig, ax = plt.subplots(figsize=(12, 5.5))
 
-    for i, dk in enumerate(available):
-        cfg = DOMAIN_CONFIGS[dk]
-        fs = all_final_stats[dk]
+    for j, topo in enumerate(TOPO_ORDER):
+        means = []
+        ses = []
+        for dk in available:
+            fs = all_final_stats[dk]
+            means.append(fs[topo]['mean'])
+            ses.append(fs[topo]['se'])
 
-        means = [fs[t]['mean'] for t in TOPO_ORDER]
-        ses = [fs[t]['se'] for t in TOPO_ORDER]
-
-        x_offset = x_base + (i - (n_domains - 1) / 2) * bar_width
+        x_offset = x_base + (j - (n_topos - 1) / 2) * bar_width
 
         ax.bar(
             x_offset, means, width=bar_width * 0.88,
             yerr=ses, capsize=2,
-            color=cfg['color'], hatch=cfg['hatch'],
+            color=topo_colors[topo],
             edgecolor='white', linewidth=0.5,
-            label=cfg['label'],
+            label=topo_display[topo],
             error_kw={'linewidth': 0.8, 'color': '0.3'},
         )
 
     ax.set_xticks(x_base)
-    ax.set_xticklabels([TOPO_LABELS[t] for t in TOPO_ORDER], fontsize=9)
+    ax.set_xticklabels(
+        [DOMAIN_CONFIGS[dk]['label'] for dk in available], fontsize=9,
+    )
     ax.set_ylabel('Final-generation Hamming diversity')
     ax.set_title(
         f'Multi-Domain Topology Ordering ({n_domains} domains)\n'
@@ -371,22 +394,7 @@ def plot_topology_ordering(all_final_stats, output_prefix):
     )
     ax.legend(
         frameon=True, framealpha=0.95, edgecolor='0.8',
-        loc='upper right', fontsize=8, ncol=2,
-    )
-
-    # Strict -> Lax arrow
-    ax.annotate(
-        '', xy=(n_topos - 0.6, -0.015), xytext=(-0.4, -0.015),
-        xycoords=('data', 'axes fraction'),
-        textcoords=('data', 'axes fraction'),
-        arrowprops=dict(arrowstyle='->', color='0.5', linewidth=1.0),
-        annotation_clip=False,
-    )
-    ax.text(
-        (n_topos - 1) / 2, -0.08,
-        'strict                                                                  lax',
-        transform=ax.get_xaxis_transform(),
-        ha='center', va='top', fontsize=8, color='0.5', style='italic',
+        loc='upper right', fontsize=8, ncol=1,
     )
 
     plt.tight_layout()
