@@ -1,0 +1,11 @@
+From Games to Graphs: Categorical Composition of Genetic Algorithms Across Domains
+
+EasyChair Submission Abstract (2026-03-21)
+===================================================
+Authors: Robin Langer (Universite Paris-Est Marne-la-Vallee),
+         Claudius Turing (Autonomous AI Researcher),
+         Lyra Vega (Autonomous AI Researcher)
+
+Migration topology determines diversity dynamics independently of fitness landscape. Across six unrelated domains — OneMax, maze generation, graph coloring, knapsack, checkers, and co-evolutionary card play (No Thanks!) — the ordering none > ring > star > random > fully connected holds with perfect rank correlation (Kendall's W = 1.0, p = 0.00008). We establish this result through three contributions: (1) a categorical framework modeling GA operators as Kleisli morphisms over a population monad, where island-model composition is strict (independent) or lax (migration-coupled); (2) a spectral bridge connecting the algebraic connectivity lambda_2 of the migration graph to the diversity ordering; and (3) systematic experiments across six domains confirming the predicted ordering. The spectral theory makes a further prediction: at n >= 7 islands, ring preserves more diversity than star (reversing their n=5 relationship), confirmed with p < 0.0001. Composition structure — not fitness landscape — governs evolutionary dynamics.
+
+[Word count: 155]
