@@ -60,7 +60,7 @@ How you compose GA operators matters more than which operators you choose. We de
 
 \section{Introduction}
 
-How you compose GA operators matters more than which operators you choose. This claim runs against decades of evolutionary computation research focused on designing better selection schemes~\cite{blickle1996comparison}, better crossover operators~\cite{eshelman1993crossover}, and better mutation strategies~\cite{back1996evolutionary}. Individual operators matter, of course. But when we compose the same operators into different high-level strategies---generational, island, hourglass, adaptive---the \emph{composition pattern} determines the population's diversity trajectory. Swap out tournament selection for roulette: the trajectory barely changes. Switch from generational to island composition: the trajectory transforms completely.
+How you compose genetic algorithm (GA) operators matters more than which operators you choose. This claim runs against decades of evolutionary computation research focused on designing better selection schemes~\cite{blickle1996comparison}, better crossover operators~\cite{eshelman1993crossover}, and better mutation strategies~\cite{back1996evolutionary}. Individual operators matter, of course. But when we compose the same operators into different high-level strategies---generational, island, hourglass, adaptive---the \emph{composition pattern} determines the population's diversity trajectory. Swap out tournament selection for roulette: the trajectory barely changes. Switch from generational to island composition: the trajectory transforms completely.
 
 GA practitioners already compose operators routinely. Every generational GA runs select $\to$ crossover $\to$ mutation $\to$ replacement as a pipeline. Island models compose multiple such pipelines with periodic migration. Adaptive strategies compose phases with runtime switching. But this composition is typically buried inside imperative loops, invisible to formal analysis. We cannot ask ``does this composition preserve a property of its parts?'' because the composition has no formal representation.
 
@@ -164,7 +164,7 @@ Pipelines compose into strategies that define the overall structure of an evolut
 \paragraph{Level 3: Strategies $\to$ Multi-Population Systems.}
 Strategies compose into multi-population architectures. An island model containing four generational GAs with migration is a composition at this level. So is a heterogeneous system where different islands run different strategies (one generational, one adaptive) and exchange individuals.
 
-The recursive structure is the key insight. At every level, the composite has the same type as its parts: a Kleisli arrow on populations. A pipeline of five operators is itself an operator. A strategy of three phases is itself a strategy. An island of four strategies is itself a strategy. This closure under composition gives us a \emph{design algebra} for genetic algorithms: complex systems are built by composing simple parts, and the properties of the composite can be analyzed in terms of how its parts are composed---not what those parts do internally.
+The recursive structure is the key insight. At every level, the composite has the same type as its parts: a Kleisli arrow on populations. A pipeline of five operators is itself an operator. A strategy of three phases is itself a strategy. An island model of four strategies is itself a strategy. This closure under composition gives us a \emph{design algebra} for genetic algorithms: complex systems are built by composing simple parts, and the properties of the composite can be analyzed in terms of how its parts are composed---not what those parts do internally.
 
 This algebraic view directly enables our main results. Diversity fingerprints (Section~4.1) are properties of composition patterns, not individual operators. The Strict/Lax Dichotomy (Section~4.3) is a statement about when a specific composition---the island functor---preserves the structure of sequential composition. Neither result has a natural expression in imperative code; both follow directly from the compositional framework.
 
@@ -492,9 +492,9 @@ Classical GA theory analyzes operators individually. Holland's schema theorem~\c
 
 \paragraph{Categorical Methods in Optimization.}
 Category theory has recently been applied to several optimization paradigms.
-Bakirtzis et al.~\cite{bakirtzis2024compositional} give a compositional account of reinforcement learning via categorical MDPs (JMLR 2025), proving safety guarantees that compose across subsystems---the closest precedent for our compositionality-first approach.
-Hedges and Sakamoto~\cite{hedges2024reinforcement} model reinforcement learning as parametrised optics (EPTCS 2025).
-Gavranovi\'{c} et al.~\cite{gavranovic2024categorical} formalize neural network architectures as monads in the Para construction (ICML 2024).
+Bakirtzis et al.~\cite{bakirtzis2024compositional} give a compositional account of reinforcement learning via categorical MDPs, proving safety guarantees that compose across subsystems---the closest precedent for our compositionality-first approach.
+Hedges and Sakamoto~\cite{hedges2024reinforcement} model reinforcement learning as parametrised optics.
+Gavranovi\'{c} et al.~\cite{gavranovic2024categorical} formalize neural network architectures as monads in the Para construction.
 Hanks et al.~\cite{hanks2024gradient} cast gradient descent as a hypergraph functor.
 Miranda~\cite{miranda2024abstract} develops abstract Kleisli structures that generalize the construction we instantiate here.
 Ghani et al.~\cite{ghani2025approximate} develop approximate game theory using categorical methods; their treatment of strict vs.\ approximate preservation parallels our Strict/Lax Dichotomy structurally.
@@ -509,7 +509,7 @@ Together, the two approaches suggest that categorical methods can capture both t
 
 \paragraph{LLM-Driven Evolution and Scaling.}
 Recent work uses large language models as evolutionary operators.
-AlphaEvolve~\cite{alphaevolve2026marl} drops crossover entirely when the LLM mutation monad is sufficiently expressive---a composition choice with predictable fingerprint consequences in our framework.
+AlphaEvolve~\cite{alphaevolve2026marl} drops crossover entirely, relying on LLM-driven mutation alone---a composition choice that our framework predicts yields a monotonic-decline fingerprint.
 CodeEvolve~\cite{assumpcao2025codeevolve} uses three modular LLM operators on an island-based GA: depth exploitation (strict---preserves lineage), inspiration-based crossover (intermediate---synthesizes features across parents), and meta-prompting exploration (lax---deliberately excludes ancestor chains). The full composition outperforms any individual operator and their sum on most benchmarks, exhibiting genuine compositional synergy rather than mere aggregation.
 Kim et al.~\cite{kim2025scaling} find error amplification of $17.2\times$ for independent (lax) vs.\ $4.4\times$ for centralized (strict) multi-agent compositions---a numerical shadow of our Dichotomy.
 Van Stein et al.~\cite{vanstein2025code} show that different evolutionary strategies produce distinct search trajectory network signatures determined by operator composition, not problem instance---our thesis in graph-theoretic language.
