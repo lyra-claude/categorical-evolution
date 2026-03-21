@@ -115,67 +115,62 @@ dynamics.
 Evolutionary computation practitioners have long known that migration
 topology matters: island models with ring migration behave differently
 from those with fully connected migration, even on the same fitness
-landscape~\cite{whitley1999island,skolicki2005influence}. Yet there is no
-formal theory of \emph{why}. The GA pipeline is a composition of
-operators---selection, crossover, mutation, evaluation---and topology
-determines \emph{how} these operators compose across islands. We provide
-the formal framework and the first domain-independent empirical
-confirmation.
+landscape~\cite{whitley1999island,skolicki2005influence}. In parallel,
+categorical treatments of optimization have shown that \emph{composition
+structure}---not landscape geometry---determines dynamics: deep learning
+as a $\mathbf{Para}$-construction~\cite{gavranovic2024categorical}, RL
+via categorical cybernetics~\cite{hedges2024reinforcement}, compositional
+MDPs~\cite{bakirtzis2024compositional}, and monadic agent
+systems~\cite{zhang2024mce}. The gap across all four programs: none
+treats migration topology as a formal variable. The question topology
+raises has not been asked categorically---until now.
 
 \paragraph{Main result.}
-The diversity ordering
+We show that the diversity ordering
 none~$>$~ring~$>$~star~$>$~random~$>$~fully connected holds across
-six fundamentally different domains with perfect rank correlation
-(Kendall's $W = 1.0$, all 15 pairwise Spearman $\rho = 1.0$,
-$p = 0.00008$). A two-way ANOVA confirms topology explains
+six fundamentally different domains---OneMax, maze generation, graph
+coloring, knapsack, checkers, and co-evolutionary card play---with
+perfect rank correlation (Kendall's $W = 1.0$, all 15 pairwise
+Spearman $\rho = 1.0$, $p = 0.00008$). Topology explains
 $28.7\times$ more variance in diversity than domain. This ordering is
 not an artifact of any particular fitness landscape; it is a
-structural invariant of the compositional framework.
+structural invariant explained by the interplay of category theory,
+graph theory, and empirical validation.
 
-\paragraph{Related work.}
-Over the past three years, four independent research groups have
-arrived at the same structural insight: the way an optimization
-pipeline \emph{composes} its components determines its dynamics more
-than the components themselves. Gavranovi\'{c} et
-al.~\cite{gavranovic2024categorical} showed that deep learning
-architectures are constructions in $\mathbf{Para}$, where gradient
-descent is a functor. Hedges and
-Sakamoto~\cite{hedges2024reinforcement} formalized RL within
-categorical cybernetics, expressing the Bellman equation as a natural
-transformation. Bakirtzis et al.~\cite{bakirtzis2024compositional}
-formalized MDPs categorically, deriving safety guarantees from
-composition structure. Zhang et al.~\cite{zhang2024mce} applied
-monadic composition to agent systems. The gap across all four
-programs: none treats migration topology as a formal variable.
+\paragraph{Three-part argument.}
+Our argument has three interlocking components, each necessary:
+\emph{(i)~Category theory} supplies the formal reason topology
+matters. We model GA operators as Kleisli morphisms over a population
+monad (Section~\ref{sec:framework}). The island functor lifting a
+strategy to $n$ islands is \emph{strict} when islands evolve
+independently and \emph{lax} when coupled by migration; the
+\emph{laxator}---the natural transformation measuring the
+compositional discrepancy introduced by migration---is the key formal
+quantity.%
+\footnote{Throughout, we restrict to connected migration topologies ($\lambda_2 > 0$). The disconnected case ($\lambda_2 = 0$) reduces to $n$~independent runs; this lies outside the island model proper.}
+\emph{(ii)~Graph theory} makes this computable. We connect the
+laxator magnitude to the algebraic connectivity $\lambda_2$ of the
+migration graph (Section~\ref{sec:spectral}): smaller $\lambda_2$
+means slower mixing, smaller laxator, and higher sustained diversity.
+This yields a falsifiable boundary prediction---ring preserves more
+diversity than star for $n \geq 7$, where $\lambda_2(C_n)$ drops
+below $1.0 = \lambda_2(K_{1,n-1})$, but not at $n{=}5$ where the
+values are close.
+\emph{(iii)~Empirical evidence} confirms both the ordering and the
+spectral boundary. Six domains spanning three axes of variation
+(landscape structure, representation, constraint type) all yield
+$W = 1.0$, and a dedicated $n{=}7$ experiment confirms the ring/star
+reversal with $p = 6.6 \times 10^{-5}$ (Section~\ref{sec:experiments}).
 
-\paragraph{Our approach.}
-We model GA operators as Kleisli morphisms over a population monad
-(Section~\ref{sec:framework}). The island functor lifting strategies
-to multi-population systems is strict when islands evolve
-independently and lax when coupled by migration. We identify the
-\emph{laxator}---the natural transformation measuring the discrepancy
-introduced by migration---as the key quantity, and connect its
-magnitude to the algebraic connectivity $\lambda_2$ of the migration
-graph (Section~\ref{sec:spectral}).%
-\footnote{Throughout, we restrict to connected migration topologies ($\lambda_2 > 0$). The disconnected case ($\lambda_2 = 0$) reduces to $n$~independent runs where genetic drift erodes diversity; this lies outside the island model proper.}
-This spectral bridge yields falsifiable predictions that we confirm
-across six domains (Section~\ref{sec:experiments}).
-
-\paragraph{Contributions.}
-\begin{enumerate}
-\item \textbf{Categorical framework.} We formalize GA operators as
-  Kleisli morphisms over a population monad, identifying the island
-  functor and its laxator as the formal objects governing migration
-  dynamics (Section~\ref{sec:framework}).
-\item \textbf{Spectral bridge.} We connect the laxator magnitude to
-  the algebraic connectivity $\lambda_2$, deriving the predicted
-  diversity ordering and a falsifiable boundary prediction at
-  $n{=}7$ islands (Section~\ref{sec:spectral}).
-\item \textbf{Six-domain empirical validation.} We confirm the
-  predicted ordering across six unrelated domains with $W = 1.0$,
-  including the $n{=}7$ spectral prediction with $p < 0.0001$
-  (Section~\ref{sec:experiments}).
-\end{enumerate}
+\paragraph{Summary.}
+Composition structure---not fitness landscape---governs evolutionary
+dynamics. Our three contributions are: a categorical formalization
+bringing evolutionary computation into the optimization zoo; a
+spectral bridge from graph theory that makes the formalization
+predictive; and six-domain empirical validation that confirms the
+predictions hold across fundamentally different problems. Together
+they establish that topology is the key design variable in island
+models, and explain why.
 
 %% ============================================================
 %% Section 2: Categorical Framework
