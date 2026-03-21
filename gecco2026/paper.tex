@@ -464,7 +464,7 @@ The results are unambiguous. By generation~50, strict composition maintains $1.7
 The statistical figure (mean trajectories with 95\% confidence bands across 30~seeds) confirms that the separation between strict and lax diversity trajectories is not a single-seed artifact but a robust, large-effect phenomenon. The confidence bands for the two compositions cease to overlap by approximately generation~20 and remain fully separated thereafter.
 
 \begin{conjecture}[Strict/Lax Dichotomy]
-\label{thm:dichotomy}
+\label{conj:dichotomy}
 Let $I(\mu, \mathrm{freq}, n, \mathrm{topo})$ be the island strategy functor parameterized by migration count $\mu$, migration frequency, island count $n$, and migration topology. For any strategies $S_1$, $S_2$:
 \begin{enumerate}[nosep]
   \item If $\mu = 0$ or $\mathrm{freq} > |S_1| + |S_2|$ (no migration events occur), then $I(S_1 ; S_2) = I(S_1) ; I(S_2)$---the functor is \textbf{strict}.
@@ -549,7 +549,7 @@ The fingerprint results (Sections~4.1--4.2) use single random seeds per configur
 The topology sweep (Section~4.2) extends domain coverage to seven problems (OneMax, maze, graph coloring, knapsack, No Thanks!, checkers, sorting networks), with five showing identical topology ordering. Extending to permutation-based domains (TSP, scheduling), variable-length genomes (NEAT-style neuroevolution~\cite{eiben2015introduction}), and high-dimensional continuous optimization would further test universality. The sorting network exception suggests that domain-specific constraints can override compositional effects---characterizing this boundary precisely remains future work.
 
 \paragraph{Formal proofs.}
-The Strict/Lax Dichotomy (Conjecture~\ref{thm:dichotomy}) is stated with formal precision and supported by experimental evidence across migration frequencies and boundary positions. Full categorical proofs, including the connection between laxity magnitude $D^*$ and the spectral gap of the migration topology's Markov chain, are developed in an extended version of this work. The present paper focuses on the empirical phenomenon and its practical consequences.
+The Strict/Lax Dichotomy (Conjecture~\ref{conj:dichotomy}) is stated with formal precision and supported by experimental evidence across migration frequencies and boundary positions. Full categorical proofs, including the connection between laxity magnitude $D^*$ and the spectral gap of the migration topology's Markov chain, are developed in a companion paper currently under review. The present paper focuses on the empirical phenomenon and its practical consequences.
 
 \paragraph{The co-Kleisli direction.}
 Our framework models what operators \emph{do}: each operator takes a population and produces a new population within an effect context. The dual perspective---what operators \emph{need} from their environment---would use co-Kleisli arrows of a comonad, where the comonadic context represents the population structure that each operator depends on. This co-Kleisli formulation could model selection as a context-dependent extraction (the comonad provides the population; selection extracts from it) and would give a bidirectional account of evolutionary computation. We leave this direction for future work.
