@@ -1,0 +1,139 @@
+\documentclass[submission,copyright,creativecommons]{eptcs}
+\providecommand{\event}{ACT 2026}
+
+\usepackage{iftex}
+
+\ifpdf
+  \usepackage{underscore}
+  \usepackage[T1]{fontenc}
+\fi
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+
+\title{From Games to Graphs:\\Categorical Composition of Genetic Algorithms Across Domains}
+
+\author{Robin Langer
+\institute{Universit\'{e} Paris-Est Marne-la-Vall\'{e}e}
+\email{langer.robin@gmail.com}
+\email{\url{https://github.com/RaggedR}}
+\and
+Claudius Turing
+\institute{Autonomous AI Researcher}
+\email{11o1111o11oo1o1o@gmail.com}
+\email{\url{https://github.com/GayleJewson}}
+\and
+Lyra Vega
+\institute{Autonomous AI Researcher}
+\email{lyraclaude20@gmail.com}
+\email{\url{https://github.com/lyra-claude}}
+}
+
+\newcommand{\titlerunning}{From Games to Graphs}
+\newcommand{\authorrunning}{R. Langer, C. Turing \& L. Vega}
+
+\hypersetup{
+  bookmarksnumbered,
+  pdftitle    = {\titlerunning},
+  pdfauthor   = {\authorrunning},
+  pdfsubject  = {ACT 2026},
+  pdfkeywords = {category theory, genetic algorithms, Kleisli morphisms,
+                 evolutionary computation, compositional optimization}
+}
+
+\newtheorem{conjecture}{Conjecture}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Migration topology determines diversity dynamics independently of fitness
+landscape. Across six unrelated domains---OneMax, maze generation, graph
+coloring, knapsack, checkers, and co-evolutionary card play
+(No~Thanks!)---the ordering
+none~$>$~ring~$>$~star~$>$~random~$>$~fully connected holds with perfect
+rank correlation (Kendall's $W = 1.0$, $p = 0.00008$). We model GA
+operators as Kleisli morphisms over a population monad and connect the
+island functor's laxator to the algebraic connectivity $\lambda_2$ of the
+migration graph, yielding a falsifiable spectral prediction confirmed at
+$n{=}7$ islands with $p < 0.0001$. Categorical formalizations now exist
+for neural networks, reinforcement learning, compositional MDPs, and
+agent systems; this work completes the landscape by bringing evolutionary
+computation into the categorical framework.
+\end{abstract}
+
+\section{Completing the Categorical Optimization Landscape}
+
+Over the past three years, four independent programs have applied
+category theory to optimization:
+Gavranovi\'{c} et al.~\cite{gavranovic2024categorical} showed that deep
+learning architectures are constructions in $\mathbf{Para}$;
+Hedges and Sakamoto~\cite{hedges2024reinforcement} formalized RL within
+categorical cybernetics;
+Bakirtzis et al.~\cite{bakirtzis2024compositional} derived safety
+guarantees from categorical composition of MDPs;
+Zhang et al.~\cite{zhang2024mce} applied monadic composition to agent
+systems.
+Evolutionary computation---the last major paradigm---has remained outside
+this landscape. We close the gap.
+
+\section{Framework: GA Operators as Kleisli Morphisms}
+
+Following Moggi~\cite{moggi1991notions}, we define the \emph{evolution
+monad} $T = \mathsf{Reader}(\Gamma) \times \mathsf{Writer}(\Lambda)
+\times \mathsf{State}(S)$. A GA operator is a Kleisli morphism
+$f : \mathsf{Pop}(A) \to T(\mathsf{Pop}(B))$, and composition at three
+levels---operators into pipelines, pipelines into strategies, strategies
+into island models via the island functor $\mathcal{I}_G$---yields a
+hierarchical categorical structure.
+
+The key insight: whether $\mathcal{I}_G$ preserves composition depends on
+the migration graph~$G$. With no edges, $\mathcal{I}_G$ is strict; with
+migration, it is lax. The \emph{laxator} $\varphi_G$ measures the
+discrepancy.
+
+\section{The Spectral Bridge}
+
+We conjecture that $\|\varphi_G\|$ grows with the algebraic connectivity
+$\lambda_2(G)$: larger $\lambda_2$ means faster mixing and greater
+diversity erosion. This yields a predicted diversity ordering among
+connected topologies---and a falsifiable boundary prediction.
+
+At $n{=}5$ islands, $\lambda_2(\text{ring}) = 1.382$ and
+$\lambda_2(\text{star}) = 1.0$---close enough that ring and star should be
+hard to distinguish. At $n{=}7$, $\lambda_2(\text{ring}) = 0.753 < 1.0 =
+\lambda_2(\text{star})$---ring should now clearly outperform star.
+
+\section{Key Results: Six Domains, Perfect Concordance}
+
+Experiments across six domains (5~islands $\times$ 16~individuals,
+100~generations, 30~seeds each) confirm:
+\begin{itemize}
+\item The ordering none~$>$~ring~$>$~star~$>$~random~$>$~FC holds in
+  \emph{every} domain with Kendall's $W = 1.0$ ($p = 0.00008$).
+  Topology explains $28.7\times$ more variance than domain.
+\item At $n{=}5$: ring and star are statistically indistinguishable
+  (Fisher's combined $p = 0.14$), as predicted.
+\item At $n{=}7$: ring clearly outperforms star
+  ($p = 6.6 \times 10^{-5}$), confirming the spectral boundary prediction.
+\end{itemize}
+
+The six domains span monotone landscapes (OneMax), NP-hard optimization
+(knapsack), and intransitive co-evolution (checkers, No~Thanks!). The
+ordering is invariant across all of them.
+
+\paragraph{Talk outline.}
+The talk will present: (1)~the categorical optimization landscape and why
+EC is the missing piece; (2)~the Kleisli formalization and the island
+functor's strict/lax dichotomy; (3)~the spectral bridge connecting
+$\lambda_2$ to diversity ordering; (4)~the six-domain empirical
+confirmation including the $n{=}7$ boundary prediction; and (5)~the
+general conjecture connecting our results to approximate game
+theory~\cite{ghani2025approximate}. Composition structure---not fitness
+landscape---governs evolutionary dynamics.
+
+\bibliographystyle{eptcs}
+\bibliography{references}
+
+\end{document}
