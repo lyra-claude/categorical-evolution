@@ -81,27 +81,36 @@ Lyra Vega
 %% ============================================================
 
 \begin{abstract}
-Migration topology determines diversity dynamics independently of fitness
-landscape. Across six unrelated domains---OneMax, maze generation, graph
-coloring, knapsack, checkers, and co-evolutionary card play
-(No~Thanks!)---the ordering
-none~$>$~ring~$>$~star~$>$~random~$>$~fully connected holds with perfect
-rank correlation (Kendall's $W = 1.0$, $p = 0.00008$). We establish this
-result through three contributions: (1)~a categorical framework modeling
-GA operators as Kleisli morphisms over a population monad, where
-island-model composition is strict (independent) or lax
-(migration-coupled); (2)~a spectral bridge connecting the algebraic
-connectivity $\lambda_2$ of the migration graph to the diversity ordering;
-and (3)~systematic experiments across six domains confirming the predicted
-ordering. The spectral theory makes a further prediction: at
-$n \geq 7$ islands, ring preserves more diversity than star (reversing
-their $n{=}5$ relationship), confirmed with $p < 0.0001$.
 Categorical formalizations now exist for neural
 networks~\cite{gavranovic2024categorical}, reinforcement
 learning~\cite{hedges2024reinforcement}, compositional
-MDPs~\cite{bakirtzis2024compositional}, and agent
-systems~\cite{zhang2024mce}; this work completes the landscape by
-bringing evolutionary computation into the categorical framework.
+MDPs~\cite{bakirtzis2024compositional}, and multi-agent
+systems~\cite{zhang2024mce}---yet evolutionary computation, one of the
+oldest families of optimization algorithms, remains outside this
+framework. At the same time, island-model practitioners have known for
+decades that migration topology affects search dynamics, but lack a
+mathematical theory explaining \emph{why} ring outperforms star
+outperforms fully connected.
+
+We bridge both gaps. Modeling GA operators as Kleisli morphisms over a
+population monad, we show that the island functor lifting strategies to
+multi-population systems is strict when islands evolve independently and
+lax when coupled by migration. The \emph{laxator}---the natural
+transformation measuring the discrepancy---is the formal quantity
+governing diversity. A spectral bridge then connects the laxator's
+magnitude to the algebraic connectivity $\lambda_2$ of the migration
+graph, yielding a computable predictor: smaller $\lambda_2$ means less
+coupling and higher sustained diversity.
+
+The prediction is confirmed across six unrelated domains---OneMax, maze
+generation, graph coloring, knapsack, checkers, and co-evolutionary card
+play (No~Thanks!). The diversity ordering
+none~$>$~ring~$>$~star~$>$~random~$>$~fully connected holds with perfect
+rank correlation (Kendall's $W = 1.0$, $p = 0.00008$), with topology
+explaining $28.7\times$ more variance than domain. The spectral theory
+makes a further falsifiable prediction: at $n \geq 7$ islands, ring
+preserves strictly more diversity than star (reversing their $n{=}5$
+relationship), confirmed with $p < 0.0001$.
 Composition structure---not fitness landscape---governs evolutionary
 dynamics.
 \end{abstract}
