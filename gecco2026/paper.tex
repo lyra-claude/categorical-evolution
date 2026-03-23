@@ -334,35 +334,20 @@ To test whether fingerprints are composition-invariant rather than domain-specif
 
 \begin{table}[ht]
 \centering
-\caption{Cross-domain genotypic diversity over generations. C = Checkers (Euclidean, normalized), M = Mazes (Hamming, normalized). Diversity is measured on domain-appropriate scales.}
+\caption{Cross-domain genotypic diversity (GenoDiv) trajectories and final outcomes (20~gen, pop~30). C = Checkers (Euclidean, norm.), M = Mazes (Hamming, norm.). Best Fit and PhenoDiv are final-generation values.}
 \label{tab:cross-domain}
-\begin{tabular}{@{}rrrrrrr@{}}
+\begin{tabular}{@{}llrrrrrr@{}}
 \toprule
-\textbf{Gen} & \textbf{C:Flat} & \textbf{C:Hrgl} & \textbf{C:Isld} & \textbf{M:Flat} & \textbf{M:Hrgl} & \textbf{M:Isld} \\
+& & \multicolumn{4}{c}{\textbf{GenoDiv by Gen}} & & \\
+\cmidrule(lr){3-6}
+\textbf{Dom} & \textbf{Strat} & \textbf{0} & \textbf{5} & \textbf{10} & \textbf{20} & \textbf{Fit} & \textbf{PhDiv} \\
 \midrule
-0  & 0.49 & 0.49 & 0.49 & 0.47 & 0.47 & 0.47 \\
-5  & 0.34 & 0.32 & 0.23 & 0.21 & 0.51 & 0.37 \\
-10 & 0.33 & 0.33 & 0.47 & 0.26 & 0.29 & 0.31 \\
-15 & 0.31 & 0.32 & 0.44 & 0.26 & 0.46 & 0.28 \\
-20 & 0.30 & 0.30 & 0.34 & 0.27 & 0.46 & 0.32 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\begin{table}[ht]
-\centering
-\caption{Final comparison across two domains and three strategies (20~generations, population~30).}
-\label{tab:final-comparison}
-\begin{tabular}{@{}llrrr@{}}
-\toprule
-\textbf{Domain} & \textbf{Strategy} & \textbf{Best Fit} & \textbf{GenoDiv} & \textbf{PhenoDiv} \\
-\midrule
-Checkers & Flat      & 1.0  & 0.30 & 0.0 \\
-Checkers & Hourglass & 1.0  & 0.30 & 0.0 \\
-Checkers & Island    & 1.0  & 0.34 & 0.0 \\
-Maze     & Flat      & 0.70 & 0.27 & 40.36 \\
-Maze     & Hourglass & 0.68 & 0.46 & 19.96 \\
-Maze     & Island    & 0.73 & 0.32 & 40.14 \\
+C & Flat  & .49 & .34 & .33 & .30 & 1.0  & 0.0 \\
+C & Hrgl  & .49 & .32 & .33 & .30 & 1.0  & 0.0 \\
+C & Isld  & .49 & .23 & .47 & .34 & 1.0  & 0.0 \\
+M & Flat  & .47 & .21 & .26 & .27 & 0.70 & 40.4 \\
+M & Hrgl  & .47 & .51 & .29 & .46 & 0.68 & 20.0 \\
+M & Isld  & .47 & .37 & .31 & .32 & 0.73 & 40.1 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -417,27 +402,7 @@ Table~\ref{tab:laxity} varies migration frequency while holding all other parame
 The transition is binary. At freq=40 (no migration occurs within the 40-generation window), the functor is \textbf{strict}: continuous and composed runs produce identical populations (divergence = 0.000). At every nonzero migration frequency, the functor is \textbf{uniformly lax} with population divergence ${\sim}0.78 \pm 0.04$, independent of how often migration occurs. Migrating every 2~generations produces the same divergence magnitude as migrating every 20. Fitness is unaffected in all conditions (all reach OneMax optimum), confirming that the divergence is genotypic, not phenotypic.
 
 \paragraph{Boundary position sweep.}
-Table~\ref{tab:boundary} varies where the composition boundary falls relative to the migration schedule (freq=5, boundary positions from gen~15 to gen~25).
-
-\begin{table}[ht]
-\centering
-\caption{Divergence vs.\ composition boundary position (migration freq=5). ``Hits migration'' indicates whether the boundary coincides with a scheduled migration event.}
-\label{tab:boundary}
-\small
-\begin{tabular}{@{}rlrr@{}}
-\toprule
-\textbf{Boundary} & \textbf{Hits Migr?} & \textbf{Pop Div} & \textbf{Ham Div} \\
-\midrule
-15 & YES & 0.794 & 0.105 \\
-17 & no  & 0.725 & 0.098 \\
-20 & YES & 0.812 & 0.102 \\
-23 & no  & 0.744 & 0.108 \\
-25 & YES & 0.800 & 0.102 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-Divergence is \textbf{uniform} (${\sim}0.78 \pm 0.04$) regardless of whether the boundary coincides with a migration event. This falsifies the naive hypothesis that schedule disruption matters only when the boundary directly displaces a migration event. The resetting of the migration counter at the boundary is sufficient; the perturbation is amplified to a characteristic magnitude $D^*$ by the chaotic dynamics of the interacting subpopulations.
+Varying the composition boundary position (gen~15 through gen~25, freq=5) yields uniform divergence (${\sim}0.78 \pm 0.04$) regardless of whether the boundary coincides with a scheduled migration event. This falsifies the naive hypothesis that schedule disruption matters only when the boundary directly displaces a migration event. The resetting of the migration counter at the boundary is sufficient; the perturbation is amplified to a characteristic magnitude $D^*$ by the chaotic dynamics of the interacting subpopulations.
 
 \paragraph{Multi-seed statistical validation.}
 To confirm the Dichotomy with rigorous statistics, we run 30~independent seeds comparing strict (no migration) and lax (migration every 5~generations) island compositions on 20-bit OneMax over 100~generations (population~80, 4~islands of~20). Table~\ref{tab:multiseed} reports mean $\pm$ standard deviation of normalized Hamming diversity, with Mann-Whitney $U$ test $p$-values and Cohen's $d$ effect sizes.
@@ -477,14 +442,6 @@ Let $I(\mu, \mathrm{freq}, n, \mathrm{topo})$ be the island strategy functor par
 \paragraph{Practical implication.}
 Checkpointing or composing island-model runs introduces population divergence of ${\sim}0.78$ (normalized), independent of migration frequency---a consequence of chaotic amplification at composition boundaries (see Section~6 for details). Fitness is unaffected: both compositions reach the optimum. This pattern echoes LLM-based multi-agent systems, where independent (lax) composition amplifies errors $17.2\times$ versus $4.4\times$ for centralized (strict) composition~\cite{kim2025scaling}. Han et al.~\cite{han2026conformity} observe analogous dynamics: hub-topology agents converge fast but are fragile (strict), while distributed agents converge slowly but are robust (lax).
 
-\subsection{Evolved Artifacts}
-
-To ground the fingerprint results, we briefly examine artifact quality.
-In checkers, all strategies saturate to perfect fitness (1.0 win rate), so fingerprint differences do not translate into quality differences.
-In mazes, the island strategy produces the highest-fitness mazes (0.73 vs.\ 0.70 flat, 0.68 hourglass)---its diversity maintenance fingerprint preserves structural variants that flat composition eliminates.
-In symbolic regression, all strategies recover the exact target $(x \cdot x) + x$, but final phenotypic diversity ranges from 213.42 (adaptive) to 615.42 (island), a $2.9\times$ spread.
-The composition pattern determines the population's diversity profile even when fitness outcomes are identical.
-
 \section{Related Work}
 
 \paragraph{GA Theory and Composition.}
@@ -515,7 +472,7 @@ Kim et al.~\cite{kim2025scaling} find error amplification of $17.2\times$ for in
 Van Stein et al.~\cite{vanstein2025code} show that different evolutionary strategies produce distinct search trajectory network signatures determined by operator composition, not problem instance---our thesis in graph-theoretic language.
 
 \paragraph{Topology Optimization in Multi-Agent Systems.}
-Yang et al.~\cite{yang2025topology} argue that topological structure learning is an underresearched priority for LLM-based multi-agent systems, documenting up to 10\% performance variation across fixed topologies. Several empirical approaches address this: Zhou et al.~\cite{zhou2025mass} decompose multi-agent design into prompt and topology optimization, finding 10--15\% improvement from topology alone; Cang et al.~\cite{cang2026graphgrpo} use reinforcement learning to discover optimal communication graphs; and Li et al.~\cite{li2026ofamas} train a generative model that produces task-specific topologies. These learn \emph{which} topologies work through search; our framework explains \emph{why} via the spectral bridge and Strict/Lax Dichotomy.
+Yang et al.~\cite{yang2025topology} argue that topological structure learning is an underresearched priority for LLM-based multi-agent systems, documenting up to 10\% performance variation across fixed topologies. Several empirical approaches address this: Zhou et al.~\cite{zhou2025mass} decompose multi-agent design into prompt and topology optimization, finding 10--15\% improvement from topology alone; Cang et al.~\cite{cang2026graphgrpo} use reinforcement learning to discover optimal communication graphs; Li et al.~\cite{li2026ofamas} train a generative model that produces task-specific topologies; and Wang et al.~\cite{wang2026agentconductor} use RL-optimized DAG topologies for code generation, achieving 14.6\% improvement via density-aware construction. Jung et al.~\cite{jung2025mac} provide the engineering substrate: practical algorithms for maximizing algebraic connectivity ($\lambda_2$), the same spectral quantity that governs our lax-to-strict transition. These learn \emph{which} topologies work through search; our framework explains \emph{why} via the spectral bridge and Strict/Lax Dichotomy.
 
 \paragraph{Monads in Programming Language Theory.}
 Moggi~\cite{moggi1991notions} introduced monads as a unifying framework for computational effects---randomness, state, I/O---in programming language semantics. This idea, now standard in functional programming, provides the foundation for our evolution monad. We instantiate Moggi's framework for evolutionary computation: the monad carries randomness, configuration, and logging, and Kleisli composition gives us the compositionality that imperative GA implementations lack. To our knowledge, this is the first application of Kleisli categories to genetic algorithm analysis.
@@ -539,7 +496,7 @@ The three-level composition tower (operators $\to$ pipelines $\to$ strategies) p
 Since fingerprints are composition-determined rather than domain-determined (Section~4.2), insights transfer across domains. If island composition maintains diversity on a cheap problem (e.g., OneMax or small mazes), it will maintain diversity on an expensive problem with the same composition structure (e.g., large-scale combinatorial optimization). Practitioners can tune their \emph{composition structure} on inexpensive benchmarks and apply it to expensive target problems with confidence that the qualitative diversity dynamics will transfer. The composition is the invariant; the domain is a parameter.
 
 \paragraph{Predictive power.}
-The framework generates testable predictions: any migration topology with algebraic connectivity between ring and fully connected should exhibit intermediate diversity dynamics, regardless of fitness landscape. This aligns with independent results from coupled oscillator theory~\cite{sanz2026algebraic}, threshold graph synchronization~\cite{wu2025threshold}, network robustness~\cite{ostilli2025topological}, and evolutionary graph theory~\cite{brewster2025evolutionary} (where fixation times scale as $N^2$ on complete graphs versus $N^3$ on rings---our strict/lax ordering). More broadly, any system whose operator composition can be typed as Kleisli arrows over a population monad inherits these predictions without domain-specific re-derivation.
+The framework generates testable predictions: any migration topology with algebraic connectivity between ring and fully connected should exhibit intermediate diversity dynamics, regardless of fitness landscape. This aligns with independent results from coupled oscillator theory~\cite{sanz2026algebraic}, threshold graph synchronization~\cite{wu2025threshold}, network robustness~\cite{ostilli2025topological}, and evolutionary graph theory~\cite{brewster2025evolutionary} (where fixation times scale as $N^2$ on complete graphs versus $N^3$ on rings---our strict/lax ordering). Wang et al.~\cite{wang2026agentconductor} demonstrate this empirically: their RL-optimized DAG topologies for multi-agent code generation achieve 14.6\% improvement, consistent with the algebraic connectivity predictions our framework formalizes. More broadly, any system whose operator composition can be typed as Kleisli arrows over a population monad inherits these predictions without domain-specific re-derivation.
 
 \subsection{Limitations and Future Work}
 \label{sec:limitations}
@@ -551,15 +508,13 @@ The fingerprint results (Sections~4.1--4.2) use single random seeds per configur
 Combining the fingerprint experiments (3~domains), the Dichotomy experiment (OneMax), and the topology sweep (3~new domains plus sorting networks as a falsifying case) yields eight unique domains, with five showing identical topology ordering in the sweep. Extending to permutation-based domains (TSP, scheduling), variable-length genomes (NEAT-style neuroevolution~\cite{eiben2015introduction}), and high-dimensional continuous optimization would further test universality. The sorting network exception suggests that domain-specific constraints can override compositional effects---characterizing this boundary precisely remains future work.
 
 \paragraph{Formal proofs.}
-The Strict/Lax Dichotomy (Observation~\ref{obs:dichotomy}) is stated with formal precision and supported by experimental evidence across migration frequencies and boundary positions. Full categorical proofs, including the connection between laxity magnitude $D^*$ and the spectral gap of the migration topology's Markov chain, are developed in a companion paper. The present paper focuses on the empirical phenomenon and its practical consequences.
+The Strict/Lax Dichotomy (Observation~\ref{obs:dichotomy}) is stated with formal precision and supported by experimental evidence across migration frequencies and boundary positions. Full categorical proofs---including the connection between laxity magnitude $D^*$ and the spectral gap of the migration topology's Markov chain---are deferred to future work; the complete categorical construction exceeds the scope of this workshop paper. The present paper focuses on the empirical phenomenon and its practical consequences.
+
+\paragraph{Monadic context engineering.}
+Zhang et al.~\cite{zhang2025monadic} independently apply monad transformer stacks to LLM agent architectures for effect management; unifying their agent-internal monadic effects with our operator-composition monads is a natural next step.
 
 \paragraph{The co-Kleisli direction.}
 Our framework models what operators \emph{do}: each operator takes a population and produces a new population within an effect context. The dual perspective---what operators \emph{need} from their environment---would use co-Kleisli arrows of a comonad, where the comonadic context represents the population structure that each operator depends on. This co-Kleisli formulation could model selection as a context-dependent extraction (the comonad provides the population; selection extracts from it) and would give a bidirectional account of evolutionary computation. We leave this direction for future work.
-
-\paragraph{Mainstream integration.}
-Our implementation uses Haskell, where monads and Kleisli composition are first-class language features.
-Porting to mainstream EC frameworks (DEAP, ECJ, jMetal) would require categorical libraries or disciplined use of interfaces and type classes.
-The compositional structure itself is language-agnostic; accessibility is an engineering challenge, not a theoretical one.
 
 \subsection{Conclusion}
 
