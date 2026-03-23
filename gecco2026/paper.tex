@@ -4,6 +4,7 @@
 \setcopyright{none}
 \settopmatter{printacmref=false}
 \renewcommand\footnotetextcopyrightpermission[1]{}
+\acmConference[GECCO '26 AABOH]{Genetic and Evolutionary Computation Conference Companion}{July 14--18, 2026}{M\'{a}laga, Spain}
 
 % amsmath, amssymb, amsthm, booktabs are loaded by acmart
 \usepackage{tikz-cd}
@@ -33,7 +34,7 @@
   \country{Finland}}
 
 \begin{abstract}
-How you compose GA operators matters more than which operators you choose. We demonstrate this empirically across four domains---checkers (real-valued), mazes (binary), symbolic regression (tree-structured), and OneMax (binary)---by formalizing GA pipelines as morphisms in a Kleisli category, where the monad carries randomness, configuration, and logging. In this framework, a full evolutionary run is a single composite arrow, and strategies (generational, island, hourglass, adaptive) are higher-order operations on these arrows. We present three results. First, different strategy compositions produce qualitatively distinct diversity trajectories---\emph{diversity fingerprints}---that are stable across genome types and fitness landscapes; a topology sweep across five further domains---including a co-evolutionary domain with no fixed fitness landscape---confirms identical ordering with topology explaining $23.9\times$ more variance than domain ($p_{\mathrm{domain}} = 0.945$). Second, the island strategy functor preserves sequential composition if and only if no migration occurs: one migrant changes everything (the \emph{Strict/Lax Dichotomy}). Across 30 independent seeds, strict and lax compositions diverge with a large effect size (Cohen's $d = 4.34$, $p < 4 \times 10^{-11}$) while converging to identical fitness optima. Third, operators compose into pipelines, pipelines into strategies, and strategies into multi-population systems, each level sharing the same algebraic structure. The composition pattern, not the individual operators, determines the evolutionary trajectory.
+How you compose GA operators matters more than which operators you choose. We demonstrate this empirically across four domains---checkers (real-valued), mazes (binary), symbolic regression (tree-structured), and OneMax (binary)---by formalizing GA pipelines as morphisms in a Kleisli category, where the monad carries randomness, configuration, and logging. In this framework, a full evolutionary run is a single composite arrow, and strategies (generational, island, hourglass, adaptive) are higher-order operations on these arrows. We present three results. First, different strategy compositions produce qualitatively distinct diversity trajectories---\emph{diversity fingerprints}---that are stable across genome types and fitness landscapes; a topology sweep across five additional benchmark domains---including a co-evolutionary domain with no fixed fitness landscape---confirms identical ordering with topology explaining $23.9\times$ more variance than domain ($p_{\mathrm{domain}} = 0.945$). Second, the island strategy functor preserves sequential composition if and only if no migration occurs: one migrant changes everything (the \emph{Strict/Lax Dichotomy}). Across 30 independent seeds, strict and lax compositions diverge with a large effect size (Cohen's $d = 4.34$, $p < 4 \times 10^{-11}$) while converging to identical fitness optima. Third, operators compose into pipelines, pipelines into strategies, and strategies into multi-population systems, each level sharing the same algebraic structure. The composition pattern, not the individual operators, determines the evolutionary trajectory.
 \end{abstract}
 
 \begin{CCSXML}
@@ -450,7 +451,7 @@ Classical GA theory analyzes operators individually. Holland's schema theorem~\c
 \paragraph{Categorical Methods in Optimization.}
 Category theory has recently been applied to several optimization paradigms.
 Bakirtzis et al.~\cite{bakirtzis2024compositional} give a compositional account of reinforcement learning via categorical MDPs, proving safety guarantees that compose across subsystems---the closest precedent for our compositionality-first approach.
-Hedges and Sakamoto~\cite{hedges2024reinforcement} model reinforcement learning as parametrised optics.
+Hedges and Sakamoto~\cite{hedges2024reinforcement} model reinforcement learning as parameterized optics.
 Gavranovi\'{c} et al.~\cite{gavranovic2024categorical} formalize neural network architectures as monads in the Para construction.
 Hanks et al.~\cite{hanks2024gradient} cast gradient descent as a hypergraph functor.
 Miranda~\cite{miranda2024abstract} develops abstract Kleisli structures that generalize the construction we instantiate here.
@@ -508,7 +509,7 @@ The fingerprint results (Sections~4.1--4.2) use single random seeds per configur
 Combining the fingerprint experiments (3~domains), the Dichotomy experiment (OneMax), and the topology sweep (3~new domains plus sorting networks as a falsifying case) yields eight unique domains, with five showing identical topology ordering in the sweep. Extending to permutation-based domains (TSP, scheduling), variable-length genomes (NEAT-style neuroevolution~\cite{eiben2015introduction}), and high-dimensional continuous optimization would further test universality. The sorting network exception suggests that domain-specific constraints can override compositional effects---characterizing this boundary precisely remains future work.
 
 \paragraph{Formal proofs.}
-The Strict/Lax Dichotomy (Observation~\ref{obs:dichotomy}) is stated with formal precision and supported by experimental evidence across migration frequencies and boundary positions. Full categorical proofs---including the connection between laxity magnitude $D^*$ and the spectral gap of the migration topology's Markov chain---are deferred to future work; the complete categorical construction exceeds the scope of this workshop paper. The present paper focuses on the empirical phenomenon and its practical consequences.
+The Strict/Lax Dichotomy (Observation~\ref{obs:dichotomy}) is stated with formal precision and supported by experimental evidence across migration frequencies and boundary positions. Full categorical proofs---including the connection between laxity magnitude $D^*$ and the spectral gap of the migration topology's Markov chain---are deferred to future work; the complete categorical construction exceeds the scope of this paper. The present paper focuses on the empirical phenomenon and its practical consequences.
 
 \paragraph{Monadic context engineering.}
 Zhang et al.~\cite{zhang2025monadic} independently apply monad transformer stacks to LLM agent architectures for effect management; unifying their agent-internal monadic effects with our operator-composition monads is a natural next step.
