@@ -363,7 +363,7 @@ none $<$ ring $<$ star $<$ random $<$ fully\_connected
 \end{center}
 \noindent with pairwise Spearman rank correlation $\rho = 1.0$ across all $\binom{5}{2} = 10$ domain pairs. A two-way ANOVA finds that topology explains $23.9\times$ more variance in mean fitness than domain ($F_{\mathrm{topo}} = 47.8$, $p < 10^{-6}$; $F_{\mathrm{domain}} = 0.13$, $p = 0.945$). The domain factor is non-significant: it contributes essentially no explanatory power beyond topology. The No Thanks! result is especially significant: as a co-evolutionary domain with tournament-based relative fitness, there is no fixed fitness landscape---yet the canonical topology ordering persists ($\rho = 1.0$, phase transition 53.9\%), providing the strongest domain-independence evidence to date. This ordering follows the algebraic connectivity $\lambda_2$ of the migration graph~\cite{sanz2026algebraic}, confirming a structural prediction from coupled oscillator theory. A sixth domain (sorting networks) violates the ordering, providing a falsifiable scope condition: the invariant holds for domains where the fitness landscape admits sufficient selective gradient, and breaks where domain-specific constraints dominate migration dynamics.
 
-A separate $n{=}7$ island experiment on mazes confirms the spectral theorem prediction at the boundary where the ring--star ordering changes sign: at $n{\geq}7$ islands, $\lambda_2(\text{ring}) < \lambda_2(\text{star})$ and star outperforms ring ($p = 6.6{\times}10^{-5}$), validating the algebraic connectivity prediction independently of the $n{=}5$ sweep.
+A separate $n{=}7$ island experiment on mazes confirms the spectral theorem prediction at the boundary where the ring--star ordering changes sign: at $n{\geq}7$ islands, $\lambda_2(\text{ring}) < \lambda_2(\text{star})$ and star outperforms ring ($p = 6.6{\times}10^{-5}$), validating the algebraic connectivity prediction.
 
 Furthermore, early convergence analysis across domains reveals a two-phase process: coupling onset occurs universally at generations 5--7 (independent of domain), followed by gradual differentiation, with the topology ordering fully established by generation~30. This onset timing matches the spectral gap prediction from coupled oscillator theory~\cite{sanz2026algebraic}.
 
@@ -439,6 +439,11 @@ Let $I(\mu, \mathrm{freq}, n, \mathrm{topo})$ be the island strategy functor par
   \item Otherwise, $I(S_1 ; S_2) \cong I(S_1) ; I(S_2)$ with laxity magnitude $D^*$ that is independent of boundary position and migration frequency, determined asymptotically by the spectral gap of the migration topology's Markov chain. The multi-seed experiment confirms this with Cohen's $d$ up to 5.36 across 30~independent runs (Table~\ref{tab:multiseed}).
 \end{enumerate}
 \end{observation}
+
+\begin{remark}[Laxator magnitude is topology-dependent]
+\label{rem:laxator-topo}
+The laxity magnitude $D^*$ in item~2 is a property of the migration topology, not a universal constant. For the ring and star topologies tested here, $D^* \approx 0.78$; other topologies will yield different values determined by the spectral gap $\lambda_2$ of their respective Markov chains. The claim is that $D^*$ is invariant to \emph{boundary position and migration frequency} within a fixed topology---not that it is the same across topologies. A full characterization of $D^*$ as a function of $\lambda_2$ is deferred to future work.
+\end{remark}
 
 \paragraph{Practical implication.}
 Checkpointing or composing island-model runs introduces population divergence of ${\sim}0.78$ (normalized), independent of migration frequency---a consequence of chaotic amplification at composition boundaries (see Section~6 for details). Fitness is unaffected: both compositions reach the optimum. This pattern echoes LLM-based multi-agent systems, where independent (lax) composition amplifies errors $17.2\times$ versus $4.4\times$ for centralized (strict) composition~\cite{kim2025scaling}. Han et al.~\cite{han2026conformity} observe analogous dynamics: hub-topology agents converge fast but are fragile (strict), while distributed agents converge slowly but are robust (lax).
