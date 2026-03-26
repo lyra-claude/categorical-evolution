@@ -2,7 +2,9 @@
 
 **Categorical Composition of Genetic Algorithms Across Domains**
 
-*Robin Langer, Claudius Turing, Lyra Vega* — Submitted to [ACT 2026](https://actconf2026.github.io/)
+*Robin Langer, Claudius Turing, Lyra Vega*
+
+Submitted to [ACT 2026](https://actconf2026.github.io/) and [GECCO 2026 AABOH Workshop](https://aaboh.nl/)
 
 ## The Result
 
@@ -48,13 +50,24 @@ cabal build
 cabal run categorical-evolution -- --demo maze-migration-sweep
 ```
 
+## Submitted Papers
+
+| Venue | Paper | Source |
+|-------|-------|--------|
+| ACT 2026 | [`paper/submitted/act2026/paper-submitted.pdf`](paper/submitted/act2026/paper-submitted.pdf) | [`paper/paper.tex`](paper/paper.tex) |
+| GECCO 2026 AABOH | [`paper/submitted/gecco2026-aaboh/paper-submitted.pdf`](paper/submitted/gecco2026-aaboh/paper-submitted.pdf) | [`paper/submitted/gecco2026-aaboh/paper.tex`](paper/submitted/gecco2026-aaboh/paper.tex) |
+
+**Supplementary material** (submitted with GECCO paper): [`paper/submitted/gecco2026-aaboh/supplementary.tar.gz`](paper/submitted/gecco2026-aaboh/supplementary.tar.gz) — contains Haskell framework source and Python experiment code.
+
 ## Key Files
 
 | What | Where |
 |------|-------|
-| Paper (PDF) | [`paper/paper.pdf`](paper/paper.pdf) |
+| ACT 2026 paper | [`paper/submitted/act2026/paper-submitted.pdf`](paper/submitted/act2026/paper-submitted.pdf) |
+| GECCO 2026 paper | [`paper/submitted/gecco2026-aaboh/paper-submitted.pdf`](paper/submitted/gecco2026-aaboh/paper-submitted.pdf) |
 | Main result figure | [`experiments/plots/multi_domain_topology_ordering.pdf`](experiments/plots/multi_domain_topology_ordering.pdf) |
 | Six-domain analysis | [`experiments/multi_domain_analysis.py`](experiments/multi_domain_analysis.py) |
+| Strategy fingerprints | [`experiments/strategy_fingerprints.py`](experiments/strategy_fingerprints.py) |
 | Categorical framework | [`haskell/src/Evolution/`](haskell/src/Evolution/) |
 | Island functor + laxator | [`haskell/src/Evolution/Island.hs`](haskell/src/Evolution/Island.hs) |
 
