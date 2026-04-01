@@ -1,4 +1,4 @@
-\documentclass[sigconf,anonymous]{acmart}
+\documentclass[sigconf]{acmart}
 
 % Remove default ACM copyright for workshop submission draft
 \setcopyright{none}
@@ -15,10 +15,17 @@
 \pgfplotsset{compat=1.18}
 
 \AtBeginDocument{\newtheorem{observation}[theorem]{Observation}}
+\AtBeginDocument{\newtheorem{remark}[theorem]{Remark}}
 
 \begin{document}
 
 \title{Composition Determines Behavior: Diversity Fingerprints and the Strict/Lax Dichotomy in Genetic Algorithms}
+
+\author{Robin Langer}
+\email{langer.robin@gmail.com}
+\affiliation{%
+  \institution{Independent Researcher}
+  \country{Australia}}
 
 \author{Claudius Turing}
 \affiliation{%
@@ -34,7 +41,7 @@
   \country{Finland}}
 
 \begin{abstract}
-How you compose GA operators matters more than which operators you choose. We demonstrate this empirically across four domains---checkers (real-valued), mazes (binary), symbolic regression (tree-structured), and OneMax (binary)---by formalizing GA pipelines as morphisms in a Kleisli category, where the monad carries randomness, configuration, and logging. In this framework, a full evolutionary run is a single composite arrow, and strategies (generational, island, hourglass, adaptive) are higher-order operations on these arrows. We present three results. First, different strategy compositions produce qualitatively distinct diversity trajectories---\emph{diversity fingerprints}---that are stable across genome types and fitness landscapes; a topology sweep across five additional benchmark domains---including a co-evolutionary domain with no fixed fitness landscape---confirms identical ordering with topology explaining $23.9\times$ more variance than domain ($p_{\mathrm{domain}} = 0.945$). Second, the island strategy functor preserves sequential composition if and only if no migration occurs: one migrant changes everything (the \emph{Strict/Lax Dichotomy}). Across 30 independent seeds, strict and lax compositions diverge with a large effect size (Cohen's $d = 4.34$, $p < 4 \times 10^{-11}$) while converging to identical fitness optima. Third, operators compose into pipelines, pipelines into strategies, and strategies into multi-population systems, each level sharing the same algebraic structure. A finer topological analysis reveals that cycle rank ($\beta_1$, the first Betti number of the migration graph) outperforms algebraic connectivity $\lambda_2$ as a predictor of fitness dynamics ($\rho = 0.893$, $p = 0.007$ vs.\ $\rho = 0.679$, $p = 0.094$), resolving anomalies where $\lambda_2$ mispredicts (e.g., the star topology). The composition pattern, not the individual operators, determines the evolutionary trajectory.
+How you compose GA operators matters more than which operators you choose. We demonstrate this empirically across four domains---checkers (real-valued), mazes (binary), symbolic regression (tree-structured), and OneMax (binary)---by formalizing GA pipelines as morphisms in a Kleisli category, where the monad carries randomness, configuration, and logging. In this framework, a full evolutionary run is a single composite arrow, and strategies (generational, island, hourglass, adaptive) are higher-order operations on these arrows. We present four results. First, different strategy compositions produce qualitatively distinct diversity trajectories---\emph{diversity fingerprints}---that are stable across genome types and fitness landscapes; a topology sweep across five additional benchmark domains---including a co-evolutionary domain with no fixed fitness landscape---confirms identical ordering with topology explaining $23.9\times$ more variance than domain ($p_{\mathrm{domain}} = 0.945$). Second, the island strategy functor preserves sequential composition if and only if no migration occurs: one migrant changes everything (the \emph{Strict/Lax Dichotomy}). Across 30 independent seeds, strict and lax compositions diverge with a large effect size (Cohen's $d = 4.34$, $p < 4 \times 10^{-11}$) while converging to identical fitness optima. Third, operators compose into pipelines, pipelines into strategies, and strategies into multi-population systems, each level sharing the same algebraic structure. A finer topological analysis reveals that cycle rank ($\beta_1$, the first Betti number of the migration graph) outperforms algebraic connectivity $\lambda_2$ as a predictor of fitness dynamics ($\rho = 0.893$, $p = 0.007$ vs.\ $\rho = 0.679$, $p = 0.094$), resolving anomalies where $\lambda_2$ mispredicts (e.g., the star topology). The composition pattern, not the individual operators, determines the evolutionary trajectory.
 \end{abstract}
 
 \begin{CCSXML}
@@ -65,7 +72,7 @@ How you compose genetic algorithm (GA) operators matters more than which operato
 
 We make composition explicit by formalizing GA operators as morphisms in a \emph{Kleisli category}~\cite{moggi1991notions}, where a monad threads randomness, configuration, and logging automatically. A full evolutionary run becomes a single composite arrow. Strategies become higher-order operations on arrows.
 
-This formalization is not merely notational. It yields three concrete results:
+This formalization is not merely notational. It yields four concrete results:
 
 \begin{enumerate}[nosep]
   \item \textbf{Diversity fingerprints.} Different strategy compositions produce qualitatively distinct diversity trajectories: monotonic decline (generational), spike-crash-rebound (hourglass), steady maintenance (island), and spike-then-collapse (adaptive). These fingerprints are compositionally determined and stable across genome types and fitness landscapes.
@@ -73,6 +80,8 @@ This formalization is not merely notational. It yields three concrete results:
   \item \textbf{The Strict/Lax Dichotomy.} The island strategy preserves sequential composition strictly if and only if no migration occurs. Any nonzero migration---even one individual per thousand generations---breaks strict preservation. The magnitude of divergence is independent of migration frequency, a consequence of chaotic amplification at composition boundaries.
 
   \item \textbf{Three-level composition tower.} Operators compose into pipelines (one generation), pipelines compose into strategies (a full run), and strategies compose into multi-population systems. Each level uses the same Kleisli composition, giving a recursive design algebra for building complex GAs from simple parts.
+
+  \item \textbf{Cycle rank as topological predictor.} The first Betti number $\beta_1$ of the migration graph outperforms algebraic connectivity $\lambda_2$ as a predictor of fitness dynamics ($\rho = 0.893$, $p = 0.007$), resolving anomalies where $\lambda_2$ mispredicts (e.g., the star topology).
 \end{enumerate}
 
 We demonstrate the framework across three core domains chosen for maximum dissimilarity: checkers evaluation (real-valued weight vectors), maze topology (binary genomes), and symbolic regression (expression trees); a fourth domain (OneMax) tests the Strict/Lax Dichotomy, and a topology sweep extends coverage to five additional domains. The categorical structure is invariant---only the genome types and domain-specific operators change.
@@ -89,7 +98,11 @@ Every GA operator draws random numbers, reads configuration (tournament size, mu
 
 \subsection{Operators as Morphisms}
 
-Let \texttt{Pop\,a} denote a population with genome type~$a$. All core operators---selection, crossover, mutation, replacement---share the uniform Kleisli type \texttt{Pop\,a $\to$ $M$\,(Pop\,a)}: one population in, one out, effects in~$M$. A \emph{pipeline} is their Kleisli composition: \texttt{selection $\mathbin{>\!\!=\!\!>}$ crossover $\mathbin{>\!\!=\!\!>}$ mutation $\mathbin{>\!\!=\!\!>}$ replacement}. This composite has the same type as its parts and can be further composed: the generational strategy applies the pipeline $n$~times. The genome type~$a$ is a parameter---checkers uses \texttt{[Double]}, mazes \texttt{[Bool]}, symbolic regression \texttt{Expr}---but the pipeline shape is identical, which is precisely what we mean by ``composition determines behavior.''
+Let \texttt{Pop\,a} denote a population with genome type~$a$. All core operators---selection, crossover, mutation, replacement---share the uniform Kleisli type \texttt{Pop\,a $\to$ $M$\,(Pop\,a)}: one population in, one out, effects in~$M$. A \emph{pipeline} is their Kleisli composition:
+\begin{quote}
+\small\texttt{selection $\mathbin{>\!\!=\!\!>}$ crossover $\mathbin{>\!\!=\!\!>}$ mutation $\mathbin{>\!\!=\!\!>}$ replacement}
+\end{quote}
+\noindent This composite has the same type as its parts and can be further composed: the generational strategy applies the pipeline $n$~times. The genome type~$a$ is a parameter---checkers uses \texttt{[Double]}, mazes \texttt{[Bool]}, symbolic regression \texttt{Expr}---but the pipeline shape is identical, which is precisely what we mean by ``composition determines behavior.''
 
 \subsection{Composition Levels}
 
@@ -316,7 +329,7 @@ A finer-grained analysis on 8-island OneMax (Section~\ref{sec:cycle-rank}) revea
 
 \begin{figure*}[t]
 \centering
-\includegraphics[width=\textwidth]{gecco_two_panel.pdf}
+\includegraphics[width=0.95\textwidth,height=0.35\textheight,keepaspectratio]{gecco_two_panel.pdf}
 \caption{Left: Cycle rank ($\beta_1$) vs.\ mean fitness at generation~30 across 8 topologies ($\rho = 0.893$, $p = 0.007$). Right: Topology effect ($\eta^2$) over generations---88\% at gen~30, ${<}10\%$ by gen~50.}
 \label{fig:two-panel}
 \end{figure*}
