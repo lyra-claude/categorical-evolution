@@ -1,9 +1,9 @@
 % CAIS 2026 Workshop Extended Abstract
 % ACM Conference on AI Safety, May 27-29, San Jose
-% Draft v7: April 10, 2026
+% Draft v7.1: April 10, 2026
+% V7.1: Add positive coupling sign-flip confirmation (320 additional runs).
 % V7: Integrate Claude Chorus LLM experiment, remove bridge (for evolving-strategies),
 %   add contravariant functor explanation, explicit agent definitions.
-%   Addresses Robin's UID 975/977 feedback: agent-side quantities defined explicitly.
 \documentclass[10pt,twocolumn]{article}
 
 \usepackage[margin=1in]{geometry}
@@ -43,17 +43,18 @@ affects behavior. We provide three lines of evidence. First, using
 island-model genetic algorithms as a model system (240~runs), we show
 topology independently explains 17\% of behavioral diversity variance
 ($p < 10^{-7}$), amplified $14\times$ on hard problems. Second, we
-validate the transfer to real agents: 1,600 LLM~API calls across
+validate the transfer to real agents: 3,200 LLM~API calls across
 8~coding tasks show that topology determines solution diversity in
-GPT-4o-mini agents with \emph{inverted} sign---isolated agents
-converge (Cohen's $d = -11.1$), while fully connected agents diversify
-(Kendall's $W = 0.91$). The inversion arises because GA migration
-homogenizes (left Kan extension) while LLM context-sharing diversifies
-(right Kan extension)---same topology, opposite effect, determined by
-which adjoint the coupling mechanism instantiates. At least nine
-deployed agent systems chose topologies based on uncontrolled
-comparisons. Topology is a first-class design variable for agent
-safety; current systems are tuning it blindly.
+GPT-4o-mini agents. Under negative coupling (``be different''), the
+diversity ordering \emph{inverts} from GAs (Cohen's $d = -11.1$);
+under positive coupling (``build on and improve''), it reverts to
+GA-like ordering ($\eta^2 = 0.291$, $p < 10^{-19}$). Changing one
+word in the prompt flips which topology produces the most diverse
+output. The sign depends on which adjoint of the topology the coupling
+mechanism instantiates---left Kan (homogenize) vs.\ right Kan
+(diversify). At least nine deployed systems chose topologies without
+controlled comparisons. Topology is a first-class safety variable;
+current systems are tuning it blindly.
 \end{abstract}
 
 %% ===================================================================
@@ -147,7 +148,7 @@ landscape; increasing $K$ adds local optima.
 %% ===================================================================
 
 We present three experiments spanning GA model systems and LLM agents,
-totaling 2,400+ runs and API calls.
+totaling 3,600+ runs and API calls.
 
 \subsection{Experiment 1: Topology affects diversity at constant density}
 
@@ -227,34 +228,10 @@ LLM & FC $>$ ring $\approx$ star $>$ none & $W = 0.91$ (6/8 tasks) \\
 
 \noindent
 Six of eight tasks show the inverted ordering cleanly (Kruskal-Wallis
-$p < 10^{-6}$, Cohen's $d = -11.1$ for none vs.\ fully connected on
-the strongest task). Per-task results:
-
-\begin{center}
-\footnotesize
-\begin{tabular}{@{}lccccr@{}}
-\toprule
-\textbf{Task} & \textbf{None} & \textbf{Ring} & \textbf{Star} & \textbf{FC} & $d$ \\
-\midrule
-shortest\_path & .041 & .174 & .116 & \textbf{.231} & $-$14.8 \\
-kth\_largest & .043 & .199 & .157 & \textbf{.244} & $-$8.8 \\
-rate\_limiter & .029 & .096 & .093 & \textbf{.133} & $-$5.9 \\
-json\_parser & .088 & .126 & .137 & \textbf{.149} & $-$3.5 \\
-lru\_cache & .071 & .127 & .137 & \textbf{.172} & $-$2.6 \\
-regex\_match & .143 & .183 & .150 & \textbf{.205} & $-$1.9 \\
-\midrule
-expr\_eval & .254 & .289 & .278 & .232 & $+$0.4 \\
-bloom\_filter & .047 & .052 & .046 & .050 & $\approx$0 \\
-\bottomrule
-\end{tabular}
-\end{center}
-
-\noindent
-The two exceptions are informative. \textbf{Bloom filter} (spread
-$= 0.006$): the task is unimodal---no algorithmic variety for
-topology to act on. \textbf{Expression evaluator} ($d = +0.4$):
-the model's prior is already spread across multiple approaches, so
-the ``be different'' constraint adds little.
+$p < 10^{-6}$; Cohen's $d$ ranges from $-14.8$ to $-1.9$). Two
+exceptions are informative: bloom filter ($d \approx 0$, unimodal
+task---no algorithmic variety for topology to act on) and expression
+evaluator ($d = +0.4$, the model's prior is already spread).
 
 \paragraph{Why the sign flips.}
 Under ``none'' topology, all 5 LLM agents independently generate
@@ -279,6 +256,22 @@ topology the coupling mechanism instantiates:
 The topology is the invariant; the sign depends on the adjoint.
 $\mathrm{Lan}_F \dashv \mathrm{Ran}_F$ reverses ordering on any poset,
 including the diversity ordering on topologies.
+
+\paragraph{Positive coupling confirms the prediction.}
+We repeated the experiment with \emph{positive} coupling: each agent
+is instructed to ``build on and improve'' neighbors' solutions instead
+of ``be different.'' 320 additional API calls (total: 3,200). Results:
+the diversity ordering \textbf{reverts to GA-like}: none $>$ star
+$\approx$ ring $>$ FC (Kruskal-Wallis $H = 94.83$, $p = 2.01 \times
+10^{-20}$; Cohen's $d = 1.08$, none vs.\ FC; $\eta^2 = 0.291$).
+Crucially, the \emph{none} topology---where agents have no
+neighbors---shows identical diversity across conditions (negative:
+0.090, positive: 0.095, $p = 0.96$), confirming that coupling sign,
+not some other experimental variable, drives the reversal. Connected
+topologies collapse to near-zero diversity (0.025--0.028) under
+positive coupling, as agents converge on a shared best solution. One
+word change in the prompt flips the diversity ordering---precisely as
+the $\mathrm{Lan} \dashv \mathrm{Ran}$ framework predicts.
 
 %% ===================================================================
 \section{Implications for Agent Orchestration}
@@ -315,10 +308,10 @@ Dochkina~\citep{dochkina2026} & Density \& cycles confounded \\
 
 \paragraph{Safety risks.}
 Our LLM experiment sharpens three concerns:
-\emph{(1)~The sign matters.} A topology that reduces diversity in
-GAs may \emph{increase} it in agents with negative coupling (``be
-different'' instructions). Predictions based on GA intuition alone
-will have the wrong sign.
+\emph{(1)~The sign matters.} Changing one word in the coupling
+instruction flips which topology produces the most diverse output
+($\eta^2 = 0.291$, $p < 10^{-19}$). Predictions based on GA
+intuition alone will have the wrong sign for diversifying agents.
 \emph{(2)~Premature consensus.} Isolated LLM agents converge to
 identical solutions (Cohen's $d = -11.1$ vs.\ connected agents).
 ``Ensemble diversity'' claims based on independent agents may be
@@ -333,10 +326,10 @@ standard fix (impose DAG structure) simultaneously removes cycles
   \item \textbf{Treat topology as a first-class variable.}
     It controls the diversity--convergence tradeoff---in both GAs and
     LLM agents, empirically confirmed.
-  \item \textbf{Know your coupling sign.} Does your agent framework
-    encourage agents to build on neighbors' outputs (homogenizing,
-    left Kan) or differentiate from them (diversifying, right Kan)?
-    The same topology has opposite effects.
+  \item \textbf{Know your coupling sign.} One word change in the
+    coupling instruction flips the diversity ordering empirically.
+    Building on neighbors' outputs (left Kan) homogenizes;
+    differentiating from them (right Kan) diversifies.
   \item \textbf{Match topology to task complexity.} Simple tasks
     tolerate any topology; hard tasks demand deliberate choice
     ($\eta^2$ scales $14\times$ from $K{=}0$ to $K{=}6$).
@@ -352,15 +345,14 @@ standard fix (impose DAG structure) simultaneously removes cycles
 
 Yang et al.~\citep{yang2025topology} identify topology as the
 underexplored MAS dimension; we provide the controlled experiments
-they call for. HERA~\citep{hera2026} tracks cycle count during
-topology evolution, converging on ``compact chains with preserved
-cycles.'' Dochkina~\citep{dochkina2026} shows massive effects (25K
-tasks, $d = 1.86$) without isolating the mechanism. In evolutionary
-computation, the topology--diversity link is
-established~\citep{tomassini2005spatially,skolicki2005influence} but
+they call for. Dochkina~\citep{dochkina2026} shows massive effects
+(25K tasks, $d = 1.86$) without isolating the mechanism.
+HERA~\citep{hera2026} tracks cycle count during evolution but does not
+control density. In evolutionary computation, the topology--diversity
+link is established~\citep{tomassini2005spatially,skolicki2005influence}
 without density control. Capucci and
-Myers~\citep{capucci2026feedback} show each cycle requires an
-independent convergence guarantee---the theoretical cost side.
+Myers~\citep{capucci2026feedback} formalize the cost: each cycle
+requires an independent convergence guarantee.
 
 %% ===================================================================
 \section{Conclusion}
@@ -371,12 +363,13 @@ Communication topology is not neutral infrastructure---it is a design
 variable controlling how multi-agent systems balance exploration
 against convergence. In GA model systems, topology independently
 explains 17\% of diversity variance on easy problems, rising to 69\%
-on hard ones. In LLM agents, the effect is equally strong but
-\emph{inverted}: fully connected agents produce the most diverse
-solutions (Cohen's $d = -11.1$), while isolated agents converge to
-identical outputs. The sign depends on which adjoint of the topology
-graph the coupling mechanism instantiates---left Kan (merge,
-homogenize) vs.\ right Kan (constrain, diversify). At least nine
+on hard ones. In LLM agents, the effect is equally strong but its \emph{sign}
+depends on coupling: negative coupling (``be different'') inverts the
+GA ordering ($d = -11.1$); positive coupling (``build on'') restores
+it ($\eta^2 = 0.291$). The sign is determined by which adjoint the
+coupling instantiates---left Kan (homogenize) vs.\ right Kan
+(diversify)---confirmed by the null control: isolated agents show
+identical diversity regardless of coupling instruction ($p = 0.96$). At least nine
 deployed systems chose topologies based on comparisons that
 simultaneously varied the property they claimed to test. For safe
 multi-agent deployment, topology must be tuned deliberately, its

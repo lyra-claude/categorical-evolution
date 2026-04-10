@@ -1,0 +1,64 @@
+This is BibTeX, Version 0.99d (TeX Live 2023/Debian)
+Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
+The top-level auxiliary file: cais2026-abstract.aux
+The style file: plainnat.bst
+I found no \bibdata command---while reading file cais2026-abstract.aux
+Warning--I didn't find a database entry for "dochkina2026"
+Warning--I didn't find a database entry for "johnson1975finding"
+Warning--I didn't find a database entry for "kauffman1993origins"
+Warning--I didn't find a database entry for "hatcher2002algebraic"
+Warning--I didn't find a database entry for "graphgrpo2026"
+Warning--I didn't find a database entry for "ofamas2026"
+Warning--I didn't find a database entry for "gdesigner2025"
+Warning--I didn't find a database entry for "goagent2026"
+Warning--I didn't find a database entry for "argdesigner2026"
+Warning--I didn't find a database entry for "agentconductor2026"
+Warning--I didn't find a database entry for "dytopo2026"
+Warning--I didn't find a database entry for "hera2026"
+Warning--I didn't find a database entry for "moran2025error"
+Warning--I didn't find a database entry for "yang2025topology"
+Warning--I didn't find a database entry for "tomassini2005spatially"
+Warning--I didn't find a database entry for "skolicki2005influence"
+Warning--I didn't find a database entry for "capucci2026feedback"
+You've used 0 entries,
+            2773 wiz_defined-function locations,
+            608 strings with 5105 characters,
+and the built_in function-call counts, 33 in all, are:
+= -- 0
+> -- 0
+< -- 0
++ -- 0
+- -- 0
+* -- 2
+:= -- 10
+add.period$ -- 0
+call.type$ -- 0
+change.case$ -- 0
+chr.to.int$ -- 0
+cite$ -- 0
+duplicate$ -- 0
+empty$ -- 1
+format.name$ -- 0
+if$ -- 1
+int.to.chr$ -- 1
+int.to.str$ -- 1
+missing$ -- 0
+newline$ -- 8
+num.names$ -- 0
+pop$ -- 0
+preamble$ -- 1
+purify$ -- 0
+quote$ -- 0
+skip$ -- 1
+stack$ -- 0
+substring$ -- 0
+swap$ -- 0
+text.length$ -- 0
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 0
+warning$ -- 0
+while$ -- 0
+width$ -- 0
+write$ -- 7
+(There was 1 error message)
