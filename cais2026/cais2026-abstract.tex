@@ -207,6 +207,22 @@ $0.05$ ($K{=}0$, smooth) to $\mathbf{0.69}$ ($K{=}6$,
 rugged)---a $14\times$ amplification. Real-world agent tasks are
 closer to $K{=}6$ than to a unimodal toy problem.
 
+\paragraph{A second confound: cycle rank vs.\ spectral gap.}
+Even after controlling for density, cycle rank $\beta_1$ and
+algebraic connectivity $\lambda_2$ (the Fiedler eigenvalue) covary
+across most natural graph families. We construct \emph{iso-spectral}
+families---graphs sharing the same $\lambda_2$ but differing in
+$\beta_1$, and vice versa---to separate them. On NK landscapes
+($K{=}4$, $N{=}20$, 320 runs), two independent channels emerge on
+\textbf{distinct timescales}: $\beta_1$ drives \emph{transient}
+diversity ($\eta^2 = 0.191$ at generation~100, $p < 0.05$, fading by
+generation~500), while $\lambda_2$ drives \emph{persistent} diversity
+($\eta^2 = 0.265$ at generation~200, $p = 0.003$, maintained
+throughout). Neither invariant subsumes the other. The confounded
+benchmarks of Section~\ref{sec:confound} are therefore worse than
+stated: they conflate not one but \textbf{two} independent topological
+invariants with density.
+
 %% ===================================================================
 \section{Safety Implications}
 \label{sec:safety}
