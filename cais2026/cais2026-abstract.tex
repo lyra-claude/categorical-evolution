@@ -1,6 +1,7 @@
 % CAIS 2026 Workshop Extended Abstract
 % ACM Conference on AI Safety, May 27-29, San Jose
-% Draft v7.1: April 10, 2026
+% Draft v7.2: April 10, 2026
+% V7.2: Fix Cohen's d, run counts, capitalize Bloom.
 % V7.1: Add positive coupling sign-flip confirmation (320 additional runs).
 % V7: Integrate Claude Chorus LLM experiment, remove bridge (for evolving-strategies),
 %   add contravariant functor explanation, explicit agent definitions.
@@ -46,7 +47,7 @@ topology independently explains 17\% of behavioral diversity variance
 validate the transfer to real agents: 3,200 LLM~API calls across
 8~coding tasks show that topology determines solution diversity in
 GPT-4o-mini agents. Under negative coupling (``be different''), the
-diversity ordering \emph{inverts} from GAs (Cohen's $d = -11.1$);
+diversity ordering \emph{inverts} from GAs (Cohen's $d$ from $-14.0$ to $-1.9$ across six tasks);
 under positive coupling (``build on and improve''), it reverts to
 GA-like ordering ($\eta^2 = 0.291$, $p < 10^{-19}$). Changing one
 word in the prompt flips which topology produces the most diverse
@@ -148,7 +149,7 @@ landscape; increasing $K$ adds local optima.
 %% ===================================================================
 
 We present three experiments spanning GA model systems and LLM agents,
-totaling 3,600+ runs and API calls.
+totaling 490 GA runs and 3,200 LLM~API calls.
 
 \subsection{Experiment 1: Topology affects diversity at constant density}
 
@@ -172,8 +173,9 @@ reducing capacity to maintain alternative strategies.
 
 \subsection{Experiment 2: Hard problems amplify the effect $14\times$}
 
-On NK landscapes with tunable ruggedness, topology's effect scales
-with difficulty:
+On NK landscapes with tunable ruggedness (250 runs across 4 values of
+$K$, 2--3 topologies, 10--20 seeds), topology's effect scales with
+difficulty:
 
 \begin{center}
 \small
@@ -229,7 +231,7 @@ LLM & FC $>$ ring $\approx$ star $>$ none & $W = 0.91$ (6/8 tasks) \\
 \noindent
 Six of eight tasks show the inverted ordering cleanly (Kruskal-Wallis
 $p < 10^{-6}$; Cohen's $d$ ranges from $-14.8$ to $-1.9$). Two
-exceptions are informative: bloom filter ($d \approx 0$, unimodal
+exceptions are informative: Bloom filter ($d \approx 0$, unimodal
 task---no algorithmic variety for topology to act on) and expression
 evaluator ($d = +0.4$, the model's prior is already spread).
 
@@ -260,7 +262,7 @@ including the diversity ordering on topologies.
 \paragraph{Positive coupling confirms the prediction.}
 We repeated the experiment with \emph{positive} coupling: each agent
 is instructed to ``build on and improve'' neighbors' solutions instead
-of ``be different.'' 320 additional API calls (total: 3,200). Results:
+of ``be different.'' 1,600 additional API calls (total: 3,200). Results:
 the diversity ordering \textbf{reverts to GA-like}: none $>$ star
 $\approx$ ring $>$ FC (Kruskal-Wallis $H = 94.83$, $p = 2.01 \times
 10^{-20}$; Cohen's $d = 1.08$, none vs.\ FC; $\eta^2 = 0.291$).
@@ -313,7 +315,7 @@ instruction flips which topology produces the most diverse output
 ($\eta^2 = 0.291$, $p < 10^{-19}$). Predictions based on GA
 intuition alone will have the wrong sign for diversifying agents.
 \emph{(2)~Premature consensus.} Isolated LLM agents converge to
-identical solutions (Cohen's $d = -11.1$ vs.\ connected agents).
+identical solutions (Cohen's $d$ from $-14.0$ to $-1.9$ vs.\ connected agents across six tasks).
 ``Ensemble diversity'' claims based on independent agents may be
 illusory when models share a peaked prior.
 \emph{(3)~Error amplification.} Moran~\citep{moran2025error} reports
@@ -365,7 +367,7 @@ against convergence. In GA model systems, topology independently
 explains 17\% of diversity variance on easy problems, rising to 69\%
 on hard ones. In LLM agents, the effect is equally strong but its \emph{sign}
 depends on coupling: negative coupling (``be different'') inverts the
-GA ordering ($d = -11.1$); positive coupling (``build on'') restores
+GA ordering ($d$ from $-14.0$ to $-1.9$); positive coupling (``build on'') restores
 it ($\eta^2 = 0.291$). The sign is determined by which adjoint the
 coupling instantiates---left Kan (homogenize) vs.\ right Kan
 (diversify)---confirmed by the null control: isolated agents show
