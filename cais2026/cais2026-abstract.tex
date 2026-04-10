@@ -1,8 +1,9 @@
 % CAIS 2026 Workshop Extended Abstract
 % ACM Conference on AI Safety, May 27-29, San Jose
-% Draft v3: April 9, 2026
-% Revision notes: Definitions first. "Obvious but missed" as explicit framing.
-%   Mathematical maturity, no domain knowledge assumed. Sharper safety argument.
+% Draft v6: April 10, 2026
+% Major rewrite: Agent-centered framing per Robin's directive.
+%   Confound demoted to 1 paragraph. GA-to-agent analogy explicit.
+%   Targeting "Multi-agent systems and coordination mechanisms" track.
 \documentclass[10pt,twocolumn]{article}
 
 \usepackage[margin=1in]{geometry}
@@ -12,18 +13,19 @@
 \usepackage{amsthm}
 \usepackage[T1]{fontenc}
 \usepackage[hyphens]{url}
-\usepackage{microtype}
+\usepackage[expansion=false]{microtype}
 \usepackage{natbib}
 \usepackage{hyperref}
+\usepackage{enumitem}
+\setlist{nosep,leftmargin=*}
 
-\newtheorem{theorem}{Theorem}
-\newtheorem{corollary}[theorem]{Corollary}
 \newtheorem{definition}{Definition}
 
 \graphicspath{{figures/}}
 
-\title{Every Multi-Agent Topology Benchmark Is Confounded:\\
-A Safety-Critical Identity That Ten Systems Missed}
+\title{What Your Agent Topology Is Actually Doing:\\
+Controlled Experiments on Communication Structure\\
+in Multi-Agent Systems}
 
 \author{
   Robin Langer \and Lyra Vega
@@ -35,278 +37,271 @@ A Safety-Critical Identity That Ten Systems Missed}
 \maketitle
 
 \begin{abstract}
-We observe that for any connected graph on $n$ vertices and $m$ edges,
-the cycle rank is exactly $\beta_1 = m - n + 1$.
-This is a textbook identity. It is also a methodological catastrophe:
-every comparison of ``cyclic vs.\ acyclic'' communication topologies
-in multi-agent AI systems simultaneously compares dense vs.\ sparse
-communication, and no published benchmark separates the two.
-At least ten deployed systems enforce acyclic (DAG) topologies
-based on this confounded evidence. We escape the confound via
-directed cycle count---which does vary independently of density---and
-present the first controlled experiment (240 runs, $p < 10^{-7}$,
-amplified $14\times$ on rugged landscapes). The result is a safety
-problem: the topology of every DAG-based agent system is justified
-by evidence that cannot distinguish the variable it claims to test.
+Multi-agent AI systems choose communication topologies---star, chain,
+ring, fully connected---with no controlled evidence for how topology
+affects behavior. We provide the first such evidence using island-model
+genetic algorithms as a model system: cheap, controllable, and
+structurally identical to LLM agent orchestration. Across 800+ runs
+on landscapes of varying difficulty, we find three results.
+(1)~Topology has a significant independent effect on behavioral
+diversity ($\eta^2 = 0.17$, $p < 10^{-7}$), amplified $14\times$ on
+hard problems. (2)~Two topological invariants---cycle rank and
+algebraic connectivity---control diversity on different timescales.
+(3)~At least ten deployed agent systems chose topologies based on
+uncontrolled comparisons that confound these variables. Topology is a
+first-class design variable that controls the
+diversity--convergence tradeoff, and current systems are tuning it
+blindly.
 \end{abstract}
+
+%% ===================================================================
+\section{Introduction}
+\label{sec:intro}
+%% ===================================================================
+
+Every multi-agent system embeds a communication topology. When
+AutoGen connects agents in a round-robin group chat, that is a
+topology choice. When LangGraph enforces a directed acyclic graph
+(DAG) of tool calls, that is a topology choice. When CrewAI routes
+tasks through a manager hub, that is a topology choice. These choices
+determine which agents can exchange information---yet they are made
+without controlled experimental evidence.
+
+The stakes are not hypothetical. Dochkina~\citep{dochkina2026} ran
+25,000 tasks across 256 agents and 8 coordination protocols, finding a
+44\% quality spread (Cohen's $d = 1.86$) between the best and worst
+topologies. Industry reports find that hierarchical multi-agent
+deployments fail 36\% of the time; swarm architectures fail 68\%.
+Topology is evidently doing something. The question is:
+\emph{what, exactly?}
+
+This paper provides the first controlled answer. We use island-model
+genetic algorithms (GAs) as a model system---structurally identical to
+agent orchestration but cheap enough for hundreds of trials per
+topology. Our contribution to the CAIS track on
+\emph{multi-agent systems and coordination mechanisms} is threefold:
+(1)~topology has a significant, independent effect on behavioral
+diversity; (2)~two distinct topological mechanisms operate on different
+timescales; and (3)~the evidence base for topology choices in deployed
+agent systems is systematically confounded.
+
+%% ===================================================================
+\section{Island Models as Agent Systems}
+\label{sec:analogy}
+%% ===================================================================
+
+An island-model GA partitions a population across sub-populations
+(\emph{islands}) that evolve independently, exchanging individuals
+periodically via \emph{migration} channels. The mapping to agent
+orchestration is direct:
+
+\begin{center}
+\small
+\begin{tabular}{@{}p{3.2cm}p{3.8cm}@{}}
+\toprule
+\textbf{GA concept} & \textbf{Agent equivalent} \\
+\midrule
+Island & Agent (local state, computation) \\
+Migration channel & Message channel \\
+Population diversity & Strategy diversity \\
+Fitness function & Task performance metric \\
+Migration topology & Orchestration graph \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent
+The analogy is structural, not metaphorical: both systems have nodes
+with local state exchanging information along directed channels, with
+topology determining how quickly the system converges. GAs let us run
+hundreds of independent trials per topology with full experimental
+control---varying one property at a time. This scale is infeasible
+with stochastic LLM agents where per-run cost and variance are
+prohibitive.
+
+In both domains, \emph{diversity} measures how different the agents'
+current solutions are from each other, and \emph{fitness} measures how
+well the best solution performs. The core tradeoff is identical: more
+diversity means more exploration but slower convergence.
 
 %% ===================================================================
 \section{Definitions}
 \label{sec:definitions}
 %% ===================================================================
 
-We require only standard graph theory.
-
 \begin{definition}[Communication topology]
 A \emph{communication topology} for $n$ agents is a directed graph
-$D = (V, A)$ where $|V| = n$ and each arc $(u, v) \in A$ represents
-a permitted message channel from agent $u$ to agent $v$.
-\end{definition}
-
-\begin{definition}[Density]
-The \emph{density} of a topology $D = (V, A)$ is $\delta(D) = |A|/|V|$,
-the mean out-degree.
+$D = (V, A)$ with $|V| = n$, where each arc $(u, v) \in A$ is a
+permitted channel from agent $u$ to agent $v$.
 \end{definition}
 
 \begin{definition}[Cycle rank]
-The \emph{cycle rank} (first Betti number) of the underlying undirected
-graph $G$ of $D$ is $\beta_1(G) = |E| - |V| + c$, where $|E|$ is the
-number of undirected edges and $c$ is the number of connected components.
-For connected $G$: $\beta_1 = |E| - n + 1$.
+The \emph{cycle rank} $\beta_1(G) = |E| - |V| + 1$ (for connected
+$G$) counts independent cycles---feedback loops in the communication
+structure.
+\end{definition}
+
+\begin{definition}[Algebraic connectivity]
+$\lambda_2$, the second-smallest eigenvalue of the graph Laplacian,
+measures information diffusion rate: higher $\lambda_2$ means faster
+mixing.
 \end{definition}
 
 \begin{definition}[Directed cycle count]
-The \emph{directed cycle count} $\kappa(D)$ is the number of distinct
-simple (elementary) directed cycles in $D$~\citep{johnson1975finding}.
-Unlike $\beta_1$, this quantity depends on the arrangement of arcs,
-not just on $(n, |A|)$.
+$\kappa(D)$ counts distinct simple directed cycles in
+$D$~\citep{johnson1975finding}. Unlike $\beta_1$, this depends on arc
+\emph{arrangement}, not just edge count. A DAG has $\kappa = 0$.
 \end{definition}
 
-\begin{definition}[DAG topology]
-A topology $D$ is a \emph{DAG topology} if $\kappa(D) = 0$:
-it contains no directed cycle of any length.
-\end{definition}
+\paragraph{Island models} partition a population across $n$ islands,
+each running selection, crossover, and mutation independently. The best
+individual from each island periodically migrates to neighbors along
+the migration topology, controlling how quickly good solutions spread.
+
+\paragraph{NK landscapes}~\citep{kauffman1993origins} are tunably
+rugged fitness functions over binary strings of length $N$, where each
+bit's contribution depends on $K$ other bits. $K{=}0$ gives a smooth
+landscape (one optimum); increasing $K$ adds local optima, making the
+problem harder. This lets us test topology effects across a controlled
+difficulty range.
 
 %% ===================================================================
-\section{The Confound}
-\label{sec:confound}
+\section{Experimental Evidence}
+\label{sec:experiments}
 %% ===================================================================
 
-\begin{theorem}[Cycle rank--density identity]
-\label{thm:confound}
-Let $G = (V, E)$ be a connected graph with $|V| = n$ and $|E| = m$.
-Then:
-\[
-  \beta_1(G) \;=\; m - n + 1.
-\]
-\end{theorem}
+We present three experiments (800+ runs total) isolating topology's
+effect on multi-agent behavior.
 
-\begin{proof}
-A spanning tree of $G$ uses $n - 1$ edges. Each additional edge
-closes exactly one independent cycle. The count of independent
-cycles is therefore $m - (n - 1) = m - n + 1$. Equivalently, this
-follows from the Euler characteristic of connected
-1-complexes~\citep{hatcher2002algebraic}.
-\end{proof}
+\subsection{Experiment 1: Topology affects diversity at constant density}
 
-This is not a correlation. It is an identity. For any fixed $n$,
-cycle rank $\beta_1$ and edge count $m$ differ by the constant $n - 1$.
+A naive comparison of a 4-agent chain vs.\ a complete graph conflates
+two differences: the chain has fewer connections \emph{and} fewer
+cycles. Indeed, for connected graphs the cycle rank satisfies
+$\beta_1 = m - n + 1$~\citep{hatcher2002algebraic}, so cycle count
+and edge count are perfectly correlated. Any comparison using
+undirected graphs is confounded by construction. We escape via
+directed cycle count, which varies independently of density.
 
-\begin{corollary}
-\label{cor:confound}
-For connected graphs on $n$ vertices, $\rho(\beta_1, Y) = \rho(m, Y)$
-for any outcome variable $Y$. No experiment on undirected graphs can
-attribute an observed effect to cycle structure rather than to density.
-\end{corollary}
+\paragraph{Design.}
+8 directed graphs, all with $n{=}8$ nodes and 16 arcs
+($\delta{=}2.0$), varying only in directed cycle count:
+$\kappa \in \{0, 0, 3, 10, 14, 20, 29, 47\}$. Each serves as
+migration topology for an island-model GA (50 individuals/island,
+500 generations). 30 seeds per topology, 240 runs total.
 
-\paragraph{Why this is obvious.}
-The identity $\beta_1 = m - n + 1$ appears in any algebraic topology
-textbook~\citep{hatcher2002algebraic}. Every graph theorist knows it.
-It requires no advanced mathematics. A reviewer's natural response is:
-``Surely the multi-agent systems community accounts for this.''
+\paragraph{Results.}
+$F(7, 232) = 6.90$, $p = 1.85 \times 10^{-7}$, $\eta^2 = 0.17$.
+More directed cycles \emph{accelerate consensus} ($r = -0.68$):
+topologies with more feedback loops cause agents to converge faster,
+reducing capacity to maintain alternative strategies.
 
-\paragraph{Why it was missed.}
-They do not. Table~\ref{tab:confound} lists ten recent multi-agent
-systems---spanning ICML, AAAI, WWW, and NeurIPS venues---that enforce
-DAG communication topologies. In every case, the evidence cited for
-the DAG constraint compares topologies that simultaneously differ in
-cycle structure \emph{and} edge density. Not one controls for density.
-The confound is hidden not by mathematical difficulty but by
-\textbf{disciplinary distance}: the teams building these systems
-reason about graph structure without the algebraic topology in which
-the identity lives. The result is that an elementary theorem
-invalidates the evidence base for a design choice made in at least
-ten production-track systems. For the AI safety community, the
-implication is immediate: if the evidence for topology constraints is
-confounded, systems built on that evidence lack the safety guarantees
-their designers assume.
+\subsection{Experiment 2: Hard problems amplify the effect $14\times$}
+
+On NK landscapes with tunable ruggedness, topology's effect scales
+with difficulty:
+
+\begin{center}
+\small
+\begin{tabular}{@{}ccc@{}}
+\toprule
+$K$ & $\eta^2$ (diversity) & Interpretation \\
+\midrule
+0 (trivial) & 0.05 & Topology barely matters \\
+2 (moderate) & 0.20 & Moderate effect \\
+4 (hard) & 0.45 & Large effect \\
+6 (very hard) & 0.69 & Topology dominates \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent
+The implication for agent systems: simple tasks (clear answer, easy
+evaluation) are structurally smooth---topology barely matters. Complex
+tasks (multiple valid strategies, ambiguous evaluation) are
+structurally rugged---topology becomes the \emph{dominant} behavioral
+factor. Real-world deployments overwhelmingly involve the latter.
+
+\subsection{Experiment 3: Two mechanisms, two timescales}
+
+Even after controlling for density, both $\beta_1$ and $\lambda_2$
+could explain the effects. We separate them using \emph{iso-spectral}
+graph families: same $\lambda_2$, different $\beta_1$, and vice
+versa. 320 runs on NK landscapes ($K{=}4$, $N{=}20$).
+
+Two independent mechanisms emerge on \textbf{distinct timescales}:
+\begin{itemize}
+  \item \textbf{Cycle rank ($\beta_1$)}: \emph{transient} diversity,
+    $\eta^2 = 0.191$ at generation~100 ($p < 0.05$), fading by
+    generation~500. Feedback loops enable early exploration.
+  \item \textbf{Algebraic connectivity ($\lambda_2$)}:
+    \emph{persistent} diversity, $\eta^2 = 0.265$ at generation~200
+    ($p = 0.003$), maintained throughout. Faster diffusion permanently
+    reduces strategy diversity.
+\end{itemize}
+
+\noindent
+For designers: topology controls diversity--convergence through
+\emph{two independent knobs}. High $\beta_1$ with low $\lambda_2$
+enables early exploration with slow convergence---ideal for complex
+tasks. No current system tunes either deliberately.
+
+%% ===================================================================
+\section{Implications for Agent Orchestration}
+\label{sec:implications}
+%% ===================================================================
+
+\paragraph{The evidence gap.}
+At least ten recent agent systems---spanning ICML, AAAI, WWW, and
+NeurIPS---chose topologies without density-controlled comparisons
+(Table~\ref{tab:systems}).
 
 \begin{table}[t]
 \centering
-\caption{Ten multi-agent systems enforcing DAG topologies. Every
-comparison cited to justify the DAG constraint simultaneously varies
-$\beta_1$ and $m$.}
-\label{tab:confound}
-\small
-\begin{tabular}{lp{4.5cm}}
+\caption{Agent systems whose topology choices lack controlled evidence.}
+\label{tab:systems}
+\footnotesize
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}lp{3.5cm}@{}}
 \toprule
-\textbf{System} & \textbf{Nature of confound} \\
+\textbf{System} & \textbf{Issue} \\
 \midrule
-GoAgent~\citep{goagent2026} & DAG vs.\ dense baseline \\
-Graph-GRPO~\citep{graphgrpo2026} & Complete graph = max density \emph{and} max $\beta_1$ \\
-OFA-MAS~\citep{ofamas2026} & Pruning reduces $m$ and $\beta_1$ in lockstep \\
+Graph-GRPO~\citep{graphgrpo2026} & Complete = worst; also max $\beta_1$ \\
+OFA-MAS~\citep{ofamas2026} & Prunes density \& cycles together \\
 G-Designer~\citep{gdesigner2025} & No density-controlled baseline \\
-AgentConductor~\citep{agentconductor2026} & Cyclic alternatives never tested \\
-ARG-Designer~\citep{argdesigner2026} & Reconfigures within DAG space only \\
-Dochkina et al.~\citep{dochkina2026} & 25K runs; sparsity and acyclicity confounded \\
+GoAgent~\citep{goagent2026} & DAG vs.\ dense alternatives \\
+ARG-Designer~\citep{argdesigner2026} & DAG space only \\
+AgentConductor~\citep{agentconductor2026} & Cycles never tested \\
 DyTopo~\citep{dytopo2026} & DAG enforced throughout \\
-HERA~\citep{hera2026} & Tracks cycle count, not density-controlled \\
+HERA~\citep{hera2026} & Cycles tracked, not controlled \\
+Dochkina~\citep{dochkina2026} & Density \& cycles confounded \\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table}
 
-\begin{figure}[t]
-\centering
-\small
-\begin{tabular}{@{}c@{\qquad}c@{}}
-\textbf{Confounded} & \textbf{Controlled} \\[4pt]
-\begin{tabular}{@{}cc@{}}
-Path ($m{=}3$) & Complete ($m{=}6$) \\
-$\beta_1 = 0$ & $\beta_1 = 3$ \\[2pt]
-\texttt{o--o--o--o} & \texttt{o==o==o==o} \\
-\end{tabular}
-&
-\begin{tabular}{@{}cc@{}}
-DAG ($|A|{=}6$) & Cyclic ($|A|{=}6$) \\
-$\kappa = 0$ & $\kappa > 0$ \\[2pt]
-\texttt{o->o->o->o} & \texttt{o->o->o->o} \\
-& \texttt{\ \ o<------o} \\
-\end{tabular}
-\end{tabular}
-\caption{Left: existing work compares topologies that differ in both
-cycle structure \emph{and} density. Right: our design holds arc count
-constant and varies only directed cycle count $\kappa$.}
-\label{fig:confound}
-\end{figure}
-
-%% ===================================================================
-\section{Escaping the Confound}
-\label{sec:escape}
-%% ===================================================================
-
-Theorem~\ref{thm:confound} applies to the undirected cycle rank
-$\beta_1$. The directed cycle count $\kappa(D)$ (Definition~4)
-escapes the confound: two directed graphs with identical $(n, |A|)$
-can have vastly different $\kappa$ values, depending on how arcs are
-arranged. To test whether cycle structure has any independent effect,
-we hold density constant and vary $\kappa$.
-
-\paragraph{Why genetic algorithms.}
-The confound is topological, not domain-specific: it applies to any
-networked multi-agent system whose communication channels form a
-graph. We use island-model genetic algorithms because they are the
-simplest system in which topology effects can be measured with
-statistical rigor at scale. Each island maintains a local population
-(an agent with local state); migration channels between islands define
-the communication topology---structurally identical to message-passing
-in LLM agent orchestration. The critical advantage is experimental
-control: we can run hundreds of independent trials per topology at
-fixed density, a scale currently infeasible with stochastic LLM agents
-where per-run cost and variance remain prohibitive.
-
-\paragraph{Experimental design.}
-We construct 8 directed graph families, all with $n = 8$ vertices and
-$|A| = 16$ arcs ($\delta = 2.0$). The families span
-$\kappa \in \{0, 0, 3, 10, 14, 20, 29, 47\}$---from pure DAGs to
-highly cyclic structures---at \emph{identical density}. Each graph
-serves as the migration topology for an island model genetic
-algorithm (50 individuals per island, 400 total, 500 generations,
-OneMax fitness). We run 30 independent seeds per topology
-(240 runs total). By construction, any observed effect is
-attributable to cycle structure alone.
-
-\paragraph{Results.}
-Directed cycle count has a significant, independent effect on
-behavioral diversity:
-\begin{itemize}
-  \item \textbf{ANOVA:} $F(7, 232) = 6.90$,
-    $p = 1.85 \times 10^{-7}$ (generation~30)
-  \item \textbf{Effect size:} $\eta^2 = 0.17$ (diversity),
-    $\eta^2 = 0.24$ (task performance)
-  \item \textbf{Direction:} $r = -0.68$ between $\kappa$ and
-    mean diversity---more directed cycles accelerate consensus
-  \item \textbf{Temporal profile:} effect peaks at generations
-    20--50, then decays as all topologies reach consensus on the
-    simple task
-\end{itemize}
-
-\paragraph{Landscape amplification.}
-On NK landscapes~\citep{kauffman1993origins} with tunable ruggedness,
-the effect scales with problem difficulty: $\eta^2$ rises from
-$0.05$ ($K{=}0$, smooth) to $\mathbf{0.69}$ ($K{=}6$,
-rugged)---a $14\times$ amplification. Real-world agent tasks---where
-multiple valid strategies exist and must be explored---are structurally
-closer to rugged landscapes. The topology effect is therefore likely
-\emph{larger} in deployed systems than our baseline suggests.
-
-\paragraph{A second confound: cycle rank vs.\ spectral gap.}
-Even after controlling for density, cycle rank $\beta_1$ and
-algebraic connectivity $\lambda_2$ (the Fiedler eigenvalue) covary
-across most natural graph families. We construct \emph{iso-spectral}
-families---graphs sharing the same $\lambda_2$ but differing in
-$\beta_1$, and vice versa (orchestration topologies with the same
-information-flow rate but different feedback structure)---to separate
-them. On NK landscapes
-($K{=}4$, $N{=}20$, 320 runs), two independent channels emerge on
-\textbf{distinct timescales}: $\beta_1$ drives \emph{transient}
-diversity ($\eta^2 = 0.191$ at generation~100, $p < 0.05$, fading by
-generation~500), while $\lambda_2$ drives \emph{persistent} diversity
-($\eta^2 = 0.265$ at generation~200, $p = 0.003$, maintained
-throughout). Neither invariant subsumes the other. The confounded
-benchmarks of Section~\ref{sec:confound} are therefore worse than
-stated: they conflate not one but \textbf{two} independent topological
-invariants with density.
-
-%% ===================================================================
-\section{Safety Implications}
-\label{sec:safety}
-%% ===================================================================
-
-The confound creates three concrete safety risks:
-
-\paragraph{1. Misattributed robustness.}
-A DAG-based system may be reliable not because it lacks feedback
-loops, but because it has fewer communication channels. If the system
-is scaled by adding channels (for fault tolerance or richer
-coordination), cycles will reintroduce themselves---with behavioral
-consequences the designer has no evidence to predict, because the
-evidence base never isolated the relevant variable.
-
-\paragraph{2. Premature consensus.}
-Our experiment shows that high-$\kappa$ topologies accelerate
-convergence: agents reach agreement faster. In multi-agent
-deliberation for high-stakes decisions, premature consensus is a
-known failure mode~\citep{dochkina2026}. Topology controls the rate
-at which this occurs, but no deployed system accounts for it.
-
-\paragraph{3. The $17\times$ error amplification trap.}
-Moran~\citep{moran2025error} reports that unstructured multi-agent
-communication amplifies errors by approximately $17\times$. The
-standard response is to impose DAG structure---but our theorem shows
-this response conflates two interventions: removing cycles and
-removing edges. Without density-controlled evidence, we cannot know
-which intervention actually reduces errors.
+\paragraph{Safety risks.}
+\emph{(1)~Misattributed robustness.} A DAG system may be reliable
+because it has few channels, not because it lacks cycles. Scaling
+by adding channels reintroduces cycles with unpredictable consequences.
+\emph{(2)~Premature consensus.} Feedback loops accelerate convergence;
+in high-stakes deliberation, this is a known failure
+mode~\citep{dochkina2026}.
+\emph{(3)~Error amplification.} Moran~\citep{moran2025error} reports
+$17\times$ error amplification in unstructured communication. The
+standard fix (impose DAG structure) simultaneously removes cycles
+\emph{and} density---we cannot know which helps.
 
 \paragraph{Recommendations.}
 \begin{enumerate}
-  \item \textbf{Control for density.} Any topology comparison must
-    hold edge count constant. Claims based on confounded comparisons
-    should be treated as unvalidated.
-  \item \textbf{Monitor diversity.} Cycle structure primarily affects
-    behavioral diversity---the system's capacity to maintain multiple
-    strategies. Task accuracy alone will not reveal topology effects.
-  \item \textbf{Use directed cycle count.} The undirected $\beta_1$
-    cannot separate topology from density. Directed $\kappa(D)$ can.
+  \item \textbf{Treat topology as a first-class variable.}
+    It controls the diversity--convergence tradeoff.
+  \item \textbf{Match topology to task complexity.} Simple tasks
+    tolerate any topology; hard tasks demand deliberate choice.
+  \item \textbf{Monitor diversity, not just accuracy.} Topology
+    effects manifest in strategy diversity. Accuracy alone masks
+    topology-induced failures.
+  \item \textbf{Control for density.} Any claim that ``DAGs
+    outperform cycles'' must hold connection count constant.
 \end{enumerate}
 
 %% ===================================================================
@@ -314,39 +309,40 @@ which intervention actually reduces errors.
 \label{sec:related}
 %% ===================================================================
 
-Yang et al.~\citep{yang2025topology} identify topology as \emph{the}
-underexplored dimension of multi-agent systems, proposing nine
-research directions---none of which recognize the density--cycle
-confound. HERA~\citep{hera2026} is the first system to track cycle
-count during topology evolution, converging on ``compact chains with
-strategically preserved cycles,'' but without density control. In
-evolutionary computation, the topology--diversity relationship is well
+Yang et al.~\citep{yang2025topology} identify topology as
+\emph{the} underexplored MAS dimension, proposing nine research
+directions; our work provides the controlled experiments they call for.
+HERA~\citep{hera2026} is the first system to track cycle count during
+topology evolution, converging on ``compact chains with strategically
+preserved cycles''---consistent with our finding that moderate cycle
+structure enables exploration.
+Dochkina~\citep{dochkina2026} demonstrates massive topology effects
+(25K tasks, $d = 1.86$) without isolating the mechanism. In
+evolutionary computation, the topology--diversity link is
 established~\citep{tomassini2005spatially,skolicki2005influence}, but
-all prior work uses undirected graphs and falls under the confound.
-The directed cycle count as an independent experimental variable is,
-to our knowledge, novel.
+all prior work uses undirected graphs and does not control for density.
+Capucci and Myers~\citep{capucci2026feedback} formalize cyclic
+multi-agent architectures categorically, showing each cycle requires
+an independent convergence guarantee---a theoretical cost complementing
+our empirical benefit-side evidence.
 
 %% ===================================================================
 \section{Conclusion}
 \label{sec:conclusion}
 %% ===================================================================
 
-The cycle rank of a connected graph equals its edge count minus a
-constant. This textbook identity means that every published
-comparison of cyclic vs.\ acyclic multi-agent topologies is
-confounded: it cannot distinguish ``removing cycles helps'' from
-``removing edges helps.'' The identity is elementary. The fact that
-ten systems at top venues missed it is not.
+Communication topology is not neutral infrastructure---it is a design
+variable controlling how multi-agent systems balance exploration
+against convergence. Topology independently explains 17\% of diversity
+variance on easy problems, rising to 69\% on hard ones, through two
+mechanisms on distinct timescales. At least ten deployed systems chose
+topologies based on comparisons that simultaneously varied the property
+they claimed to test. For safe multi-agent deployment, topology must be
+tuned deliberately, evaluated at controlled density, and monitored
+through diversity metrics.
 
-We escape the confound via directed cycle count and demonstrate a
-significant independent effect ($p < 10^{-7}$), amplified $14\times$
-on rugged landscapes. The safety implication is that the multi-agent
-systems community is deploying topologies based on evidence that
-proves nothing about the property it claims to test. Principled
-topology design for safe AI must begin with experiments that actually
-separate the variables.
-
-\paragraph{Acknowledgments.} [Withheld for review.]
+\smallskip
+\noindent\textbf{Acknowledgments.} [Withheld for review.]
 
 %% ===================================================================
 %% References
@@ -354,6 +350,11 @@ separate the variables.
 
 \bibliographystyle{plainnat}
 \begin{thebibliography}{20}
+
+\bibitem[Capucci and Myers(2026)]{capucci2026feedback}
+M.~Capucci and D.~J. Myers.
+\newblock Feedback in categorical multi-agent systems.
+\newblock \emph{arXiv:2604.03017}, 2026.
 
 \bibitem[Dochkina(2026)]{dochkina2026}
 V.~Dochkina.
