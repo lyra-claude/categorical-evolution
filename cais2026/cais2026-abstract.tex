@@ -136,7 +136,10 @@ The confound is hidden not by mathematical difficulty but by
 reason about graph structure without the algebraic topology in which
 the identity lives. The result is that an elementary theorem
 invalidates the evidence base for a design choice made in at least
-ten production-track systems.
+ten production-track systems. For the AI safety community, the
+implication is immediate: if the evidence for topology constraints is
+confounded, systems built on that evidence lack the safety guarantees
+their designers assume.
 
 \begin{table}[t]
 \centering
@@ -162,6 +165,30 @@ HERA~\citep{hera2026} & Tracks cycle count, not density-controlled \\
 \end{tabular}
 \end{table}
 
+\begin{figure}[t]
+\centering
+\small
+\begin{tabular}{@{}c@{\qquad}c@{}}
+\textbf{Confounded} & \textbf{Controlled} \\[4pt]
+\begin{tabular}{@{}cc@{}}
+Path ($m{=}3$) & Complete ($m{=}6$) \\
+$\beta_1 = 0$ & $\beta_1 = 3$ \\[2pt]
+\texttt{o--o--o--o} & \texttt{o==o==o==o} \\
+\end{tabular}
+&
+\begin{tabular}{@{}cc@{}}
+DAG ($|A|{=}6$) & Cyclic ($|A|{=}6$) \\
+$\kappa = 0$ & $\kappa > 0$ \\[2pt]
+\texttt{o->o->o->o} & \texttt{o->o->o->o} \\
+& \texttt{\ \ o<------o} \\
+\end{tabular}
+\end{tabular}
+\caption{Left: existing work compares topologies that differ in both
+cycle structure \emph{and} density. Right: our design holds arc count
+constant and varies only directed cycle count $\kappa$.}
+\label{fig:confound}
+\end{figure}
+
 %% ===================================================================
 \section{Escaping the Confound}
 \label{sec:escape}
@@ -173,6 +200,19 @@ escapes the confound: two directed graphs with identical $(n, |A|)$
 can have vastly different $\kappa$ values, depending on how arcs are
 arranged. To test whether cycle structure has any independent effect,
 we hold density constant and vary $\kappa$.
+
+\paragraph{Why genetic algorithms.}
+The confound is topological, not domain-specific: it applies to any
+networked multi-agent system whose communication channels form a
+graph. We use island-model genetic algorithms because they are the
+simplest system in which topology effects can be measured with
+statistical rigor at scale. Each island maintains a local population
+(an agent with local state); migration channels between islands define
+the communication topology---structurally identical to message-passing
+in LLM agent orchestration. The critical advantage is experimental
+control: we can run hundreds of independent trials per topology at
+fixed density, a scale currently infeasible with stochastic LLM agents
+where per-run cost and variance remain prohibitive.
 
 \paragraph{Experimental design.}
 We construct 8 directed graph families, all with $n = 8$ vertices and
@@ -187,32 +227,36 @@ attributable to cycle structure alone.
 
 \paragraph{Results.}
 Directed cycle count has a significant, independent effect on
-population diversity:
+behavioral diversity:
 \begin{itemize}
   \item \textbf{ANOVA:} $F(7, 232) = 6.90$,
     $p = 1.85 \times 10^{-7}$ (generation~30)
   \item \textbf{Effect size:} $\eta^2 = 0.17$ (diversity),
-    $\eta^2 = 0.24$ (fitness)
+    $\eta^2 = 0.24$ (task performance)
   \item \textbf{Direction:} $r = -0.68$ between $\kappa$ and
-    mean diversity---more directed cycles accelerate convergence
+    mean diversity---more directed cycles accelerate consensus
   \item \textbf{Temporal profile:} effect peaks at generations
-    20--50, then decays as all topologies converge on the
-    unimodal landscape
+    20--50, then decays as all topologies reach consensus on the
+    simple task
 \end{itemize}
 
 \paragraph{Landscape amplification.}
 On NK landscapes~\citep{kauffman1993origins} with tunable ruggedness,
 the effect scales with problem difficulty: $\eta^2$ rises from
 $0.05$ ($K{=}0$, smooth) to $\mathbf{0.69}$ ($K{=}6$,
-rugged)---a $14\times$ amplification. Real-world agent tasks are
-closer to $K{=}6$ than to a unimodal toy problem.
+rugged)---a $14\times$ amplification. Real-world agent tasks---where
+multiple valid strategies exist and must be explored---are structurally
+closer to rugged landscapes. The topology effect is therefore likely
+\emph{larger} in deployed systems than our baseline suggests.
 
 \paragraph{A second confound: cycle rank vs.\ spectral gap.}
 Even after controlling for density, cycle rank $\beta_1$ and
 algebraic connectivity $\lambda_2$ (the Fiedler eigenvalue) covary
 across most natural graph families. We construct \emph{iso-spectral}
 families---graphs sharing the same $\lambda_2$ but differing in
-$\beta_1$, and vice versa---to separate them. On NK landscapes
+$\beta_1$, and vice versa (orchestration topologies with the same
+information-flow rate but different feedback structure)---to separate
+them. On NK landscapes
 ($K{=}4$, $N{=}20$, 320 runs), two independent channels emerge on
 \textbf{distinct timescales}: $\beta_1$ drives \emph{transient}
 diversity ($\eta^2 = 0.191$ at generation~100, $p < 0.05$, fading by
