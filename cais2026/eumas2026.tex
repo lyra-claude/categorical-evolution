@@ -1,0 +1,1160 @@
+% EUMAS 2026: What Your Agent Topology Is Actually Doing
+% Expanded from CAIS v8 (5-6 pages) to 14 pages LNCS
+% Draft v1: April 11, 2026
+% Double-blind submission — no author names
+\documentclass[runningheads]{llncs}
+
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath,amssymb}
+% amsthm conflicts with llncs proof environment; omit it
+\usepackage[T1]{fontenc}
+\usepackage[hyphens]{url}
+\usepackage[expansion=false]{microtype}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{multirow}
+\usepackage{xcolor}
+
+\graphicspath{{figures/}}
+
+% LNCS already defines theorem, lemma, etc.
+% We only need custom environments not already provided.
+\spnewtheorem{thm}{Theorem}{\bfseries}{\itshape}
+
+\begin{document}
+
+\title{What Your Agent Topology Is Actually Doing:\\
+Controlled Experiments on Communication Structure\\
+in Multi-Agent Systems}
+
+\titlerunning{What Your Agent Topology Is Actually Doing}
+
+% Double-blind: no authors
+\author{Anonymous}
+\institute{Anonymous}
+
+\maketitle
+
+\begin{abstract}
+Multi-agent AI systems choose communication topologies---star, chain,
+ring, fully connected---with no controlled evidence for how topology
+affects behavior. We provide five lines of evidence across 1,360 GA
+runs and 3,200 LLM API calls. First, we prove that cycle rank and
+edge density are algebraically confounded in undirected graphs,
+invalidating density-uncontrolled topology comparisons (Theorem~1).
+Second, using directed graphs that escape this confound (240~runs), we
+show topology independently explains 17\% of diversity variance
+($p < 10^{-7}$). Third, an NK dose-response sweep (250~runs) shows
+the effect scales $14\times$ from smooth to rugged landscapes. Fourth,
+a ring-vs-star comparison at constant cycle rank (160~runs) reveals
+that degree distribution contributes at most $\eta^2 \approx 0.13$
+within a single $\beta_1$ class---cycle rank matters more than local
+connectivity pattern. Fifth, a bridge experiment (320~runs) with
+iso-spectral graph families decomposes the topology signal into two
+independent mechanisms: cycle rank ($\beta_1$) drives transient
+diversity ($\eta^2 = 0.191$ at generation~100, fading by
+generation~500), while algebraic connectivity ($\lambda_2$) drives
+persistent diversity (cross-family $\eta^2 = 0.265$ at
+generation~200, persisting). We validate transfer to real agents:
+3,200 GPT-4o-mini API calls show topology modulates LLM solution
+diversity with a coupling-dependent sign flip---a single instruction
+change reverses which topology produces the most diverse output
+($\eta^2 = 0.291$, $p < 10^{-19}$). At least nine deployed systems
+chose topologies without the controlled comparisons our confound
+theorem demands. Topology is a first-class design variable; current
+systems are tuning it blindly.
+\end{abstract}
+
+%% ===================================================================
+\section{Introduction}
+\label{sec:intro}
+%% ===================================================================
+
+Every multi-agent system embeds a communication topology. AutoGen uses
+round-robin group chat. LangGraph builds DAG pipelines. CrewAI deploys
+manager hubs. These are not neutral infrastructure choices---they
+determine which agents can see which outputs, shaping the
+diversity--convergence tradeoff that governs system behavior. Yet
+these choices are made without controlled evidence.
+
+The scale of the problem is becoming clear.
+Dochkina~\cite{dochkina2026} ran 25,000~tasks across 256~agents with
+eight coordination protocols, finding a 44\% quality spread
+($d = 1.86$) between topologies---an effect larger than most prompt
+engineering interventions. Moran~\cite{moran2025error} reports
+$17\times$ error amplification in unstructured multi-agent
+communication. Yang et al.~\cite{yang2025topology} identify topology
+as \emph{the} underexplored dimension of multi-agent system design,
+calling for controlled experiments. Wang et al.~\cite{wang2026kregular}
+show that $K$-regular graphs maximize coordination efficiency, with a
+minimum capability threshold $\beta_{\min} \sim 1/K$ suggesting that
+connectivity and agent capability trade off.
+
+Topology is doing something---but \emph{what, exactly?} Existing
+comparisons conflate multiple graph properties. Comparing a chain
+($\beta_1 = 0$) to a fully connected graph ($\beta_1 = \binom{n}{2} -
+n + 1$) simultaneously varies cycle rank, density, diameter, and
+spectral gap. We cannot know which property drives the observed
+effect.
+
+We provide the first controlled answer, bridging from a model system
+(genetic algorithms) to real LLM agents. Our contributions:
+
+\begin{enumerate}
+  \item \textbf{The Confound Theorem} (Section~\ref{sec:definitions}):
+    cycle rank and edge density are algebraically identical for
+    undirected graphs ($\beta_1 = |E| - n + 1$), making
+    density-uncontrolled topology comparisons fundamentally
+    uninterpretable. We show how directed cycle count $\kappa$ escapes
+    this confound.
+
+  \item \textbf{Controlled GA experiments} (Sections~\ref{sec:exp1}--\ref{sec:exp4}):
+    four experiments totaling 970 runs establish that topology
+    independently determines behavioral diversity, the effect scales
+    with problem difficulty, cycle rank matters more than degree
+    distribution, and two invariants ($\beta_1$, $\lambda_2$) control
+    diversity at different timescales.
+
+  \item \textbf{LLM validation} (Section~\ref{sec:exp5}): 3,200
+    GPT-4o-mini API calls confirm topology modulates agent diversity,
+    with a coupling-dependent sign flip that a single instruction
+    change controls.
+
+  \item \textbf{Evidence gap analysis} (Section~\ref{sec:discussion}):
+    at least nine recent systems chose topologies without the
+    controlled comparisons our confound theorem demands.
+
+  \item \textbf{Invariant hierarchy} (Section~\ref{sec:discussion}):
+    we identify three graph invariants---directed cycle count
+    $\kappa$, cycle rank $\beta_1$, and algebraic connectivity
+    $\lambda_2$---operating at different timescales, providing a
+    principled framework for topology selection.
+\end{enumerate}
+
+%% ===================================================================
+\section{Background: Island Models as Agent Systems}
+\label{sec:background}
+%% ===================================================================
+
+An island-model genetic algorithm (GA) partitions a population across
+sub-populations (\emph{islands}) that evolve independently, exchanging
+individuals periodically via \emph{migration}
+channels~\cite{tomassini2005spatially}. The mapping to agent
+orchestration is direct at the graph level (Table~\ref{tab:mapping}).
+
+\begin{table}[t]
+\centering
+\caption{Island-model GA concepts and their agent-system equivalents.
+The mapping is exact at the graph level (rows 1--5) and analogical at
+the node level (row 6). Our object of study---the
+diversity--topology relationship---is a graph-level property in both
+systems.}
+\label{tab:mapping}
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{GA Concept} & \textbf{Agent Equivalent} & \textbf{Level} \\
+\midrule
+Island & Agent (local state, computation) & Node \\
+Migration channel & Message channel & Edge \\
+Migration topology & Orchestration graph & Graph \\
+Population diversity & Solution diversity & Graph metric \\
+Fitness function & Task performance metric & Evaluation \\
+\midrule
+Population (many individuals) & Single output per agent & Node \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Both systems are nodes with local state exchanging information along
+directed channels. The critical shared structure is the
+\emph{topology}---who talks to whom---and its effect on aggregate
+diversity. The analogy is weaker at the node level: a GA island
+contains a population evolving over many generations, while an agent
+produces a single output per round. But the diversity--topology
+relationship, our object of study, is a graph-level property in both
+cases.
+
+\paragraph{Where the analogy holds and breaks.}
+The mapping is strongest for the structural property we study: how
+communication topology modulates the diversity of outputs across the
+system. GA migration mixes genetic material between islands; agent
+message-passing shares solution information between agents. In both
+cases, \emph{more} connectivity generally enables \emph{faster}
+information spread. The mapping breaks at the mechanism level: GA
+migration is blind copying of genotypes, while agent communication
+involves semantic understanding and selective incorporation. This
+difference is precisely what makes the sign-flip finding
+(Section~\ref{sec:exp5}) interesting: the same topology can have
+opposite diversity effects depending on the coupling mechanism.
+
+\paragraph{Why GAs as a model system?}
+GAs provide cheap, reproducible experimental control. A single
+topology comparison requires $\sim$20 seeds to achieve statistical
+power; at 500 generations per run, this takes seconds on a laptop.
+The equivalent LLM experiment requires thousands of API calls costing
+hundreds of dollars. GAs let us sweep parameter spaces (8 topologies
+$\times$ 4 difficulty levels $\times$ 20 seeds = 640 runs in
+Experiments 1--2) before investing in expensive LLM validation.
+
+\paragraph{Metrics.}
+\textbf{GA diversity} is measured as mean pairwise Hamming distance
+between all individuals across all islands (normalized by string
+length), capturing the fraction of the search space the population
+spans. \textbf{GA fitness} is the fitness of the best individual found
+across all islands. \textbf{Agent diversity} is mean pairwise cosine
+distance on sentence embeddings (all-MiniLM-L6-v2) of agent outputs.
+\textbf{Agent fitness} is task performance (test pass rate).
+
+%% ===================================================================
+\section{Definitions and the Confound Theorem}
+\label{sec:definitions}
+%% ===================================================================
+
+We define the graph-theoretic quantities that our experiments control
+and measure, together with their agent-system interpretations.
+
+\begin{definition}[Communication topology]
+\label{def:topology}
+A \emph{communication topology} for $n$~agents is a directed graph
+$D = (V, A)$ with $|V| = n$, where each arc $(u, v) \in A$ is a
+permitted message channel from agent~$u$ to agent~$v$.
+\end{definition}
+
+\noindent
+\textit{Agent interpretation:} The topology determines which agents
+can see which other agents' outputs. An arc $(u, v)$ means agent~$v$
+receives agent~$u$'s output in its context window. No arc means no
+information flow.
+
+\begin{definition}[Cycle rank]
+\label{def:cyclerank}
+The \emph{cycle rank} (first Betti number) of a connected undirected
+graph $G = (V, E)$ is
+\begin{equation}
+  \beta_1(G) = |E| - |V| + 1.
+\end{equation}
+It counts the number of independent cycles in
+$G$~\cite{hatcher2002algebraic}---equivalently, the minimum number of
+edges whose removal makes $G$ a tree.
+\end{definition}
+
+\noindent
+\textit{Agent interpretation:} $\beta_1$ counts independent feedback
+loops in the communication structure. A tree ($\beta_1 = 0$) has no
+feedback; information flows one way from root to leaves. Each
+additional cycle ($\beta_1 = 1, 2, \ldots$) creates a new feedback
+pathway where agents can respond to downstream effects of their own
+outputs. Capucci and Myers~\cite{capucci2026feedback} formalize this
+cost: each cycle requires an independent convergence guarantee
+(Lyapunov function) to ensure the system reaches a fixed point.
+
+\begin{definition}[Algebraic connectivity]
+\label{def:lambda2}
+The \emph{algebraic connectivity} $\lambda_2(G)$ is the second-smallest
+eigenvalue of the Laplacian matrix $L = D - A$ of the undirected
+graph underlying~$D$, where $D$ is the degree matrix and $A$ the
+adjacency matrix. $\lambda_2 > 0$ iff $G$ is
+connected~\cite{fiedler1973algebraic}.
+\end{definition}
+
+\noindent
+\textit{Agent interpretation:} $\lambda_2$ governs the rate at which
+information propagates through the communication network. High
+$\lambda_2$ means consensus forms quickly (agents rapidly converge to
+shared solutions); low $\lambda_2$ means information takes longer to
+traverse the network, preserving local diversity for more rounds. A
+ring has $\lambda_2 = 2(1 - \cos(2\pi/n))$; a complete graph has
+$\lambda_2 = n$.
+
+\begin{definition}[Directed cycle count]
+\label{def:kappa}
+$\kappa(D)$ counts the number of distinct simple directed cycles in a
+directed graph $D$~\cite{johnson1975finding}. Unlike $\beta_1$, this
+depends on arc \emph{arrangement}, not just edge count. A DAG has
+$\kappa = 0$.
+\end{definition}
+
+\noindent
+\textit{Agent interpretation:} $\kappa$ counts the number of ways
+information can circulate back to its source. Two directed graphs
+with the same number of arcs can have vastly different $\kappa$
+values (from 0 in a DAG to 47 in our densest cyclic graph), meaning
+different amounts of feedback even at identical communication
+bandwidth.
+
+\paragraph{Timescale hierarchy.}
+\label{rem:hierarchy}
+These three invariants operate at different timescales in our
+experiments: directed cycle count $\kappa$ determines the
+\emph{arrangement} of feedback (Experiment~1), cycle rank $\beta_1$
+determines the \emph{amount} of transient diversity
+(Experiment~4, generation~100), and algebraic connectivity
+$\lambda_2$ determines the \emph{rate} of long-term convergence
+(Experiment~4, generation~200+). This suggests a hierarchy:
+$\kappa \to \beta_1 \to \lambda_2$, from fast to slow.
+
+We now state the central theoretical result that motivates our
+experimental design.
+
+\begin{thm}[Density--Cycle Confound]
+\label{thm:confound}
+For any connected undirected graph $G$ on $n$ vertices,
+$\beta_1(G) = |E| - n + 1$. Therefore, cycle rank and edge density
+are not independent variables: every comparison that varies density
+simultaneously varies cycle rank, and vice versa.
+\end{thm}
+
+\begin{proof}
+By elementary algebraic topology~\cite{hatcher2002algebraic}, the
+first Betti number of a connected graph equals the number of edges
+minus the number of vertices plus the number of connected components.
+For a connected graph, this gives $\beta_1 = |E| - |V| + 1 = |E| - n + 1$.
+Since edge density $\delta = |E| / \binom{n}{2}$, we have
+$\beta_1 = \delta \binom{n}{2} - n + 1$, a linear function of
+$\delta$ at fixed $n$. Varying one necessarily varies the other.
+\end{proof}
+
+\noindent
+\textit{Consequence for agent systems:} Any topology comparison that
+varies the number of communication channels (e.g., chain vs.\ fully
+connected, star vs.\ mesh) simultaneously varies the number of
+feedback loops. Claims about the effect of ``adding more
+connections'' cannot distinguish density effects from cycle effects.
+To isolate cycle structure, one must either (a)~hold density constant
+and vary cycle arrangement (our Experiments~1, 3, 4), or (b)~use
+directed graphs where $\kappa$ varies independently of arc count (our
+Experiment~1). At least nine recent agent systems fail to make this
+distinction (Section~\ref{sec:discussion}).
+
+\paragraph{NK landscapes.}
+NK landscapes~\cite{kauffman1993origins} provide tunably rugged
+fitness functions over binary strings of length~$N$. Each bit's
+fitness contribution depends on $K$~other bits. $K = 0$ gives a
+smooth, single-peaked landscape (trivial optimization); increasing $K$
+adds local optima, creating a rugged landscape with many competing
+strategies. We use $N = 20$ throughout. NK landscapes serve as a
+proxy for task complexity: simple tasks (few valid approaches,
+unambiguous evaluation) correspond to low $K$; complex tasks (multiple
+valid strategies, ambiguous success criteria) correspond to high $K$.
+
+%% ===================================================================
+\section{Experiment 1: Directed Cycles at Constant Density}
+\label{sec:exp1}
+%% ===================================================================
+
+The confound theorem (Theorem~\ref{thm:confound}) shows that
+undirected graph comparisons cannot isolate cycle structure from
+density. We escape this confound using directed graphs, where the
+directed cycle count $\kappa$ varies independently of arc count.
+
+\paragraph{Design.}
+Eight directed graphs, all with $n = 8$ vertices and exactly 16~arcs
+(constant density $\delta = 2.0$ arcs per vertex), varying only in
+directed cycle count:
+$\kappa \in \{0, 0, 3, 10, 14, 20, 29, 47\}$. The two $\kappa = 0$
+graphs (DAGs) serve as replicated controls. Island-model GA: 50
+individuals per island, 500~generations, OneMax fitness function
+($K = 0$), 30~seeds per topology, 240~runs total.
+
+% FIGURE: iso-dense-directed-graphs.pdf
+% Caption: Eight directed graphs with identical density (16 arcs, 8 nodes)
+% but varying directed cycle count kappa from 0 to 47. Despite identical
+% bandwidth, cycle structure alone drives the diversity effect.
+
+\paragraph{Results.}
+One-way ANOVA: $F(7, 232) = 6.90$, $p = 1.85 \times 10^{-7}$,
+$\eta^2 = 0.17$. Topology explains 17\% of diversity variance at
+constant density. The correlation between directed cycle count and
+final diversity is $r = -0.68$: more directed cycles \emph{accelerate
+consensus}. Topologies with more feedback loops cause populations to
+converge faster, reducing the system's capacity to maintain
+alternative solutions.
+
+\paragraph{Interpretation.}
+This result establishes a baseline: even on a trivial landscape
+($K = 0$), cycle structure alone---with density perfectly
+controlled---produces a medium-to-large effect ($\eta^2 = 0.17$) on
+population diversity. The direction is intuitive: more feedback
+pathways mean faster information mixing, which accelerates convergence
+toward a shared solution. The question is how this effect scales with
+problem difficulty.
+
+%% ===================================================================
+\section{Experiment 2: NK Dose-Response}
+\label{sec:exp2}
+%% ===================================================================
+
+Experiment~1 establishes that topology affects diversity on a trivial
+problem. Real agent deployments involve complex tasks with multiple
+valid approaches. Do topology effects grow or shrink as problems get
+harder?
+
+\paragraph{Design.}
+NK landscapes with $K \in \{0, 2, 4, 6\}$ (four ruggedness levels),
+topologies selected to span the $\kappa$ range from Experiment~1,
+10--20 seeds per condition, 250~runs total. All other parameters
+(population size, migration rate, number of generations) identical to
+Experiment~1.
+
+\paragraph{Results.}
+Topology's diversity effect scales monotonically with landscape
+ruggedness (Table~\ref{tab:nk-dose}):
+
+\begin{table}[t]
+\centering
+\caption{Topology effect size ($\eta^2$) on diversity scales
+$14\times$ from smooth to rugged NK landscapes. Simple tasks show
+negligible topology effects; complex tasks are dominated by topology.}
+\label{tab:nk-dose}
+\begin{tabular}{@{}ccll@{}}
+\toprule
+$K$ & $\eta^2$ (diversity) & $p$-value & Interpretation \\
+\midrule
+0 (smooth) & 0.05 & $> 0.05$ & Topology barely matters \\
+2 (moderate) & 0.20 & $< 0.01$ & Moderate effect \\
+4 (rugged) & 0.45 & $< 10^{-4}$ & Large effect \\
+6 (very rugged) & 0.69 & $< 10^{-6}$ & Topology dominates \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% FIGURE: eta-squared-vs-k.pdf
+% Caption: Topology effect size (eta-squared for diversity) as a function
+% of NK landscape ruggedness K. The effect scales 14x from K=0 to K=6,
+% demonstrating that complex tasks amplify topology's influence.
+
+\paragraph{Causal chain.}
+The mechanism proceeds in stages: topology $\to$ diversity $\to$ mean
+fitness, with minimal direct effect on best fitness. At $K = 6$:
+topology explains $\eta^2 \approx 0.69$ of diversity variance,
+diversity explains $\eta^2 \approx 0.35$ of mean fitness variance,
+but topology's direct effect on best fitness is only
+$\eta^2 \approx 0.02$. Topology acts primarily through the
+diversity channel, not by directly improving or degrading the best
+solution found.
+
+\paragraph{Interpretation.}
+Simple tasks are structurally smooth---all paths lead to the same
+optimum, so topology barely matters. Complex tasks are
+rugged---multiple competing strategies exist, and topology determines
+whether the system explores many of them (sparse connectivity) or
+collapses to one (dense connectivity). Real-world agent deployments
+overwhelmingly involve the latter: coding tasks with multiple valid
+algorithms, planning tasks with multiple valid orderings, analysis
+tasks with multiple valid framings. The $14\times$ amplification from
+$K = 0$ to $K = 6$ suggests that topology effects in production
+systems are far larger than simple benchmarks would indicate.
+
+%% ===================================================================
+\section{Experiment 3: Ring vs Star at Constant $\beta_1$}
+\label{sec:exp3}
+%% ===================================================================
+
+Experiments~1--2 vary cycle count across topologies with different
+structures. But a natural question arises: within a single cycle rank
+class ($\beta_1 = 1$), how much does the \emph{arrangement} of edges
+matter? A 5-node ring and a 5-node star both have $\beta_1 = 1$ and
+$|E| = 5$, but very different degree distributions: the ring is
+2-regular while the star has one hub (degree~4) and four leaves
+(degree~1). If cycle rank is the primary driver, these should behave
+similarly despite their structural differences.
+
+\paragraph{Design.}
+Two topologies on $n = 5$ nodes: ring (2-regular, diameter~2,
+$\lambda_2 = 0.382$) and star (irregular, diameter~2,
+$\lambda_2 = 1.0$). Both have $\beta_1 = 1$ and $|E| = 5$. NK
+landscapes with $K \in \{0, 2, 4, 6\}$, 20~seeds per condition,
+160~runs total (80~ring, 80~star). Island-model GA: 50 individuals
+per island, 500~generations.
+
+\paragraph{Results.}
+The ring-vs-star effect is small compared to the cross-$\beta_1$
+effects in Experiments~1--2 (Table~\ref{tab:ring-star}). At
+generation~500:
+
+\begin{table}[t]
+\centering
+\caption{Ring vs star comparison at constant $\beta_1 = 1$. Effect
+sizes are small ($\eta^2 < 0.15$) and mostly non-significant,
+contrasting with $\eta^2 = 0.17$--$0.69$ across $\beta_1$ classes in
+Experiments~1--2. Cycle rank matters more than degree distribution.}
+\label{tab:ring-star}
+\begin{tabular}{@{}cccccl@{}}
+\toprule
+$K$ & $\eta^2$ (diversity) & $p$ & Ring mean & Star mean & Winner \\
+\midrule
+0 & 0.014 & 0.59 & 0.046 & 0.047 & --- \\
+2 & 0.132 & 0.22 & 0.062 & 0.045 & ring \\
+4 & 0.077 & 0.10 & 0.148 & 0.103 & ring \\
+6 & 0.080 & 0.12 & 0.249 & 0.192 & ring \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% FIGURE: ring-vs-star-diversity.pdf
+% Caption: Ring vs star diversity at generation 500 across NK landscape
+% ruggedness. Both topologies have beta_1 = 1. The ring consistently
+% maintains slightly higher diversity, but the effect is small (eta^2
+% = 0.08--0.13) compared to cross-beta_1 effects.
+
+\paragraph{Temporal dynamics.}
+The ring-vs-star effect is most pronounced at intermediate
+generations. At $K = 6$, generation~100: $\eta^2 = 0.161$
+($p = 0.02$, the only significant comparison). By generation~500,
+this fades to $\eta^2 = 0.080$ ($p = 0.12$). The ring's lower
+$\lambda_2$ (0.382 vs 1.0) slows information propagation, preserving
+diversity transiently but not permanently.
+
+\paragraph{Interpretation.}
+The ring consistently maintains slightly higher diversity than the
+star, favoring ring in all $K > 0$ conditions. The mechanism is
+$\lambda_2$: the star's higher algebraic connectivity ($\lambda_2 =
+1.0$ vs $0.382$) enables faster consensus, collapsing diversity more
+rapidly. But the effect is modest ($\eta^2 \leq 0.13$, none
+significant at $\alpha = 0.05$ after generation~100) compared to the
+large effects seen when varying $\beta_1$ ($\eta^2 = 0.17$--$0.69$).
+This confirms that \textbf{cycle rank is the primary topology
+invariant for diversity control}, with degree distribution and
+$\lambda_2$ playing a secondary role.
+
+The plateau pattern is also informative: the ring advantage does
+\emph{not} grow monotonically with $K$, instead leveling off at
+$\eta^2 \approx 0.08$--$0.13$ for $K \geq 2$. Once the landscape is
+rugged enough to create competing strategies, the within-$\beta_1$
+topology effect stabilizes. This contrasts sharply with the
+cross-$\beta_1$ NK dose-response (Experiment~2), where $\eta^2$ grows
+from 0.05 to 0.69.
+
+%% ===================================================================
+\section{Experiment 4: Bridge --- $\beta_1$ vs $\lambda_2$ Decomposition}
+\label{sec:exp4}
+%% ===================================================================
+
+Experiments~1--3 establish that cycle rank $\beta_1$ is the primary
+invariant, with Experiment~3 hinting that $\lambda_2$ plays a
+secondary role. But $\beta_1$ and $\lambda_2$ are themselves
+correlated: adding edges to a graph typically increases both. Can we
+disentangle them?
+
+We construct \emph{iso-spectral graph families}: sets of graphs that
+share the same $\lambda_2$ but differ in $\beta_1$. Within a family,
+any diversity difference must be driven by $\beta_1$ (since
+$\lambda_2$ is held constant). \emph{Across} families (different
+$\lambda_2$, same $\beta_1$), any difference must be driven by
+$\lambda_2$.
+
+\paragraph{Design.}
+Two families of four graphs each, all on $n = 5$ vertices:
+
+\begin{itemize}[nosep]
+  \item \textbf{Cycle family} ($\lambda_2 \approx 0.586$): 5-node
+    ring ($\beta_1 = 1$), ring + 1~chord ($\beta_1 = 2$), ring +
+    2~chords ($\beta_1 = 3$), ring + 3~chords ($\beta_1 = 4$). Adding
+    chords increases $\beta_1$ while preserving the spectral gap via
+    careful edge selection.
+
+  \item \textbf{Star family} ($\lambda_2 = 1.0$): star with pendant
+    ($\beta_1 = 1$), star + 1~leaf-edge ($\beta_1 = 2$), star +
+    2~leaf-edges ($\beta_1 = 3$), star + 3~leaf-edges ($\beta_1 = 4$).
+    Adding leaf-to-leaf connections increases $\beta_1$ while the
+    hub structure preserves $\lambda_2$.
+\end{itemize}
+
+\noindent
+Two NK landscapes: $K = 0$ (smooth, negative control) and $K = 4$
+(rugged). 20~seeds per condition. Total: $8 \text{ topologies} \times
+2 \text{ landscapes} \times 20 \text{ seeds} = 320$~runs.
+
+\paragraph{Results.}
+The experiment reveals two independent mechanisms operating at
+different timescales (Table~\ref{tab:bridge}):
+
+\begin{table}[t]
+\centering
+\caption{Bridge experiment: two-way ANOVA decomposing diversity
+variance into $\beta_1$ (within-family) and $\lambda_2$
+(cross-family) effects on NK $K = 4$ landscapes. $\beta_1$ peaks
+early and fades; $\lambda_2$ emerges later and persists.}
+\label{tab:bridge}
+\begin{tabular}{@{}ccccc@{}}
+\toprule
+Generation & $\eta^2_{\beta_1}$ & $p_{\beta_1}$ &
+$\eta^2_{\lambda_2}$ & $p_{\lambda_2}$ \\
+\midrule
+50  & 0.037 & 0.11 & 0.001 & 0.76 \\
+100 & 0.057 & 0.03 & 0.006 & 0.41 \\
+200 & 0.045 & 0.07 & 0.112 & $< 0.001$ \\
+500 & 0.014 & 0.44 & 0.066 & 0.005 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% FIGURE: bridge-diversity-over-generations.pdf
+% Caption: Bridge experiment: diversity trajectories for two iso-spectral
+% families. Within each family (constant lambda_2, varying beta_1), higher
+% beta_1 produces lower diversity at early generations (transient effect).
+% Across families (different lambda_2, same beta_1), the star family
+% (higher lambda_2) converges faster (persistent effect). Two invariants,
+% two timescales.
+
+\paragraph{$\beta_1$ drives transient diversity.}
+Within the cycle family ($\lambda_2 = 0.586$), $\beta_1$ explains
+$\eta^2 = 0.191$ of diversity variance at generation~100
+($F(3, 76) = 5.997$, $p = 0.001$) but fades to $\eta^2 = 0.067$ by
+generation~500 ($p = 0.15$). Higher $\beta_1$ means more feedback
+loops, which accelerate the initial mixing of information---but this
+advantage is transient. The star family ($\lambda_2 = 1.0$) shows a
+similar but weaker within-family $\beta_1$ effect ($\eta^2 = 0.092$
+at generation~100, $p = 0.06$).
+
+\paragraph{$\lambda_2$ drives persistent diversity.}
+Across families at matched $\beta_1$, the family effect
+($\lambda_2$) is negligible at generation~50 ($\eta^2 = 0.001$) but
+emerges strongly at generation~200 ($\eta^2 = 0.112$,
+$p < 0.001$) and persists through generation~500 ($\eta^2 = 0.066$,
+$p = 0.005$). The cross-family analysis at $\beta_1 = 1$ confirms:
+$\eta^2 = 0.265$ at generation~200 ($p = 0.003$), meaning the star
+family ($\lambda_2 = 1.0$) converges to lower diversity than the
+cycle family ($\lambda_2 = 0.586$) at the same cycle rank.
+
+\paragraph{Negative control.}
+On the smooth landscape ($K = 0$), both effects are negligible:
+$\eta^2_{\beta_1} < 0.02$ and $\eta^2_{\lambda_2} < 0.02$ at all
+generations. This confirms that both mechanisms require landscape
+ruggedness to produce measurable effects, consistent with the
+dose-response in Experiment~2.
+
+\paragraph{Interpretation.}
+$\beta_1$ and $\lambda_2$ are not redundant---they control
+diversity through two independent mechanisms on two timescales.
+$\beta_1$ counts feedback loops, which determine how quickly initial
+information is mixed (transient effect, first $\sim$100 generations).
+$\lambda_2$ governs the spectral gap, which determines how quickly
+the system reaches global consensus (persistent effect, visible from
+generation~200 onward). For agent systems, this suggests:
+\emph{cycle rank controls the exploration window} (how long the
+system entertains diverse strategies), while \emph{algebraic
+connectivity controls the convergence rate} (how quickly the system
+settles). These are independent design levers.
+
+%% ===================================================================
+\section{Experiment 5: LLM Sign-Flip (Claude Chorus)}
+\label{sec:exp5}
+%% ===================================================================
+
+The GA experiments (Sections~\ref{sec:exp1}--\ref{sec:exp4}) establish
+that topology controls diversity through cycle rank and spectral gap.
+But does this transfer to LLM agents? The node-level differences
+(populations vs.\ single outputs, genetic operators vs.\ language
+generation) are substantial. We test directly.
+
+\paragraph{Design.}
+Five GPT-4o-mini agents, eight coding tasks (shortest path, kth
+largest, rate limiter, JSON parser, LRU cache, regex matcher,
+expression evaluator, Bloom filter), four topologies (none, ring,
+star, fully connected), 10~seeds per condition. Two coupling
+conditions, 1,600 API calls each (3,200 total):
+
+\begin{itemize}[nosep]
+  \item \textbf{Negative coupling:} each agent is instructed to use a
+    \emph{different} algorithm from those visible in its context.
+  \item \textbf{Positive coupling:} each agent is instructed to
+    ``build on and improve'' neighbors' solutions.
+\end{itemize}
+
+\noindent
+Diversity is measured as mean pairwise cosine distance on sentence
+embeddings (all-MiniLM-L6-v2) of agent outputs.
+
+\paragraph{Metric validation.}
+The ``none'' topology provides a sanity check: all five agents
+generate independently with no information sharing, yet produce
+near-identical outputs (mean diversity 0.090, $\sigma \approx 0.01$).
+This confirms the metric detects the known homogeneity of LLM prior
+distributions---LLMs start from a peaked prior, unlike GAs' random
+initialization. The low within-condition variance also explains the
+large Cohen's $d$ values below.
+
+\paragraph{Results: negative coupling.}
+The diversity ordering \textbf{inverts} from the GA result
+(Table~\ref{tab:signflip}):
+
+\begin{table}[t]
+\centering
+\caption{Topology--diversity ordering inverts between GAs and LLM
+agents. The sign depends on whether coupling merges solutions
+(GA-like) or constrains them (``be different''). A single instruction
+change flips the ordering.}
+\label{tab:signflip}
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{System} & \textbf{Diversity ordering} & \textbf{Statistic} \\
+\midrule
+GA & none $>$ ring $>$ FC & $W = 1.0$ (6 domains) \\
+LLM (negative) & FC $>$ ring $\approx$ star $>$ none &
+  $W = 0.91$ (6/8 tasks) \\
+LLM (positive) & none $>$ star $\approx$ ring $>$ FC &
+  $\eta^2 = 0.291$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Six of eight tasks show the inverted ordering cleanly (Kruskal-Wallis
+$p < 10^{-6}$; Cohen's $d$ from $-14.0$ to $-1.9$). Two exceptions
+are informative:
+
+\begin{itemize}[nosep]
+  \item \textbf{Bloom filter} ($d \approx 0$): a unimodal task with
+    essentially one canonical implementation. No algorithmic variety
+    for topology to act on.
+  \item \textbf{Expression evaluator} ($d = +0.4$, positive): the
+    model's prior is already spread across multiple parsing strategies
+    (recursive descent, stack-based, Pratt). When the prior is
+    already flat, isolation produces diverse solutions---the GA
+    regime---and negative coupling adds little.
+\end{itemize}
+
+% FIGURE: llm-diversity-heatmap.pdf
+% Caption: LLM diversity across 8 coding tasks and 4 topologies under
+% negative coupling (left) and positive coupling (right). Under negative
+% coupling, connectivity increases diversity (FC highest). Under positive
+% coupling, connectivity decreases diversity (none highest). The sign
+% flip is clean across 6/8 tasks.
+
+\paragraph{Why the sign flips.}
+Under ``none'' topology, all five LLM agents independently generate
+the \emph{same} algorithm (e.g., quickselect for kth\_largest). LLMs
+start from a \textbf{peaked prior} (low entropy); GAs start from
+\textbf{random initialization} (high entropy). Isolation preserves
+initial entropy: high for GAs (diverse), low for LLMs (homogeneous).
+
+\begin{itemize}[nosep]
+  \item \textbf{GA migration} is colimit-like: it merges populations
+    by injecting solutions into neighboring islands. More connectivity
+    $\to$ faster homogenization $\to$ less diversity.
+  \item \textbf{LLM ``be different'' context} is limit-like: it
+    accumulates exclusion constraints from neighbors. More connectivity
+    $\to$ more constraints $\to$ agents forced into distributional
+    tails $\to$ \emph{more} diversity.
+\end{itemize}
+
+\noindent
+The topology is the invariant; the sign depends on the coupling
+direction. We conjecture this sign reversal is an instance of the
+adjunction between colimit (merge) and limit (constrain) along the
+topology functor, with the formal categorical construction developed
+in a companion paper~\cite{langer2026games}.
+
+\paragraph{Positive coupling confirms the prediction.}
+With positive coupling (``build on and improve''), 1,600 additional
+API calls. Results: the diversity ordering \textbf{reverts to
+GA-like}: none $>$ star $\approx$ ring $>$ FC (Kruskal-Wallis
+$H = 94.83$, $p = 2.01 \times 10^{-20}$; Cohen's $d = 1.08$,
+none vs.\ FC; $\eta^2 = 0.291$). The ``none'' topology shows
+identical diversity across coupling conditions (negative: 0.090,
+positive: 0.095, $p = 0.96$), confirming that coupling direction, not
+some other variable, drives the reversal. Connected topologies
+collapse to near-zero diversity (0.025--0.028) under positive
+coupling. A single instruction change flips the diversity ordering.
+
+%% ===================================================================
+\section{Discussion}
+\label{sec:discussion}
+%% ===================================================================
+
+\subsection{The Evidence Gap}
+
+At least nine recent agent systems---spanning ICML, AAAI, WWW,
+NeurIPS, and AAMAS---chose topologies without density-controlled
+comparisons (Table~\ref{tab:evidence-gap}). Our confound theorem
+(Theorem~\ref{thm:confound}) shows these comparisons are
+fundamentally uninterpretable: they cannot distinguish density effects
+from cycle effects.
+
+\begin{table}[t]
+\centering
+\caption{Agent systems whose topology choices lack controlled
+evidence. ``Confound type'' indicates which properties are varied
+simultaneously: D = density, C = cycle structure, S = spectral gap.}
+\label{tab:evidence-gap}
+\footnotesize
+\begin{tabular}{@{}llp{4.5cm}@{}}
+\toprule
+\textbf{System} & \textbf{Confound} & \textbf{Issue} \\
+\midrule
+Graph-GRPO~\cite{graphgrpo2026} & D+C & Complete graph = worst
+  performance; also max $\beta_1$ \\
+OFA-MAS~\cite{ofamas2026} & D+C & Prunes density \& cycles together;
+  generates only DAGs \\
+G-Designer~\cite{gdesigner2025} & D+C+S & No density-controlled
+  baseline \\
+GoAgent~\cite{goagent2026} & D+C & DAG vs.\ dense alternatives
+  confounded \\
+ARG-Designer~\cite{argdesigner2026} & C & DAG search space only;
+  cycles never considered \\
+AgentConductor~\cite{agentconductor2026} & C & Cycles never tested \\
+DyTopo~\cite{dytopo2026} & C & DAG enforced throughout; dynamic
+  topology shifts confound time \& structure \\
+HERA~\cite{hera2026} & D & Cycles tracked but not controlled;
+  density varies with cycle count \\
+Dochkina~\cite{dochkina2026} & D+C+S & 25K tasks, $d = 1.86$, but
+  protocols differ on all dimensions \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The DAG hegemony is striking: of these nine systems, six are
+explicitly restricted to DAG topologies ($\beta_1 = 0$), and two more
+implicitly favor sparse topologies. Only HERA~\cite{hera2026} tracks
+cycle count as a design metric, and even it does not control density.
+The implicit assumption---that acyclic structures are
+preferable---has never been tested against the alternative.
+
+\subsection{The Invariant Hierarchy}
+
+Our five experiments reveal three graph invariants operating at
+different timescales:
+
+\begin{enumerate}[nosep]
+  \item \textbf{Directed cycle count $\kappa$} (Experiment~1):
+    determines diversity at constant density. Effect visible from
+    early generations. Captures the \emph{arrangement} of feedback.
+
+  \item \textbf{Cycle rank $\beta_1$} (Experiments~2--4): the primary
+    invariant for diversity control. Drives transient diversity
+    ($\eta^2 = 0.191$ at generation~100, fading by generation~500 in
+    Experiment~4). Captures the \emph{amount} of feedback.
+
+  \item \textbf{Algebraic connectivity $\lambda_2$} (Experiments~3--4):
+    drives persistent diversity ($\eta^2 = 0.112$--$0.265$ at
+    generation~200+, not fading). Captures the \emph{rate} of
+    consensus. Within a single $\beta_1$ class (Experiment~3), ring
+    ($\lambda_2 = 0.382$) maintains more diversity than star
+    ($\lambda_2 = 1.0$).
+\end{enumerate}
+
+% FIGURE: invariant-hierarchy.pdf
+% Caption: The three-invariant hierarchy. Directed cycle count kappa
+% determines the arrangement of feedback (fast). Cycle rank beta_1
+% determines the amount of feedback, driving transient diversity
+% (medium). Algebraic connectivity lambda_2 determines consensus rate,
+% driving persistent diversity (slow). Each operates at a distinct
+% timescale.
+
+\noindent
+Whether these form a nested hierarchy ($\kappa$ modulates $\beta_1$
+which modulates $\lambda_2$) or operate independently on distinct
+phenotypic properties is an open question. The bridge experiment
+(Experiment~4) shows that $\beta_1$ and $\lambda_2$ produce
+\emph{independent} effects (low cross-correlation in the two-way
+ANOVA), suggesting the latter interpretation. Future work should test
+whether ablating one invariant collapses the other's effect (nested)
+or degrades a different metric independently (parallel).
+
+\subsection{Coupling Sign and Agent Design}
+
+The LLM sign-flip (Experiment~5) has direct implications for agent
+orchestration:
+
+\begin{itemize}[nosep]
+  \item \textbf{Know your coupling direction.} A merging coupling
+    (``build on previous answers'') homogenizes like GA migration:
+    more connectivity $\to$ less diversity. A constraining coupling
+    (``do something different'') diversifies: more connectivity $\to$
+    more diversity. The same star topology can either preserve or
+    destroy diversity depending on a single instruction.
+
+  \item \textbf{LLM priors are peaked.} Independent agents (no
+    topology) produce near-identical outputs. ``Ensemble diversity''
+    claims based on running the same model independently are illusory
+    when models share a peaked prior.
+
+  \item \textbf{Error amplification is structural.} Moran's
+    $17\times$ error amplification~\cite{moran2025error} in
+    unstructured communication arises from high $\beta_1$ (fully
+    connected) combined with merging coupling. The standard fix (impose
+    DAG structure) simultaneously removes cycles \emph{and} density---
+    we cannot know which helps.
+\end{itemize}
+
+\subsection{Practical Recommendations}
+
+\begin{enumerate}
+  \item \textbf{Treat topology as a first-class design variable.}
+    Topology controls the diversity--convergence tradeoff in both GAs
+    and LLM agents ($\eta^2$ up to 0.69 in GAs, 0.291 in LLMs).
+    Dochkina's 44\% quality spread across 25K tasks confirms the
+    effect at industrial scale.
+
+  \item \textbf{Know your coupling direction.} A single instruction
+    change flips which topology produces the most diverse output.
+    Merging homogenizes; differentiating diversifies.
+
+  \item \textbf{Match topology to task complexity.} Simple tasks
+    tolerate any topology ($\eta^2 = 0.05$ at $K = 0$); complex
+    tasks demand deliberate choice ($\eta^2 = 0.69$ at $K = 6$).
+
+  \item \textbf{Use $\beta_1$ for exploration budget, $\lambda_2$
+    for convergence rate.} These are independent levers. More cycles
+    extend the exploration window; lower $\lambda_2$ slows consensus.
+
+  \item \textbf{Monitor diversity, not just accuracy.} Topology
+    effects manifest in strategy diversity. Accuracy alone masks
+    topology-induced failures.
+\end{enumerate}
+
+\subsection{Limitations}
+
+Our GA experiments control density precisely using iso-dense directed
+graphs (Experiment~1) and iso-spectral undirected families
+(Experiment~4). Our LLM experiment (Experiment~5) does \emph{not}
+control density: the four topologies (none, ring, star, fully
+connected) differ in both density and structure. The \emph{sign-flip}
+finding is robust to this confound---both coupling conditions use
+identical topologies, and the reversal is within-topology---but the
+absolute diversity ordering across LLM topologies is confounded by
+density. Density-controlled LLM experiments using iso-dense directed
+topologies are needed.
+
+Additionally, our diversity metric (cosine distance on sentence
+embeddings) is validated only implicitly via the ``none'' baseline. A
+systematic comparison against human-judged algorithmic similarity
+would strengthen the measurement. Our GA experiments use $N = 20$ bit
+strings; scaling to realistic problem sizes is an open question. The
+bridge experiment iso-spectral families are only approximately
+matched ($\lambda_2 = 0.586$ vs $1.0$); exact spectral matching
+across families with different $\beta_1$ ranges requires construction
+techniques we leave to future work.
+
+%% ===================================================================
+\section{Related Work}
+\label{sec:related}
+%% ===================================================================
+
+\paragraph{Evolutionary computation.}
+The topology--diversity link in island-model GAs is well
+established~\cite{tomassini2005spatially,skolicki2005influence}, but
+prior work does not control for density. Tomassini's comprehensive
+treatment~\cite{tomassini2005spatially} analyzes grid, ring, and
+random topologies without iso-dense controls. Our Experiment~1 is, to
+our knowledge, the first density-controlled topology comparison in
+evolutionary computation.
+
+\paragraph{LLM multi-agent systems.}
+The field is converging on topology as a key design
+variable~\cite{yang2025topology}, but comparisons remain
+uncontrolled. Graph-GRPO~\cite{graphgrpo2026} learns topology via
+reinforcement learning, finding that complete graphs perform worst---
+consistent with our $\beta_1$ prediction, but confounded by density.
+OFA-MAS~\cite{ofamas2026} generates topologies via mixture-of-experts
+models but restricts to DAGs. G-Designer~\cite{gdesigner2025} uses
+graph neural networks to architect topologies without
+density-controlled baselines. GoAgent~\cite{goagent2026} introduces
+group-level topology but compares DAGs against dense alternatives.
+ARG-Designer~\cite{argdesigner2026} and
+AgentConductor~\cite{agentconductor2026} operate exclusively in DAG
+space. DyTopo~\cite{dytopo2026} dynamically adjusts topology during
+execution---an important direction, but enforces DAG structure
+throughout.
+
+HERA~\cite{hera2026} is the closest to our approach: it tracks cycle
+count during topology evolution, finding that ``compact chains with
+strategically preserved cycles'' achieve 38.69\% average improvement.
+This is the first system to treat cycle count as a topology metric,
+but it does not control density and cannot distinguish cycle effects
+from density effects.
+
+Dochkina~\cite{dochkina2026} provides the largest-scale topology
+comparison to date: 25,000 tasks, 256 agents, 8 coordination
+protocols, with a 44\% quality spread ($d = 1.86$). Crucially, the
+effect is capability-moderated: weak models prefer DAG-like
+hierarchies, while strong models can exploit cyclic coordination
+structures. This supports our finding that topology effects are
+amplified on hard problems (Experiment~2): stronger models on harder
+tasks correspond to higher effective $K$.
+
+Wang et al.~\cite{wang2026kregular} show that $K$-regular graphs
+maximize coordination efficiency, with a minimum capability threshold
+$\beta_{\min} \sim 1/K$. This suggests a \emph{coordination--exploration
+duality}: density helps coordination but hurts exploration (our
+finding). The optimal topology balances these competing demands---a
+Goldilocks $\beta_1$.
+
+\paragraph{Categorical and algebraic approaches.}
+Capucci and Myers~\cite{capucci2026feedback} formalize agent systems
+as lenses and Moore machines, showing that each cycle in the
+communication graph requires an independent convergence guarantee.
+This provides the theoretical cost side of our empirical benefit
+measurements: cycles buy exploration (our Experiments~1--4) but cost
+convergence guarantees. Langer and Turing~\cite{langer2026games}
+develop the categorical framework (lax monoidal functors, Kleisli
+morphisms over an evolution monad) that motivates the colimit/limit
+interpretation of the coupling-sign flip; our Experiment~5 provides
+the first empirical test.
+
+%% ===================================================================
+\section{Conclusion}
+\label{sec:conclusion}
+%% ===================================================================
+
+Communication topology is not neutral infrastructure---it is a design
+variable controlling how multi-agent systems balance exploration
+against convergence. We have shown:
+
+\begin{enumerate}[nosep]
+  \item \textbf{The confound is real.} Cycle rank and density are
+    algebraically identical for undirected graphs. Most published
+    topology comparisons are uninterpretable.
+
+  \item \textbf{Topology independently controls diversity.}
+    $\eta^2 = 0.17$ at constant density (Experiment~1), scaling to
+    0.69 on hard problems (Experiment~2).
+
+  \item \textbf{Two invariants, two timescales.} $\beta_1$ drives
+    transient exploration; $\lambda_2$ drives persistent convergence.
+    These are independent levers (Experiment~4).
+
+  \item \textbf{Cycle rank $>$ degree distribution.} Within a single
+    $\beta_1$ class, degree differences explain at most
+    $\eta^2 \approx 0.13$ (Experiment~3).
+
+  \item \textbf{The sign depends on coupling.} A single instruction
+    change flips which topology produces diverse output
+    ($\eta^2 = 0.291$, Experiment~5). GA intuition has the wrong sign
+    for constraining agents.
+\end{enumerate}
+
+\noindent
+For safe multi-agent deployment, topology must be selected
+deliberately, its coupling direction understood, and its effects
+monitored through diversity metrics. The three-invariant hierarchy
+($\kappa \to \beta_1 \to \lambda_2$) provides a principled framework
+for this selection. Current systems are tuning their most powerful
+design variable blindly.
+
+\smallskip
+\noindent\textbf{Acknowledgments.} [Withheld for review.]
+
+%% ===================================================================
+%% References
+%% ===================================================================
+
+\bibliographystyle{splncs04}
+\begin{thebibliography}{20}
+
+\bibitem{capucci2026feedback}
+Capucci, M., Myers, D.J.:
+Feedback in categorical multi-agent systems.
+arXiv:2604.03017 (2026)
+
+\bibitem{dochkina2026}
+Dochkina, V.:
+Drop the hierarchy and roles: How self-organizing {LLM} agents
+outperform designed structures.
+arXiv:2603.28990 (2026)
+
+\bibitem{dytopo2026}
+Lu, Y., et al.:
+DyTopo: Dynamic topology routing for multi-agent reasoning via
+semantic matching.
+arXiv:2602.06039 (2026)
+
+\bibitem{fiedler1973algebraic}
+Fiedler, M.:
+Algebraic connectivity of graphs.
+Czechoslovak Mathematical Journal \textbf{23}(2), 298--305 (1973)
+
+\bibitem{goagent2026}
+Chen, H., et al.:
+GoAgent: Group-of-agents communication topology generation for
+{LLM}-based multi-agent systems.
+arXiv:2603.19677 (2026)
+
+\bibitem{gdesigner2025}
+Zhang, G., et al.:
+G-Designer: Architecting multi-agent communication topologies via
+graph neural networks.
+In: Proc.\ ICML (2025)
+
+\bibitem{graphgrpo2026}
+Cang, Y., et al.:
+Graph-GRPO: Stabilizing multi-agent topology learning via group
+relative policy optimization.
+arXiv:2603.02701 (2026)
+
+\bibitem{hatcher2002algebraic}
+Hatcher, A.:
+Algebraic Topology.
+Cambridge University Press (2002)
+
+\bibitem{hera2026}
+Li, S., Ramakrishnan, N.:
+Experience as a compass: Multi-agent {RAG} with evolving
+orchestration and agent prompts.
+arXiv:2604.00901 (2026)
+
+\bibitem{johnson1975finding}
+Johnson, D.B.:
+Finding all the elementary circuits of a directed graph.
+SIAM J.\ Comput.\ \textbf{4}(1), 77--84 (1975)
+
+\bibitem{kauffman1993origins}
+Kauffman, S.A.:
+The Origins of Order.
+Oxford University Press (1993)
+
+\bibitem{langer2026games}
+Langer, R., Turing, C.:
+From games to graphs: Categorical composition of genetic algorithms
+across domains.
+In: Proc.\ ACT (2026)
+
+\bibitem{agentconductor2026}
+Wang, S., et al.:
+AgentConductor: Topology evolution for multi-agent competition-level
+code generation.
+arXiv:2602.17100 (2026)
+
+\bibitem{argdesigner2026}
+Li, S., et al.:
+Assemble your crew: Automatic multi-agent communication topology
+design via autoregressive graph generation.
+In: Proc.\ AAAI (2026)
+
+\bibitem{moran2025error}
+Moran, K.:
+The secret is topology: Why unstructured multi-agent communication
+amplifies errors.
+Towards Data Science (2025)
+
+\bibitem{ofamas2026}
+Li, S., et al.:
+OFA-MAS: One-for-all multi-agent system topology design based on
+mixture-of-experts graph generative models.
+In: Proc.\ WWW (2026)
+
+\bibitem{skolicki2005influence}
+Skolicki, Z., De~Jong, K.A.:
+The influence of migration sizes and intervals on island models.
+In: GECCO, pp.\ 1295--1302 (2005)
+
+\bibitem{tomassini2005spatially}
+Tomassini, M.:
+Spatially Structured Evolutionary Algorithms.
+Springer (2005)
+
+\bibitem{wang2026kregular}
+Wang, X., et al.:
+$K$-regular graphs maximize coordination in multi-agent systems.
+arXiv:2604.07751 (2026)
+
+\bibitem{yang2025topology}
+Yang, J., et al.:
+Topological structure learning should be a research priority for
+{LLM}-based multi-agent systems.
+arXiv:2505.22467 (2025)
+
+\end{thebibliography}
+
+\end{document}
