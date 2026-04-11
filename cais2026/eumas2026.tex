@@ -352,15 +352,19 @@ directed cycle count $\kappa$ varies independently of arc count.
 Eight directed graphs, all with $n = 8$ vertices and exactly 16~arcs
 (constant density $\delta = 2.0$ arcs per vertex), varying only in
 directed cycle count:
-$\kappa \in \{0, 0, 3, 10, 14, 20, 29, 47\}$. The two $\kappa = 0$
+$\kappa \in \{0, 0, 3, 10, 14, 20, 29, 47\}$ (Figure~\ref{fig:iso-dense}). The two $\kappa = 0$
 graphs (DAGs) serve as replicated controls. Island-model GA: 50
 individuals per island, 500~generations, OneMax fitness function
 ($K = 0$), 30~seeds per topology, 240~runs total.
 
-% FIGURE: iso-dense-directed-graphs.pdf
-% Caption: Eight directed graphs with identical density (16 arcs, 8 nodes)
-% but varying directed cycle count kappa from 0 to 47. Despite identical
-% bandwidth, cycle structure alone drives the diversity effect.
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{iso-dense-graphs.pdf}
+\caption{Eight directed graphs with identical density (16 arcs, 8 nodes)
+but varying directed cycle count $\kappa$ from 0 to 47. Despite identical
+bandwidth, cycle structure alone drives the diversity effect.}
+\label{fig:iso-dense}
+\end{figure}
 
 \paragraph{Results.}
 One-way ANOVA: $F(7, 232) = 6.90$, $p = 1.85 \times 10^{-7}$,
@@ -399,7 +403,7 @@ Experiment~1.
 
 \paragraph{Results.}
 Topology's diversity effect scales monotonically with landscape
-ruggedness (Table~\ref{tab:nk-dose}):
+ruggedness (Table~\ref{tab:nk-dose}, Figure~\ref{fig:eta-vs-k}):
 
 \begin{table}[t]
 \centering
@@ -419,10 +423,14 @@ $K$ & $\eta^2$ (diversity) & $p$-value & Interpretation \\
 \end{tabular}
 \end{table}
 
-% FIGURE: eta-squared-vs-k.pdf
-% Caption: Topology effect size (eta-squared for diversity) as a function
-% of NK landscape ruggedness K. The effect scales 14x from K=0 to K=6,
-% demonstrating that complex tasks amplify topology's influence.
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.85\linewidth]{eta-squared-vs-k.pdf}
+\caption{Topology effect size ($\eta^2$ for diversity) as a function
+of NK landscape ruggedness $K$. The effect scales $14\times$ from $K=0$ to $K=6$,
+demonstrating that complex tasks amplify topology's influence.}
+\label{fig:eta-vs-k}
+\end{figure}
 
 \paragraph{Causal chain.}
 The mechanism proceeds in stages: topology $\to$ diversity $\to$ mean
@@ -470,7 +478,7 @@ per island, 500~generations.
 
 \paragraph{Results.}
 The ring-vs-star effect is small compared to the cross-$\beta_1$
-effects in Experiments~1--2 (Table~\ref{tab:ring-star}). At
+effects in Experiments~1--2 (Table~\ref{tab:ring-star}, Figure~\ref{fig:ring-vs-star}). At
 generation~500:
 
 \begin{table}[t]
@@ -492,11 +500,15 @@ $K$ & $\eta^2$ (diversity) & $p$ & Ring mean & Star mean & Winner \\
 \end{tabular}
 \end{table}
 
-% FIGURE: ring-vs-star-diversity.pdf
-% Caption: Ring vs star diversity at generation 500 across NK landscape
-% ruggedness. Both topologies have beta_1 = 1. The ring consistently
-% maintains slightly higher diversity, but the effect is small (eta^2
-% = 0.08--0.13) compared to cross-beta_1 effects.
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.85\linewidth]{ring-vs-star-diversity.pdf}
+\caption{Ring vs star diversity at generation 500 across NK landscape
+ruggedness. Both topologies have $\beta_1 = 1$. The ring consistently
+maintains slightly higher diversity, but the effect is small ($\eta^2
+= 0.08$--$0.13$) compared to cross-$\beta_1$ effects.}
+\label{fig:ring-vs-star}
+\end{figure}
 
 \paragraph{Temporal dynamics.}
 The ring-vs-star effect is most pronounced at intermediate
@@ -568,7 +580,7 @@ Two NK landscapes: $K = 0$ (smooth, negative control) and $K = 4$
 
 \paragraph{Results.}
 The experiment reveals two independent mechanisms operating at
-different timescales (Table~\ref{tab:bridge}):
+different timescales (Table~\ref{tab:bridge}, Figures~\ref{fig:bridge-diversity}--\ref{fig:bridge-eta2}):
 
 \begin{table}[t]
 \centering
@@ -590,13 +602,27 @@ $\eta^2_{\lambda_2}$ & $p_{\lambda_2}$ \\
 \end{tabular}
 \end{table}
 
-% FIGURE: bridge-diversity-over-generations.pdf
-% Caption: Bridge experiment: diversity trajectories for two iso-spectral
-% families. Within each family (constant lambda_2, varying beta_1), higher
-% beta_1 produces lower diversity at early generations (transient effect).
-% Across families (different lambda_2, same beta_1), the star family
-% (higher lambda_2) converges faster (persistent effect). Two invariants,
-% two timescales.
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{bridge-diversity-generations.pdf}
+\caption{Bridge experiment: diversity trajectories for two iso-spectral
+families. Within each family (constant $\lambda_2$, varying $\beta_1$), higher
+$\beta_1$ produces lower diversity at early generations (transient effect).
+Across families (different $\lambda_2$, same $\beta_1$), the star family
+(higher $\lambda_2$) converges faster (persistent effect). Two invariants,
+two timescales.}
+\label{fig:bridge-diversity}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{bridge-eta2-temporal.pdf}
+\caption{Temporal evolution of $\eta^2$ in the bridge experiment. $\beta_1$
+produces a transient effect peaking at generation~100 and fading by
+generation~500. $\lambda_2$ produces a persistent effect emerging at
+generation~200 and not fading. Two invariants operate at distinct timescales.}
+\label{fig:bridge-eta2}
+\end{figure}
 
 \paragraph{$\beta_1$ drives transient diversity.}
 Within the cycle family ($\lambda_2 = 0.586$), $\beta_1$ explains
@@ -678,7 +704,7 @@ large Cohen's $d$ values below.
 
 \paragraph{Results: negative coupling.}
 The diversity ordering \textbf{inverts} from the GA result
-(Table~\ref{tab:signflip}):
+(Table~\ref{tab:signflip}, Figure~\ref{fig:llm-heatmap}):
 
 \begin{table}[t]
 \centering
@@ -715,12 +741,16 @@ are informative:
     regime---and negative coupling adds little.
 \end{itemize}
 
-% FIGURE: llm-diversity-heatmap.pdf
-% Caption: LLM diversity across 8 coding tasks and 4 topologies under
-% negative coupling (left) and positive coupling (right). Under negative
-% coupling, connectivity increases diversity (FC highest). Under positive
-% coupling, connectivity decreases diversity (none highest). The sign
-% flip is clean across 6/8 tasks.
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{llm-diversity-heatmap.pdf}
+\caption{LLM diversity across 8 coding tasks and 4 topologies under
+negative coupling (left) and positive coupling (right). Under negative
+coupling, connectivity increases diversity (FC highest). Under positive
+coupling, connectivity decreases diversity (none highest). The sign
+flip is clean across 6/8 tasks.}
+\label{fig:llm-heatmap}
+\end{figure}
 
 \paragraph{Why the sign flips.}
 Under ``none'' topology, all five LLM agents independently generate
@@ -834,16 +864,20 @@ different timescales:
     ($\lambda_2 = 1.0$).
 \end{enumerate}
 
-% FIGURE: invariant-hierarchy.pdf
-% Caption: The three-invariant hierarchy. Directed cycle count kappa
-% determines the arrangement of feedback (fast). Cycle rank beta_1
-% determines the amount of feedback, driving transient diversity
-% (medium). Algebraic connectivity lambda_2 determines consensus rate,
-% driving persistent diversity (slow). Each operates at a distinct
-% timescale.
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.85\linewidth]{invariant-hierarchy.pdf}
+\caption{The three-invariant hierarchy. Directed cycle count $\kappa$
+determines the arrangement of feedback (fast). Cycle rank $\beta_1$
+determines the amount of feedback, driving transient diversity
+(medium). Algebraic connectivity $\lambda_2$ determines consensus rate,
+driving persistent diversity (slow). Each operates at a distinct
+timescale.}
+\label{fig:hierarchy}
+\end{figure}
 
 \noindent
-Whether these form a nested hierarchy ($\kappa$ modulates $\beta_1$
+Whether these form a nested hierarchy (Figure~\ref{fig:hierarchy}; $\kappa$ modulates $\beta_1$
 which modulates $\lambda_2$) or operate independently on distinct
 phenotypic properties is an open question. The bridge experiment
 (Experiment~4) shows that $\beta_1$ and $\lambda_2$ produce
