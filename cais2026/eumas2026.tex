@@ -62,7 +62,6 @@ our confound theorem demands. Topology is a first-class design
 variable; current systems are tuning it blindly.
 \end{abstract}
 
-\vspace{-4pt}
 %% ===================================================================
 \section{Introduction}
 \label{sec:intro}
@@ -88,7 +87,9 @@ across 25K~tasks and 8~protocols. Moran~\cite{moran2025error} reports, in an inf
 analysis, $17\times$ error amplification in unstructured communication.
 Yang et al.~\cite{yang2025topology} call topology \emph{the}
 underexplored MAS dimension. Wang et al.~\cite{wang2026kregular} show
-$K$-regular graphs maximize coordination ($\beta_{\min} \sim 1/K$).
+$K$-regular graphs maximize coordination ($\beta_{\min} \sim 1/K$,
+where $\beta_{\min}$ is the minimum algebraic connectivity threshold
+for consensus).
 
 But \emph{what, exactly}, is topology doing? Comparing a chain
 ($\beta_1 = 0$) to a complete graph simultaneously varies cycle rank,
@@ -111,8 +112,9 @@ We provide the first controlled answer, bridging from a model system
     different timescales.
 
   \item \textbf{LLM validation} (\S\ref{sec:exp5}): 3,200
-    GPT-4o-mini API calls show a coupling-dependent sign flip---one
-    instruction change reverses the diversity ordering ($\eta^2 = 0.291$).
+    GPT-4o-mini API calls reveal a coupling-dependent sign
+    flip---one instruction change reverses the diversity ordering
+    ($\eta^2 = 0.291$).
 
   \item \textbf{Invariant hierarchy} (\S\ref{sec:discussion}):
     three invariants---$\kappa$, $\beta_1$, $\lambda_2$---operating at
@@ -522,15 +524,15 @@ $\eta^2_{\lambda_2}$ & $p_{\lambda_2}$ \\
 \includegraphics[width=0.48\linewidth]{bridge-diversity-generations.pdf}
 \hfill
 \includegraphics[width=0.48\linewidth]{bridge-eta2-temporal.pdf}
-\caption{Bridge experiment. \emph{Left:} diversity trajectories for two
-iso-spectral families. Within each family (constant $\lambda_2$, varying
-$\beta_1$), higher $\beta_1$ reduces early diversity (transient). Across
-families (different $\lambda_2$, same $\beta_1$), higher $\lambda_2$
-converges faster (persistent). \emph{Right:} temporal $\eta^2$. $\beta_1$
-peaks at generation~100 and fades; $\lambda_2$ emerges at generation~200
-and persists. Two invariants, two timescales.}
+\caption{Bridge experiment. \textbf{(a)}~\emph{Left panel:} diversity
+trajectories for the two iso-spectral families. Within each family
+(constant $\lambda_2$, varying $\beta_1$), higher $\beta_1$ reduces
+early diversity (transient). Across families (different $\lambda_2$,
+same $\beta_1$), higher $\lambda_2$ converges faster (persistent).
+\textbf{(b)}~\emph{Right panel:} temporal $\eta^2$ decomposition.
+$\beta_1$ peaks at generation~100 and fades; $\lambda_2$ emerges at
+generation~200 and persists. Two invariants, two timescales.}
 \label{fig:bridge-diversity}
-\label{fig:bridge-eta2}
 \end{figure}
 
 \paragraph{$\beta_1$ drives transient diversity.}
@@ -576,7 +578,7 @@ generation) are substantial. We test directly.
 \paragraph{Design.}
 Five GPT-4o-mini agents, eight coding tasks (shortest path, kth
 largest, rate limiter, JSON parser, LRU cache, regex matcher,
-expression evaluator, Bloom filter), four topologies (none, ring,
+expression evaluator, Bloom filter), four topologies (none (agents receive no neighbours' outputs), ring,
 star, fully connected), 10~seeds per condition. Two coupling
 conditions, 1,600 API calls each (3,200 total):
 
@@ -629,10 +631,10 @@ are informative:
     essentially one canonical implementation. No algorithmic variety
     for topology to act on.
   \item \textbf{Expression evaluator} ($d = +0.4$, positive): the
-    model's prior is already spread across multiple parsing strategies
-    (recursive descent, stack-based, Pratt). When the prior is
-    already flat, isolation produces diverse solutions---the GA
-    regime---and negative coupling adds little.
+    model's prior spans multiple parsing strategies (recursive descent,
+    stack-based, Pratt). When the prior is already flat, isolation
+    produces diverse solutions---the GA regime---and negative coupling
+    adds little.
 \end{itemize}
 
 \begin{figure}[t]
@@ -722,8 +724,8 @@ systems are decision-theoretically dominated by centralized planning
 
 \subsection{The Invariant Hierarchy}
 
-Our five experiments reveal three graph invariants operating at
-different timescales:
+Our five experiments reveal three graph invariants, each operating at
+a distinct timescale:
 
 \begin{enumerate}[nosep]
   \item \textbf{Directed cycle count $\kappa$} (Experiment~1):
@@ -793,11 +795,12 @@ simultaneously remove cycles \emph{and} density.
 \subsection{Limitations}
 
 The LLM experiment does not control density: the sign-flip is robust
-(within-topology reversal), but absolute diversity ordering is
+(within-topology reversal), but the absolute diversity ordering is
 confounded. Density-controlled LLM experiments remain future work, as
 does human validation of the embedding metric. GA experiments use
-$N = 20$; scaling is open. Bridge families are approximately
-iso-spectral; exact within-family matching is left to future work.
+$N = 20$; scaling to larger genomes is open. Bridge families are
+approximately iso-spectral; exact within-family matching is left to
+future work.
 
 %% ===================================================================
 \section{Related Work}
