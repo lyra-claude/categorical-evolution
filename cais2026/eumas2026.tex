@@ -79,6 +79,14 @@ determine which agents can see which outputs, shaping the
 diversity--convergence tradeoff that governs system behavior. Yet
 these choices are made without controlled evidence.
 
+The costs of acyclicity are not merely empirical.
+Ao et al.~\cite{ao2026reliability} prove (Proposition~6) that
+DAG-constrained multi-agent systems are decision-theoretically
+dominated by a centralized Bayes decision maker, establishing a
+formal cost to acyclicity. Our work investigates whether introducing
+cycles ($\beta_1 > 0$) recovers performance by restoring the
+feedback that DAG constraints eliminate.
+
 Dochkina~\cite{dochkina2026} finds a 44\% quality spread ($d = 1.86$)
 across 25K~tasks and 8~protocols. Moran~\cite{moran2025error} reports
 $17\times$ error amplification in unstructured communication.
@@ -401,7 +409,11 @@ Simple tasks have one optimum, so topology barely matters. Complex
 tasks have multiple competing strategies, and topology determines
 whether the system explores many or collapses to one. The $14\times$
 amplification suggests that topology effects in production agent
-systems are far larger than simple benchmarks indicate.
+systems are far larger than simple benchmarks indicate. This
+landscape-dependent amplification accords with Artis et
+al.~\cite{artis2026heterogeneity}: environments that permit
+heterogeneity reward it, and topology is the mechanism that either
+preserves or destroys it.
 
 %% ===================================================================
 \section{Experiment 3: Ring vs Star at Constant $\beta_1$}
@@ -725,7 +737,10 @@ Dochkina~\cite{dochkina2026} & D+C+S & 25K tasks, $d = 1.86$, but
 Of these nine systems, six are restricted to DAGs ($\beta_1 = 0$).
 Only HERA~\cite{hera2026} tracks cycle count, but without density
 control. The assumption that acyclic structures are preferable has
-never been tested.
+never been tested --- and Ao et al.~\cite{ao2026reliability} show the
+assumption has a formal cost: DAG-constrained multi-agent systems are
+decision-theoretically dominated by centralized planning (Proposition~6
+of their paper), motivating the investigation of what cycles recover.
 
 \subsection{The Invariant Hierarchy}
 
@@ -747,7 +762,10 @@ different timescales:
     generation~200+, not fading). Captures the \emph{rate} of
     consensus. Within a single $\beta_1$ class (Experiment~3), ring
     ($\lambda_2 = 0.382$) maintains more diversity than star
-    ($\lambda_2 = 1.0$).
+    ($\lambda_2 = 1.0$). This is consistent with Brewster et
+    al.~\cite{brewster2025diversity}: cycle graphs have $\Theta(N^3)$
+    absorption time versus $\Theta(N^2)$ for complete graphs, meaning
+    rings preserve heterogeneity for a fundamentally longer timescale.
 \end{enumerate}
 
 \begin{figure}[t]
@@ -814,6 +832,13 @@ The topology--diversity link in island-model GAs is well
 established~\cite{tomassini2005spatially,skolicki2005influence}, but
 without density control. Our Experiment~1 is, to our knowledge, the
 first density-controlled comparison.
+Brewster et al.~\cite{brewster2025diversity} provide a theoretical
+foundation for why topology matters: in evolutionary graph theory,
+absorption time (time until a single type dominates)
+scales as $\Theta(N^2)$ on complete graphs, $\Theta(N^3)$ on cycles,
+and superexponentially on certain directed structures.
+The cycle--vs--complete gap directly predicts our diversity ordering:
+slower absorption preserves heterogeneity longer.
 
 \paragraph{LLM multi-agent systems.}
 The field converges on topology as a key
@@ -825,6 +850,11 @@ GoAgent~\cite{goagent2026}, ARG-Designer~\cite{argdesigner2026},
 AgentConductor~\cite{agentconductor2026}, and
 DyTopo~\cite{dytopo2026} all operate in or favor DAG space without
 density-controlled baselines.
+Ao et al.~\cite{ao2026reliability} provide a formal lower bound:
+DAG-constrained multi-agent planning is decision-theoretically
+dominated by centralized Bayes decision making (Proposition~6),
+establishing that acyclicity has a provable cost independent of
+implementation details.
 
 HERA~\cite{hera2026} is closest: it tracks cycle count during
 topology evolution (38.69\% improvement), but does not control density.
@@ -834,6 +864,14 @@ dose-response finding. Wang et al.~\cite{wang2026kregular} show
 $K$-regular graphs maximize coordination ($\beta_{\min} \sim 1/K$),
 suggesting a coordination--exploration duality where the optimal
 topology balances competing demands.
+Artis et al.~\cite{artis2026heterogeneity} propose the Principle of
+Maximum Heterogeneity: any distributed production system optimising for
+performance converges on an increasingly heterogeneous configuration,
+with communication topology determining heterogeneity's spatial
+distribution. Applied across biology, economics, and computing, this
+cross-disciplinary evidence strengthens our finding that ring topologies
+(which preserve local diversity) outperform fully connected graphs on
+rugged landscapes.
 
 \paragraph{Categorical approaches.}
 Capucci and Myers~\cite{capucci2026feedback} formalize the cost side:
@@ -1003,6 +1041,22 @@ Yang, J., et al.:
 Topological structure learning should be a research priority for
 {LLM}-based multi-agent systems.
 arXiv:2505.22467 (2025)
+
+\bibitem{ao2026reliability}
+Ao, J., Gao, Y., Simchi-Levi, D.:
+On the reliability limits of {LLM}-based multi-agent planning.
+arXiv:2603.26993 (2026)
+
+\bibitem{artis2026heterogeneity}
+Artis, G., Akarca, D., Achterberg, J.:
+The principle of maximum heterogeneity optimises productivity in
+distributed production systems across biology, economics, and computing.
+arXiv:2604.07602 (2026)
+
+\bibitem{brewster2025diversity}
+Brewster, D.A., Svoboda, J., Roscow, D., Chatterjee, K., Tkadlec, J., Nowak, M.A.:
+Maintaining diversity in structured populations.
+PNAS Nexus \textbf{4}(8), pgaf252 (2025)
 
 \end{thebibliography}
 
