@@ -792,6 +792,17 @@ simultaneously remove cycles \emph{and} density.
   \item \textbf{Monitor diversity, not just accuracy.}
 \end{enumerate}
 
+\paragraph{Garden-path recovery (prediction).}
+Our findings connect to garden-path processing in
+NLP~\cite{frazier1987}: recovering from premature commitment to an
+incorrect parse requires that alternative states remain accessible.
+Experiment~3 shows ring topologies ($\lambda_2 \approx 0.586$) sustain
+local diversity far longer than star topologies ($\lambda_2 = 1.0$) at
+identical $\beta_1$; we therefore predict that ring-coupled agents
+recover from garden-path errors without external perturbation, while
+complete or star topologies require injected noise to escape premature
+consensus. This prediction is untested but directly falsifiable.
+
 \subsection{Limitations}
 
 The LLM experiment does not control density: the sign-flip is robust
@@ -833,20 +844,17 @@ dominated by centralized Bayes decision making (Proposition~6),
 establishing that acyclicity has a provable cost independent of
 implementation details.
 
-HERA~\cite{hera2026} is closest: it tracks cycle count during
-topology evolution (38.69\% improvement), but does not control density.
+HERA~\cite{hera2026} is closest: it tracks cycle count during topology
+evolution (38.69\% improvement), without density control.
 Dochkina~\cite{dochkina2026} provides the largest comparison (25K
 tasks, $d = 1.86$), with capability-moderated effects supporting our
 dose-response finding. Wang et al.~\cite{wang2026kregular} show
 $K$-regular graphs maximize coordination ($\beta_{\min} \sim 1/K$),
-suggesting a coordination--exploration duality where the optimal
-topology balances competing demands.
-Artis et al.~\cite{artis2026heterogeneity} propose the Principle of
-Maximum Heterogeneity: performance-maximising distributed systems
-converge on heterogeneous configurations, with topology determining
-heterogeneity's spatial distribution. This cross-disciplinary evidence
-(biology, economics, computing) supports our finding that ring
-topologies outperform fully connected graphs on rugged landscapes.
+suggesting a coordination--exploration duality.
+Artis et al.~\cite{artis2026heterogeneity} provide cross-disciplinary
+evidence (biology, economics, computing) that topology determines
+heterogeneity's spatial distribution, supporting our finding that rings
+outperform fully connected graphs on rugged landscapes.
 
 \paragraph{Categorical approaches.}
 Capucci and Myers~\cite{capucci2026feedback} formalize the cost side:
@@ -1032,6 +1040,12 @@ arXiv:2604.07602 (2026)
 Brewster, D.A., Svoboda, J., Roscow, D., Chatterjee, K., Tkadlec, J., Nowak, M.A.:
 Maintaining diversity in structured populations.
 PNAS Nexus \textbf{4}(8), pgaf252 (2025)
+
+\bibitem{frazier1987}
+Frazier, L.:
+Sentence processing: A tutorial review.
+In: Coltheart, M. (ed.) Attention and Performance XII, pp.\ 559--586.
+Erlbaum (1987)
 
 \end{thebibliography}
 
