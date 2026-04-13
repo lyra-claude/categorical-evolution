@@ -844,6 +844,11 @@ dominated by centralized Bayes decision making (Proposition~6),
 establishing that acyclicity has a provable cost independent of
 implementation details.
 
+MASS~\cite{zhou2025mass} jointly optimizes prompts and topologies
+via a three-stage search, but restricts the topology space to DAGs;
+its finding that ``prompts matter more than topology'' may be an
+artifact of holding $\kappa = 0$ throughout the search, artificially
+suppressing the dominant topological variable our experiments identify.
 HERA~\cite{hera2026} is closest: it tracks cycle count during topology
 evolution (38.69\% improvement), without density control.
 Dochkina~\cite{dochkina2026} provides the largest comparison (25K
@@ -1046,6 +1051,11 @@ Frazier, L.:
 Sentence processing: A tutorial review.
 In: Coltheart, M. (ed.) Attention and Performance XII, pp.\ 559--586.
 Erlbaum (1987)
+
+\bibitem{zhou2025mass}
+Zhou, H., Wan, X., Sun, R., Palangi, H., Iqbal, S., Vuli{\'c}, I., Korhonen, A., Ar{\i}k, S.{\"O}.:
+Multi-agent design: Optimizing agents with better prompts and topologies.
+In: Proc.\ ICLR (2026)
 
 \end{thebibliography}
 
