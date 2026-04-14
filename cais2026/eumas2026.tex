@@ -61,11 +61,14 @@ the effect scales $14\times$ from smooth to rugged landscapes. Fourth,
 a ring-vs-star comparison at constant cycle rank (160~runs) shows
 degree distribution contributes at most $\eta^2 \approx 0.13$ within
 a single $\beta_1$ class. Fifth, a bridge experiment (320~runs) with
-iso-spectral families decomposes the topology signal: cycle rank
-($\beta_1$) drives transient diversity ($\eta^2 = 0.191$ at
-generation~100, fading by~500), while algebraic connectivity
-($\lambda_2$) drives persistent diversity (cross-family $\eta^2 =
-0.265$ at generation~200). Transfer to LLM agents: a coupling-dependent
+iso-spectral families decomposes the topology signal into two
+invariants operating at different timescales: cycle rank
+($\beta_1$) determines the \emph{diversity fingerprint at transient scales}
+($\eta^2 = 0.191$ at generation~100, fading by~500), while algebraic
+connectivity ($\lambda_2$) determines the \emph{diversity fingerprint at
+persistent scales} (cross-family $\eta^2 = 0.265$ at generation~200).
+Why these two invariants govern different timescales is an open
+theoretical question. Transfer to LLM agents: a coupling-dependent
 sign flip means one instruction reverses which topology produces the
 most diverse output ($\eta^2 = 0.291$, $p < 10^{-19}$). At least nine
 published systems chose topologies without the controlled comparisons
@@ -108,22 +111,84 @@ density, diameter, and spectral gap. At least nine published
 systems---spanning ICML, AAAI, WWW, NeurIPS, and AAMAS---have chosen
 topologies without density-controlled comparisons
 (Table~\ref{tab:evidence-gap}):
-Graph-GRPO~\cite{graphgrpo2026} reports that complete graphs perform
-worst, but that comparison confounds density and cycle rank.
-OFA-MAS~\cite{ofamas2026} prunes topology jointly on both dimensions.
-G-Designer~\cite{gdesigner2025} searches over topologies with no
-density-fixed baseline.
-GoAgent~\cite{goagent2026} compares DAGs to dense alternatives without
-controlling edge count.
-ARG-Designer~\cite{argdesigner2026} and
-AgentConductor~\cite{agentconductor2026} restrict search to DAG
-space and never test cyclic alternatives.
-DyTopo~\cite{dytopo2026} enforces acyclicity throughout; its dynamic
-topology shifts conflate structure and time.
-HERA~\cite{hera2026} tracks cycle count but not density.
-Dochkina~\cite{dochkina2026}'s 25K-task study reports a 44\% quality
-spread across 8 protocols, but the protocols differ simultaneously on
-density, cycle structure, and spectral gap.
+
+\textbf{Graph-GRPO}~\cite{graphgrpo2026} trains LLM agents via Group
+Relative Policy Optimization on a fixed communication graph, reporting
+that complete-graph coordination \emph{performs worst}---yet the
+complete graph simultaneously maximizes both density and cycle rank, so
+the finding cannot distinguish which property is responsible.
+\textbf{OFA-MAS}~\cite{ofamas2026} searches for a single topology
+that generalizes across diverse tasks by pruning agent communication
+edges to reduce cost; the pruning optimizes density and cycle structure
+jointly and evaluates only DAGs as candidates, suppressing the dominant
+topological variable our experiments identify.
+\textbf{G-Designer}~\cite{gdesigner2025} uses an LLM to design
+task-specific agent graphs across reasoning and coding benchmarks,
+reporting topology-dependent performance differences, but uses no
+density-controlled baseline---comparisons conflate density, cycle
+structure, and spectral gap simultaneously.
+\textbf{GoAgent}~\cite{goagent2026} constructs DAG-based agent
+workflows optimized by a graph planner, comparing against dense
+fully-connected alternatives; those alternatives have both higher
+density and more cycles, making performance differences
+unattributable.
+\textbf{ARG-Designer}~\cite{argdesigner2026} uses adaptive graph
+search to find task-optimal agent routing; it restricts its search
+space to DAGs throughout and never tests whether adding feedback cycles
+would improve performance.
+\textbf{AgentConductor}~\cite{agentconductor2026} orchestrates
+specialist agents via a dynamically assembled communication graph;
+cyclic topologies are not in its design space, and the acyclicity
+constraint is not tested against a cyclic baseline.
+\textbf{DyTopo}~\cite{dytopo2026} adapts the communication topology
+dynamically across task steps while enforcing acyclicity throughout;
+its variable-structure results conflate structural change with temporal
+effects.
+\textbf{HERA}~\cite{hera2026} is closest to our work: it runs
+topology evolution with cycle-count tracking and reports a 38.69\%
+improvement, but does not control for density---as $\beta_1$ grows,
+$|E|$ grows with it, rendering its results uninterpretable by our
+confound theorem.
+\textbf{Dochkina}~\cite{dochkina2026} provides the largest
+comparison (25K tasks, 8 protocols, $d = 1.86$ quality spread), with
+capability-moderated effects consistent with our dose-response
+findings; but the 8 protocols differ simultaneously on density, cycle
+structure, and spectral gap, so the 44\% quality spread cannot be
+attributed to any single graph property.
+
+\begin{table}[t]
+\centering
+\caption{Agent systems whose topology choices lack controlled
+evidence. ``Confound type'' indicates which properties are varied
+simultaneously: D = density, C = cycle structure, S = spectral gap.}
+\label{tab:evidence-gap}
+\footnotesize
+\begin{tabular}{@{}llp{4.5cm}@{}}
+\toprule
+\textbf{System} & \textbf{Confound} & \textbf{Issue} \\
+\midrule
+Graph-GRPO~\cite{graphgrpo2026} & D+C & Complete graph = worst
+  performance; also max $\beta_1$ \\
+OFA-MAS~\cite{ofamas2026} & D+C & Prunes density \& cycles together;
+  generates only DAGs \\
+G-Designer~\cite{gdesigner2025} & D+C+S & No density-controlled
+  baseline \\
+GoAgent~\cite{goagent2026} & D+C & DAG vs.\ dense alternatives
+  confounded \\
+ARG-Designer~\cite{argdesigner2026} & C & DAG search space only;
+  cycles never considered \\
+AgentConductor~\cite{agentconductor2026} & C & Cycles never tested \\
+DyTopo~\cite{dytopo2026} & C & DAG enforced throughout; dynamic
+  topology shifts confound time \& structure \\
+HERA~\cite{hera2026} & D & Cycles tracked but not controlled;
+  density varies with cycle count \\
+Dochkina~\cite{dochkina2026} & D+C+S & 25K tasks, $d = 1.86$, but
+  protocols differ on all dimensions \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent
 Our confound theorem (Theorem~\ref{thm:confound}) shows all nine of
 these comparisons are fundamentally uninterpretable.
 
@@ -313,16 +378,28 @@ varies independently of arc count (Experiment~1). Nine recent systems
 fail to make this distinction (Section~\ref{sec:discussion}).
 
 \paragraph{NK landscapes.}
-NK landscapes~\cite{kauffman1993origins} provide tunably rugged
-fitness over binary strings of length~$N$. Each bit depends on
-$K$~others; $K = 0$ is smooth, increasing $K$ adds local optima. We
-use $N = 20$. NK landscapes proxy task complexity: low $K$ =
-simple, high $K$ = multiple valid strategies.
+NK landscapes~\cite{kauffman1993origins} are a standard benchmark for
+studying how search difficulty scales with problem structure. Each
+genome is a binary string of length~$N$; the fitness of each bit
+depends on $K$ other bits chosen at random. At $K = 0$, all bits are
+independent and there is a single global optimum (analogous to a
+coding task with one canonical solution, such as Bloom filter
+implementation). At $K > 0$, bit interactions create exponentially
+many local optima, analogous to tasks admitting multiple valid
+approaches (e.g., JSON parsing, which admits recursive descent or
+stack-based strategies). We use $N = 20$. The ruggedness parameter
+$K$ thus proxies agent task multimodality: low $K$ = unimodal task,
+high $K$ = many competing valid strategies.
 
 %% ===================================================================
 \section{Experiment 1: Directed Cycles at Constant Density}
 \label{sec:exp1}
 %% ===================================================================
+
+\emph{Experiments~1--4 use island-model GAs (Section~\ref{sec:background})
+as a controlled model system. Each island is an agent; migration is a
+message channel; genome diversity is output diversity. Results
+transfer to real LLM agents in Experiment~5.}
 
 The confound theorem (Theorem~\ref{thm:confound}) shows that
 undirected graph comparisons cannot isolate cycle structure from
@@ -436,12 +513,24 @@ preserves or destroys it.
 %% ===================================================================
 
 Within a single $\beta_1$ class, how much does edge \emph{arrangement}
-matter? A plain $n$-node ring has $n$ edges ($\beta_1 = 1$); a plain
-$n$-node star has $n - 1$ edges ($\beta_1 = 0$). To hold both $\beta_1$
-and $|E|$ constant while varying degree distribution, we augment the
-star with one leaf-to-leaf edge, yielding $|E| = n$ and $\beta_1 = 1$
-for both---isolating degree distribution (uniform 2-regular vs.\
-hub-and-spoke) at fixed cycle rank and edge count.
+matter?
+
+\paragraph{The confound in the natural comparison.}
+A plain $n$-node ring has $n$ edges and $\beta_1 = 1$; a plain $n$-node
+star has $n - 1$ edges and $\beta_1 = 0$. Comparing them at fixed $n$
+simultaneously varies both cycle rank \emph{and} edge count---the confound
+from Theorem~\ref{thm:confound} applies. Alternatively, comparing a ring
+with $n - 1$ nodes to a star with $n$ nodes (matching edge counts at $n - 1$)
+varies both cycle rank and node count. There is no natural pair of
+$\{$ring, star$\}$ topologies that holds all confounds fixed.
+
+Our result on this natural comparison: ring is consistently better than
+star for maintaining diversity ($\eta^2 = 0.08$--$0.13$ depending on $K$),
+but this effect conflates cycle rank, edge count, and degree distribution.
+To isolate the contribution of degree distribution alone, we augment the
+star with one leaf-to-leaf edge, yielding $|E| = n$ and $\beta_1 = 1$ for
+both---isolating degree distribution (uniform 2-regular vs.\ hub-and-spoke)
+at fixed cycle rank and edge count.
 
 \paragraph{Design.}
 Two topologies on $n = 8$ nodes: ring (2-regular, diameter~4,
@@ -480,10 +569,16 @@ $K$ & $\eta^2$ (diversity) & $p$ & Ring mean & Star mean & Winner \\
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.75\linewidth]{ring-vs-star-diversity.pdf}
-\caption{Ring vs star diversity at generation 500 across NK landscape
-ruggedness. Both topologies have $\beta_1 = 1$. The ring consistently
-maintains slightly higher diversity, but the effect is small ($\eta^2
-= 0.08$--$0.13$) compared to cross-$\beta_1$ effects.}
+\caption{Ring vs augmented-star diversity at generation 500 across
+NK landscape ruggedness ($n = 8$ nodes, $|E| = 8$, $\beta_1 = 1$ for
+both). \emph{Ring}: 2-regular cycle graph; every node connects to
+exactly two neighbours, giving diameter~4 and $\lambda_2 \approx
+0.586$. \emph{Augmented star}: hub-and-spoke graph ($n-1 = 7$ edges)
+with one additional leaf-to-leaf edge to match $|E|$ and $\beta_1$;
+the hub has degree~7, leaves degree~1 or~2, giving diameter~2 and
+$\lambda_2 = 1.0$. The ring consistently maintains slightly higher
+diversity, but the effect is small ($\eta^2 = 0.08$--$0.13$) compared
+to cross-$\beta_1$ effects.}
 \label{fig:ring-vs-star}
 \end{figure}
 
@@ -749,42 +844,11 @@ reach solutions, not whether they succeed on these tasks.
 
 At least nine recent agent systems---spanning ICML, AAAI, WWW,
 NeurIPS, and AAMAS---chose topologies without density-controlled
-comparisons (Table~\ref{tab:evidence-gap}). Our confound theorem
+comparisons (Table~\ref{tab:evidence-gap}, introduced in
+Section~\ref{sec:intro}). Our confound theorem
 (Theorem~\ref{thm:confound}) shows these comparisons are
 fundamentally uninterpretable: they cannot distinguish density effects
 from cycle effects.
-
-\begin{table}[t]
-\centering
-\caption{Agent systems whose topology choices lack controlled
-evidence. ``Confound type'' indicates which properties are varied
-simultaneously: D = density, C = cycle structure, S = spectral gap.}
-\label{tab:evidence-gap}
-\footnotesize
-\begin{tabular}{@{}llp{4.5cm}@{}}
-\toprule
-\textbf{System} & \textbf{Confound} & \textbf{Issue} \\
-\midrule
-Graph-GRPO~\cite{graphgrpo2026} & D+C & Complete graph = worst
-  performance; also max $\beta_1$ \\
-OFA-MAS~\cite{ofamas2026} & D+C & Prunes density \& cycles together;
-  generates only DAGs \\
-G-Designer~\cite{gdesigner2025} & D+C+S & No density-controlled
-  baseline \\
-GoAgent~\cite{goagent2026} & D+C & DAG vs.\ dense alternatives
-  confounded \\
-ARG-Designer~\cite{argdesigner2026} & C & DAG search space only;
-  cycles never considered \\
-AgentConductor~\cite{agentconductor2026} & C & Cycles never tested \\
-DyTopo~\cite{dytopo2026} & C & DAG enforced throughout; dynamic
-  topology shifts confound time \& structure \\
-HERA~\cite{hera2026} & D & Cycles tracked but not controlled;
-  density varies with cycle count \\
-Dochkina~\cite{dochkina2026} & D+C+S & 25K tasks, $d = 1.86$, but
-  protocols differ on all dimensions \\
-\bottomrule
-\end{tabular}
-\end{table}
 
 Six of these nine are restricted to DAGs ($\beta_1 = 0$); only
 HERA~\cite{hera2026} tracks cycle count, without density control.
