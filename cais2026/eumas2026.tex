@@ -37,6 +37,17 @@ in Multi-Agent Systems}
 \maketitle
 
 \begin{abstract}
+A genetic algorithm (GA) maintains a \emph{population} of candidate
+solutions (genomes), improving them through mutation and crossover
+guided by a fitness function; an \emph{island model} partitions this
+population across sub-populations (islands) that evolve independently
+and periodically exchange individuals along a communication topology.
+This paper shows that the same topology effects govern LLM agent
+orchestration: agents correspond to islands, message channels to
+migration channels, and output diversity---measured as mean pairwise
+cosine distance on sentence embeddings---plays the role of population
+diversity.
+
 Multi-agent AI systems choose communication topologies---star, chain,
 ring, fully connected---with no controlled evidence for how topology
 affects behavior. We provide five lines of evidence across 970 GA
@@ -93,7 +104,28 @@ for consensus).
 
 But \emph{what, exactly}, is topology doing? Comparing a chain
 ($\beta_1 = 0$) to a complete graph simultaneously varies cycle rank,
-density, diameter, and spectral gap.
+density, diameter, and spectral gap. At least nine published
+systems---spanning ICML, AAAI, WWW, NeurIPS, and AAMAS---have chosen
+topologies without density-controlled comparisons
+(Table~\ref{tab:evidence-gap}):
+Graph-GRPO~\cite{graphgrpo2026} reports that complete graphs perform
+worst, but that comparison confounds density and cycle rank.
+OFA-MAS~\cite{ofamas2026} prunes topology jointly on both dimensions.
+G-Designer~\cite{gdesigner2025} searches over topologies with no
+density-fixed baseline.
+GoAgent~\cite{goagent2026} compares DAGs to dense alternatives without
+controlling edge count.
+ARG-Designer~\cite{argdesigner2026} and
+AgentConductor~\cite{agentconductor2026} restrict search to DAG
+space and never test cyclic alternatives.
+DyTopo~\cite{dytopo2026} enforces acyclicity throughout; its dynamic
+topology shifts conflate structure and time.
+HERA~\cite{hera2026} tracks cycle count but not density.
+Dochkina~\cite{dochkina2026}'s 25K-task study reports a 44\% quality
+spread across 8 protocols, but the protocols differ simultaneously on
+density, cycle structure, and spectral gap.
+Our confound theorem (Theorem~\ref{thm:confound}) shows all nine of
+these comparisons are fundamentally uninterpretable.
 
 We provide the first controlled answer, bridging from a model system
 (genetic algorithms) to real LLM agents. Our contributions:
@@ -404,13 +436,18 @@ preserves or destroys it.
 %% ===================================================================
 
 Within a single $\beta_1$ class, how much does edge \emph{arrangement}
-matter? An 8-node ring and star both have $\beta_1 = 1$ and $|E| = 8$,
-but different degree distributions (2-regular vs.\ hub-and-spoke).
+matter? A plain $n$-node ring has $n$ edges ($\beta_1 = 1$); a plain
+$n$-node star has $n - 1$ edges ($\beta_1 = 0$). To hold both $\beta_1$
+and $|E|$ constant while varying degree distribution, we augment the
+star with one leaf-to-leaf edge, yielding $|E| = n$ and $\beta_1 = 1$
+for both---isolating degree distribution (uniform 2-regular vs.\
+hub-and-spoke) at fixed cycle rank and edge count.
 
 \paragraph{Design.}
 Two topologies on $n = 8$ nodes: ring (2-regular, diameter~4,
-$\lambda_2 \approx 0.586$) and star (irregular, diameter~2,
-$\lambda_2 = 1.0$). Both have $\beta_1 = 1$ and $|E| = 5$. NK
+$\lambda_2 \approx 0.586$) and augmented star (star $+$ one
+leaf-to-leaf edge; irregular, diameter~2 hub to leaf,
+$\lambda_2 = 1.0$). Both have $\beta_1 = 1$ and $|E| = 8$. NK
 landscapes with $K \in \{0, 2, 4, 6\}$, 20~seeds per condition,
 160~runs total (80~ring, 80~star). Island-model GA: 50 individuals
 per island, 500~generations.
@@ -575,12 +612,46 @@ But does this transfer to LLM agents? The node-level differences
 (populations vs.\ single outputs, genetic operators vs.\ language
 generation) are substantial. We test directly.
 
+\paragraph{Coding tasks.}
+We use eight algorithmic coding tasks of varying multimodality
+(number of distinct valid implementations), chosen to span from
+unimodal to highly multimodal:
+
+\begin{itemize}[nosep]
+  \item \textbf{Shortest path:} return the shortest path between two
+    nodes in a weighted graph (Dijkstra, Bellman-Ford, or BFS depending
+    on edge weights).
+  \item \textbf{Kth largest:} find the $k$-th largest element in an
+    unsorted array (quickselect, heap, or sort-based).
+  \item \textbf{Rate limiter:} implement a token-bucket or sliding-window
+    rate limiter for API requests (fixed window, sliding log, token
+    bucket, leaky bucket).
+  \item \textbf{JSON parser:} parse a JSON string into a native data
+    structure without using built-in JSON libraries (recursive descent
+    or iterative stack-based).
+  \item \textbf{LRU cache:} implement a least-recently-used cache with
+    $O(1)$ get and put (doubly linked list + hash map, or ordered dict).
+  \item \textbf{Regex matcher:} implement basic regular expression
+    matching supporting \texttt{.} and \texttt{*} (dynamic programming,
+    recursive backtracking, or NFA).
+  \item \textbf{Expression evaluator:} evaluate an arithmetic expression
+    string with operator precedence (recursive descent, Pratt parser,
+    or stack-based shunting-yard).
+  \item \textbf{Bloom filter:} implement a Bloom filter for set
+    membership testing (essentially one canonical implementation: bit
+    array + $k$ hash functions).
+\end{itemize}
+
+\noindent
+The Bloom filter is intentionally unimodal; the expression evaluator
+and JSON parser are multimodal. Task pass/fail is determined by a
+hidden test suite executed against agent outputs.
+
 \paragraph{Design.}
-Five GPT-4o-mini agents, eight coding tasks (shortest path, kth
-largest, rate limiter, JSON parser, LRU cache, regex matcher,
-expression evaluator, Bloom filter), four topologies (none (agents receive no neighbours' outputs), ring,
-star, fully connected), 10~seeds per condition. Two coupling
-conditions, 1,600 API calls each (3,200 total):
+Five GPT-4o-mini agents, eight coding tasks, four topologies (none
+(agents receive no neighbours' outputs), ring, star, fully connected),
+10~seeds per condition. Two coupling conditions, 1,600 API calls each
+(3,200 total):
 
 \begin{itemize}[nosep]
   \item \textbf{Negative coupling:} each agent is instructed to use a
