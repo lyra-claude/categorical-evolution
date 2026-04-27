@@ -896,6 +896,51 @@ timescale.}
 \label{fig:hierarchy}
 \end{figure}
 
+\paragraph{From graph invariants to sheaf cohomology.}
+Our two-invariant framework $(\beta_1, \lambda_2)$ is the
+constant-sheaf special case of a richer theory.
+As noted in Definition~\ref{def:cyclerank}, for a constant sheaf
+$\mathcal{F} = \mathbb{R}$ (homogeneous agents), the first sheaf
+cohomology group recovers the Betti number exactly:
+$\dim H^1(G;\mathcal{F}) = \beta_1$~\cite{hanks2025cellular}.
+For heterogeneous agents---different models, context windows, or tool
+access---the stalks vary across nodes, and the correct invariants
+become $(\dim H^1(G;\mathcal{F}), \lambda_2(L_{\mathcal{F}}))$,
+where $L_{\mathcal{F}}$ is the sheaf Laplacian, capturing topological
+structure that $\beta_1$ alone misses.
+Schmid~\cite{schmid2026prospectus} provides independent validation:
+a 64-page research prospectus proposing sheaf theory as the
+mathematical foundation for multi-agent systems, identifying cellular
+sheaves, $H^1$ as coordination obstruction, and sheaf Laplacians as
+decentralized controllers.  Schmid's program converges on the same
+invariants from decentralized control theory, but lacks the Kleisli
+formalization, laxator framework, and experimental grounding that our
+work provides.
+The sheaf upgrade predicts that agent heterogeneity introduces
+topological degrees of freedom invisible to $\beta_1$---a testable
+claim for future density-controlled experiments with mixed-capability
+agents.
+
+\paragraph{Information-theoretic cost of coordination.}
+Kurisummoottil Thomas and Chen~\cite{thomas2026shannon} establish a
+lower bound on quantum semantic communication cost via sheaf
+cohomology: the minimum number of bits required for consistent global
+behavior scales as $\log_2(\dim H^1(G;\mathcal{F}))$.
+Although their result is formulated for quantum semantic channels, the
+classical analogy is direct: $H^1 = 0$ upgrades from a binary
+possibility test (can agents coordinate without feedback?) to a
+continuous cost estimator (how expensive is coordination?), connecting
+our topological invariants to Shannon information theory.
+The bound offers a potential explanation for why topology effects
+scale with problem difficulty (Experiment~2,
+Table~\ref{tab:nk-dose}): harder tasks ($K \geq 4$) demand more
+coordination bits, so the cohomological floor imposed by
+$\dim H^1$ becomes binding.  On easy tasks ($K = 0$), the floor is
+slack and topology barely matters---exactly the pattern we observe
+($\eta^2 = 0.05$ at $K = 0$ versus $\eta^2 = 0.69$ at $K = 6$).
+
+Tran and Kiela~\cite{tran2024dpi} provide complementary evidence from a pipeline perspective: applying the data processing inequality, each additional agent in a sequential chain acts as an information bottleneck, bounding how much of the original task specification survives to the final output.
+
 \noindent
 Whether these form a nested hierarchy (Figure~\ref{fig:hierarchy})
 or operate independently is open. The bridge experiment shows
@@ -927,6 +972,17 @@ simultaneously remove cycles \emph{and} density.
     convergence.} Independent levers.
   \item \textbf{Monitor diversity, not just accuracy.}
 \end{enumerate}
+
+\noindent
+Agent systems in practice confirm this hierarchy:
+AgentConductor~\cite{agentconductor2026} discovers that sparse
+topologies reduce computational cost by 68\% on easy tasks while dense
+topologies improve code generation pass@1 by 14.6\% on harder
+tasks---an empirical dose-response pattern consistent with our
+controlled finding that topology effects on diversity scale $14\times$
+with problem complexity (Experiment~2).  These results, though
+density-confounded by our confound theorem, demonstrate that topology
+selection matters at competition scale.
 
 \paragraph{Garden-path recovery (prediction).}
 Our findings connect to garden-path processing in
@@ -996,13 +1052,30 @@ Artis et al.~\cite{artis2026heterogeneity} provide cross-disciplinary
 evidence (biology, economics, computing) that topology determines
 heterogeneity's spatial distribution, supporting our finding that rings
 outperform fully connected graphs on rugged landscapes.
+Schmid~\cite{schmid2026prospectus} independently proposes cellular
+sheaves as the mathematical foundation for multi-agent coordination,
+converging on the same invariants ($H^1$, sheaf Laplacian) from
+decentralized control theory.
 
 \paragraph{Categorical approaches.}
-Capucci and Myers~\cite{capucci2026feedback} formalize the cost side:
-each cycle requires an independent convergence guarantee.
+Capucci and Myers~\cite{capucci2026feedback} formalize the cost of
+feedback: each cycle in the communication topology requires an
+independent convergence certificate, modeled as a categorical
+fixed-point condition on traced composition.  This provides the formal
+cost accounting for our invariant hierarchy: increasing $\beta_1$ by
+one gains a unit of transient diversity (Experiment~4) but incurs one
+additional convergence obligation.  The cost-benefit framing explains
+the practical appeal of DAGs---zero obligations---despite their
+decision-theoretic suboptimality~\cite{ao2026reliability}: on simple
+tasks ($K = 0$), the diversity benefit is negligible and the
+convergence cost dominates; on complex tasks ($K \geq 4$), the
+diversity benefit dominates.
 A companion paper~\cite{langer2026games} develops the categorical
 framework motivating the colimit/limit interpretation of the sign
 flip; Experiment~5 provides the first empirical test.
+A full treatment of certification conditions for cyclic multi-agent
+composition---connecting Capucci and Myers' convergence guarantees to
+our empirical dose-response findings---is deferred to future work.
 
 %% ===================================================================
 \section{Conclusion}
@@ -1186,6 +1259,23 @@ arXiv:2604.07602 (2026)
 Brewster, D.A., Svoboda, J., Roscow, D., Chatterjee, K., Tkadlec, J., Nowak, M.A.:
 Maintaining diversity in structured populations.
 PNAS Nexus \textbf{4}(8), pgaf252 (2025)
+
+\bibitem{schmid2026prospectus}
+Schmid, L.:
+Sheaf-theoretic perspectives on multi-agent systems.
+arXiv:2504.17700 (2025)
+
+\bibitem{thomas2026shannon}
+Kurisummoottil Thomas, C., Chen, M.:
+Fundamental limits of quantum semantic communication via sheaf
+cohomology.
+arXiv:2601.10958 (2026)
+
+\bibitem{tran2024dpi}
+Tran, D., Kiela, D.:
+Single-Agent {LLMs} Outperform Multi-Agent Systems on Multi-Hop
+Reasoning Under Equal Thinking Token Budgets.
+arXiv:2604.02460 (2026)
 
 \bibitem{frazier1987}
 Frazier, L.:
