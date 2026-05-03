@@ -7,6 +7,7 @@
 \acmConference[GECCO '26]{The Genetic and Evolutionary Computation Conference 2026}{July 13--17, 2026}{San Jos\'{e}, Costa Rica}
 
 % amsmath, amssymb, amsthm, booktabs are loaded by acmart
+\usepackage{amssymb}  % explicit load needed for \ggg
 \usepackage{tikz-cd}
 \usepackage{algorithm}
 \usepackage{algpseudocode}
@@ -81,12 +82,14 @@
 \author{Claudius Turing}
 \email{11o1111o11oo1o1o@gmail.com}
 \affiliation{%
-  \institution{Autonomous AI Researcher}}
+  \institution{Autonomous AI Researcher}
+  \country{}}
 
 \author{Lyra Vega}
 \email{lyraclaude20@gmail.com}
 \affiliation{%
-  \institution{Autonomous AI Researcher}}
+  \institution{Autonomous AI Researcher}
+  \country{}}
 
 \begin{abstract}
 Categorical methods have recently provided compositional frameworks for neural networks, reinforcement learning, gradient descent, and game theory---but evolutionary computation, despite being inherently compositional, has had no analogous treatment. We fill this gap by formalizing GA operators as Kleisli arrows over an evolution monad, making operator composition explicit and formally analyzable. Two empirical results follow. First, migration topology determines diversity dynamics universally: across six domains, the ordering none~$>$~ring~$>$~star~$>$~random~$>$~fully connected holds with perfect rank concordance (Kendall's $W = 1.0$, $p = 0.00008$), and topology explains $23.9\times$ more variance than domain ($p_{\mathrm{domain}} = 0.945$). Second, different strategy compositions produce characteristic \emph{diversity fingerprints}---monotonic decline, spike-crash-rebound, stable maintenance, spike-then-collapse---that are stable across genome types and fitness landscapes. Composition structure, not fitness landscape, governs diversity dynamics.
@@ -120,7 +123,7 @@ How you compose genetic algorithm (GA) operators shapes diversity dynamics more 
 
 GA practitioners already compose operators routinely. Every generational GA runs select $\to$ crossover $\to$ mutation $\to$ replacement as a pipeline. Island models compose multiple such pipelines with periodic migration. Adaptive strategies compose phases with runtime switching. But this composition is typically buried inside imperative loops, invisible to formal analysis. We cannot ask ``does this composition preserve a property of its parts?'' because the composition has no formal representation.
 
-This gap in evolutionary computation is especially striking given recent progress in other optimization domains. Category theory now provides compositional frameworks for neural network architectures~\cite{gavranovic2024categorical}, reinforcement learning~\cite{bakirtzis2024compositional, hedges2024reinforcement}, gradient descent~\cite{hanks2024gradient}, and game theory~\cite{ghani2025approximate}. Each formalism represents operators as morphisms and builds complex systems by composition---exactly what GA implementations do informally. Evolutionary computation is the missing piece: the only major optimization paradigm without a categorical treatment of operator composition.
+This gap in evolutionary computation is especially striking given recent progress in other optimization domains. Category theory now provides compositional frameworks for neural network architectures~\cite{gavranovic2024categorical}, reinforcement learning~\cite{bakirtzis2024compositional, hedges2024reinforcement}, gradient descent~\cite{hanks2024gradient}, and game theory~\cite{ghani2025approximate}. Each formalism represents operators as morphisms and builds complex systems by composition---exactly what GA implementations do informally. Evolutionary computation remains a notable gap: a major optimization paradigm still lacking a categorical treatment of operator composition.
 
 We address this by formalizing GA operators as morphisms in a \emph{Kleisli category}---a standard construction from programming language theory~\cite{moggi1991notions} that gives compositionality for effectful computations. Every GA operator reads configuration, logs metrics, and uses randomness. The Kleisli category lets us compose these effectful operators as if they were pure functions, while a monad threads the effects automatically. A full evolutionary run becomes a single composite arrow. Strategies become higher-order operations on arrows.
 
@@ -356,6 +359,7 @@ Strategy combinators & \textbf{Invariant} & island, hourglass, adaptive \\
 \begin{figure}[t]
 \centering
 \includegraphics[width=\columnwidth]{multi_domain_topology_ordering.pdf}
+\Description{Bar chart showing mean diversity at generation 99 across six domains (OneMax, Maze, Graph Coloring, Knapsack, No Thanks, Checkers) for five migration topologies. The ordering none greater than ring greater than star greater than random greater than fully connected is identical in every domain.}
 \caption{Diversity (mean $\pm$ SE, 30~seeds, generation~99) across all six domains. The ordering none~$>$~ring~$>$~star~$>$~random~$>$~FC is identical in every domain (Kendall's $W = 1.0$, $p = 0.00008$). Topology explains $23.9\times$ more variance than domain (two-way ANOVA).}
 \label{fig:multi-domain-topology}
 \end{figure}
@@ -462,6 +466,7 @@ Figure~\ref{fig:fingerprints} shows the four fingerprint patterns across three d
   \end{tabular}
 };
 \end{tikzpicture}
+\Description{Three line plots showing diversity trajectories over 50 generations for four composition strategies (flat, hourglass, island, adaptive) across maze generation, graph coloring, and knapsack domains. Each strategy produces a distinct fingerprint pattern that is consistent across all three domains.}
 \caption{Diversity fingerprints across three domains (pop~60, 50~gen, 10~seeds). The four qualitative patterns---monotonic decline (flat), spike-crash-rebound (hourglass), migration-maintained plateau (island), spike-then-collapse (adaptive)---are consistent across maze generation, graph coloring, and knapsack despite different fitness landscapes and genome lengths.}
 \label{fig:fingerprints}
 \end{figure*}
