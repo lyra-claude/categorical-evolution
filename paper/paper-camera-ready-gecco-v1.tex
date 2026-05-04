@@ -371,7 +371,7 @@ Across six unrelated domains, the diversity ordering at generation~99 is
 \[
 \text{none} \;>\; \text{ring} \;>\; \text{star} \;>\; \text{random} \;>\; \text{fully connected}
 \]
-with perfect concordance: Kendall's $W = 1.0$, $\chi^2 = 24.0$, $p = 0.00008$; all 15 pairwise Spearman $\rho = 1.0$ (Figure~\ref{fig:multi-domain-topology}). A two-way ANOVA confirms that topology explains $23.9\times$ more variance in diversity dynamics than domain ($F_{\mathrm{topo}} = 47.8$, $p < 10^{-6}$; $F_{\mathrm{domain}} = 0.13$, $p = 0.945$).
+with perfect concordance: Kendall's $W = 1.0$, $\chi^2 = 24.0$, $p = 0.00008$; all 15 pairwise Spearman $\rho = 1.0$ (Figure~\ref{fig:multi-domain-topology}). A two-way ANOVA confirms that topology explains $23.9\times$ more variance in diversity dynamics than domain ($F_{\mathrm{topo}} = 47.8$, $p < 10^{-6}$; $F_{\mathrm{domain}} = 0.13$, $p = 0.945$). We note that all six domains share the same pipeline structure, so the ANOVA's independence assumption across domains is approximate; the non-parametric Kendall's~$W$ provides the primary evidence.
 \end{observation}
 
 The ordering follows the algebraic connectivity $\lambda_2$ of the migration graph: smaller $\lambda_2$ means slower mixing and higher sustained diversity. This is consistent with results from coupled oscillator theory, where spectral gap governs synchronization onset across network topologies~\cite{sanz2026algebraic}. The none-to-ring transition produces a 35\% diversity drop---the symmetry-breaking first coupling dominates. Each subsequent step contributes at most 9\%. The No~Thanks! result is especially significant: as a co-evolutionary domain with tournament-based relative fitness, there is no fixed fitness landscape---yet the canonical ordering persists ($\rho = 1.0$, phase transition 53.9\%), providing the strongest domain-independence evidence.
@@ -391,7 +391,7 @@ The topology ordering (Section~\ref{sec:experiments}) shows that \emph{connectiv
 
 \paragraph{Setup.}
 \label{sec:fingerprint-setup}
-We compare four composition strategies on maze generation (60-bit, population~60, 50~generations), graph coloring (40-bit, population~60, 50~generations), and knapsack (50-bit, population~60, 50~generations). All strategies compose the same base operators (evaluate, select, crossover, mutate) but differ in \emph{how}: flat generational (pure iteration), hourglass (explore$\to$converge$\to$diversify phases), island (4~subpopulations with ring migration every 5~generations), and adaptive (explore mode switching to focus mode on plateau detection).
+We compare four composition strategies on maze generation (60-bit, population~60, 50~generations), graph coloring (40-bit, population~60, 50~generations), and knapsack (50-bit, population~60, 50~generations). All strategies compose the same base operators (evaluate, select, crossover, mutate) but differ in \emph{how}: flat generational (pure iteration), hourglass (explore$\to$converge$\to$diversify phases), island (4~subpopulations with ring migration every 5~generations), and adaptive (explore mode switching to focus mode on plateau detection). We use 10~seeds (vs.\ 30 for topology) because the fingerprint patterns are qualitatively distinct and visually unambiguous; additional seeds would narrow confidence bands without changing the classification.
 
 Figure~\ref{fig:fingerprints} shows the four fingerprint patterns across three domains.
 
@@ -490,6 +490,7 @@ All four strategies use identical selection, crossover, and mutation operators.
 Only how these operators are composed---sequentially, in phases, across islands, or conditionally---differs.
 Yet this compositional difference produces an $18\times$ spread in final diversity (adaptive's 0.02 vs.\ hourglass's 0.37), consistent across all three domains in Figure~\ref{fig:fingerprints}.
 
+For practitioners, fingerprints serve as a diagnostic tool: plotting diversity over generations reveals which compositional pattern a GA is exhibiting, and whether a change in strategy composition (e.g., adding migration or phased mutation) achieves its intended effect on population dynamics.
 
 \section{Related Work}
 
