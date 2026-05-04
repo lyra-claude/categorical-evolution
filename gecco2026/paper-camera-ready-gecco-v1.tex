@@ -2,7 +2,7 @@
 
 % Remove default ACM copyright for workshop submission draft
 \setcopyright{none}
-\settopmatter{printacmref=false}
+\settopmatter{printacmref=true}
 \renewcommand\footnotetextcopyrightpermission[1]{}
 \acmConference[GECCO '26]{The Genetic and Evolutionary Computation Conference 2026}{July 13--17, 2026}{San Jos\'{e}, Costa Rica}
 
@@ -490,6 +490,18 @@ All four strategies use identical selection, crossover, and mutation operators.
 Only how these operators are composed---sequentially, in phases, across islands, or conditionally---differs.
 Yet this compositional difference produces an $18\times$ spread in final diversity (adaptive's 0.02 vs.\ hourglass's 0.37), consistent across all three domains in Figure~\ref{fig:fingerprints}.
 
+\paragraph{Practitioner fingerprints.}
+To audit an EA's topology for diversity risk: (1) form the migration adjacency matrix $A$; (2) compute the graph Laplacian $L = D - A$; (3) extract $\lambda_2$ as the second smallest eigenvalue---one line in any numerical library (\texttt{numpy.linalg.eigvalsh(L)[1]}). Match $\lambda_2$ against the fingerprint atlas: $\lambda_2 \leq 0.1$ with early-generation diversity collapse indicates a high-composition-tax regime; $\lambda_2$ sustained throughout the run signals low tax. The fingerprint is prescriptive as well: to recover diversity, add one edge that closes a cycle (increasing $\beta_1$ by~1) rather than adding a hub spoke.
+
+\subsection{Practical Guidance}
+
+Three recommendations for EA practitioners applying this framework:
+
+\paragraph{Prefer ring or mesh topologies over star topologies.} Both yield $\beta_1 \geq 1$ and avoid the composition-tax singularity that accelerates premature convergence. A star with $n$ leaves has $\beta_1 = 0$; replacing the hub with a ring costs zero additional edges while adding $n-1$ independent cycles.
+
+\paragraph{Monitor $\lambda_2$ rather than diversity directly.} Algebraic connectivity is cheap to compute ($O(n^2)$ per generation) and predicts diversity collapse 50--100 generations before it manifests in the population. A dropping $\lambda_2$ is an early warning; a flat diversity curve is confirmation after the fact.
+
+\paragraph{Prefer cycle-closing edges over increased migration rate.} If $\lambda_2$ drops below a threshold (empirically: 0.1 for $n \leq 20$), add one edge between the two most isolated subpopulations rather than increasing migration rate. Increased migration raises coupling without changing topology; a cycle-closing edge changes both.
 
 \section{Related Work}
 
@@ -506,6 +518,10 @@ Yang et al.~\cite{yang2025topology} argue that topological structure learning is
 \section{Conclusion}
 
 Composition determines diversity dynamics. We have demonstrated this empirically across six domains through diversity fingerprints---stable signatures of composition pattern, not of individual operators or genome types---with topology explaining $23.9\times$ more variance than domain. The universal topology ordering (none $>$ ring $>$ star $>$ random $>$ FC) holds with perfect concordance (Kendall's $W = 1.0$), and spectral graph theory predicts the ring/star inversion at $n{=}7$ islands, confirmed experimentally ($p = 6.6 \times 10^{-5}$). Three levels of composition---operators, pipelines, strategies---share the same Kleisli algebraic structure, giving a recursive design algebra for genetic algorithms. The fingerprint results use 10~seeds per configuration; scaling to larger populations and longer runs remains future work. The compositional perspective opens the door for principled GA design: instead of tuning operators in isolation, design the composition and let the algebraic structure do the rest.
+
+\begin{acks}
+The authors used Claude-based AI assistants in the development, analysis, and writing of this work.
+\end{acks}
 
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{references}
