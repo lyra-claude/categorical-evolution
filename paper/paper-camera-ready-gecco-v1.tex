@@ -129,7 +129,8 @@ This gap in evolutionary computation is especially striking given recent progres
 
 We address this by formalizing GA operators as morphisms in a \emph{Kleisli category}---a standard construction from programming language theory~\cite{moggi1991notions} that gives compositionality for effectful computations. Every GA operator reads configuration, logs metrics, and uses randomness. The Kleisli category lets us compose these effectful operators as if they were pure functions, while a monad threads the effects automatically. A full evolutionary run becomes a single composite arrow. Strategies become higher-order operations on arrows.
 
-This formalization is not merely notational. The framework---a three-level composition tower where operators compose into pipelines, pipelines into strategies, and strategies into multi-population systems, all via the same Kleisli mechanism---yields two empirical results:
+This formalization is not merely notational. The framework---a three-level composition tower where operators compose into pipelines, pipelines into strategies, and strategies into multi-population systems, all via the same Kleisli mechanism---yields two empirical
+results:
 
 \begin{enumerate}[nosep]
   \item \textbf{Universal topology ordering.} Across six unrelated domains, migration topology determines diversity dynamics with perfect rank concordance (Kendall's $W = 1.0$, $p = 0.00008$): none $>$ ring $>$ star $>$ random $>$ fully connected. Topology explains $23.9\times$ more variance than domain.
@@ -331,7 +332,7 @@ All topology experiments: 5~islands $\times$ 16~individuals, 100~generations, mi
 Co-evolutionary card game. Fitness is relative to opponents within each island---there is no fixed fitness landscape. Tournament-based evaluation means fitness depends on co-evolving context. This is the hardest test of domain independence: if the topology ordering holds here, it cannot be an artifact of landscape structure.
 
 \paragraph{Checkers.}
-64-bit binary genomes encoding board-evaluation weights for a Samuel-style~\cite{samuel1959checkers} checkers player. Fitness determined by round-robin tournament within each island, creating an intransitive landscape (A beats B, B beats C, C beats A). Migration introduces not just genetic material but new competitive context.
+64-bit binary genomes encoding board-evaluation weights for a Samuel-style~\cite{samuel1959checkers} checkers player. Fitness determined by round-robin tournament within each island, creating an intransitive landscape (A~beats~B, B~beats~C, C~beats~A). Migration introduces not just genetic material but new competitive context.
 
 \medskip
 \noindent The six domains share nothing in content---genome type, fitness function, mutation operator all change. What stays invariant is the categorical structure:
@@ -483,7 +484,7 @@ The explore phase maintains high diversity (0.50 $\to$ 0.44 by gen~5, vs.\ flat'
 After an initial adjustment (0.50 $\to$ 0.41 by gen~5), diversity declines slowly but remains above the flat strategy throughout (0.29 vs.\ 0.17 at gen~20). Migration every 5~generations injects just enough genetic material to counterbalance selection-driven convergence within each subpopulation. The island model acts as a diversity thermostat~\cite{whitley1999island}, reaching 0.15 by gen~50.
 
 \paragraph{Spike-then-collapse (adaptive).}
-The explore phase initially matches the hourglass trajectory (0.50 $\to$ 0.44 by gen~5). But when the plateau detector triggers the switch to focus mode, diversity collapses irreversibly to 0.02---the lowest final diversity of any strategy. Unlike the hourglass, there is no recovery phase. The adaptive strategy trades long-term diversity for rapid convergence once a promising region is found.
+The explore phase initially matches the hourglass trajectory ($0.50 \to 0.44$ by gen~5). But when the plateau detector triggers the switch to focus mode, diversity collapses irreversibly to~0.02---the lowest final diversity of any strategy. Unlike the hourglass, there is no recovery phase. The adaptive strategy trades long-term diversity for rapid convergence once a promising region is found.
 
 The fingerprint is determined by the \emph{composition pattern}, not by the operators.
 All four strategies use identical selection, crossover, and mutation operators.
