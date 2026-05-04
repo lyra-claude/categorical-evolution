@@ -9,6 +9,19 @@
 \acmDOI{10.1145/3795101.3814659}
 \acmISBN{979-8-4007-2488-6/2026/07}
 
+% Fix geometry: acmart v2.12 sets paper width to 614.295pt instead of 612pt.
+% HotCRP measures margins against 8.5in (612pt) and requires >= 0.75in.
+% Fix: acmart v2.12 sets paper to 614.295pt and textwidth to 505.89pt.
+% On 8.5in (612pt) letter, that leaves only 0.73in margins.
+% HotCRP requires >= 0.75in. Force correct page size and text width.
+\pdfpagewidth=8.5in
+\pdfpageheight=11in
+\setlength{\paperwidth}{8.5in}
+\setlength{\paperheight}{11in}
+\setlength{\textwidth}{7.0in}
+\setlength{\oddsidemargin}{-0.25in}
+\setlength{\evensidemargin}{-0.25in}
+
 % amsmath, amssymb, amsthm, booktabs are loaded by acmart
 \usepackage{tikz-cd}
 \usepackage{algorithm}
