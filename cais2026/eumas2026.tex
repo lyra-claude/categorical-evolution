@@ -882,6 +882,13 @@ a distinct timescale:
     al.~\cite{brewster2025diversity}: cycle graphs have $\Theta(N^3)$
     absorption time versus $\Theta(N^2)$ for complete graphs, meaning
     rings preserve heterogeneity for a fundamentally longer timescale.
+    Hanks and Riess~\cite{hanks2025cellular} provide the nonlinear
+    generalization: their sheaf Laplacian
+    $L_{\mathcal{F}}^{\nabla U} = \delta^\top \cdot \nabla U \cdot \delta$
+    replaces the standard graph Laplacian with a sheaf-theoretic operator
+    whose spectral gap depends on stalk structure, suggesting that
+    heterogeneous agent capabilities further modulate the $\lambda_2$
+    effect we observe.
 \end{enumerate}
 
 \begin{figure}[t]
@@ -959,6 +966,11 @@ does human validation of the embedding metric. GA experiments use
 $N = 20$; scaling to larger genomes is open. Bridge families are
 approximately iso-spectral; exact within-family matching is left to
 future work.
+Ribeiro et al.~\cite{ribeiro2026directed} introduce directed sheaf
+neural networks with an in/out decomposition of the sheaf Laplacian,
+providing a natural formalization for our directed cycle count $\kappa$;
+extending the bridge experiment to directed iso-spectral families using
+their framework is a promising direction.
 
 %% ===================================================================
 \section{Related Work}
@@ -1016,6 +1028,11 @@ task sheaves correspond to distributed solutions, providing
 model-independent foundations that subsume classical impossibility
 results (Herlihy--Shavit); this grounds our use of $\beta_1$ as a
 coordination invariant in the language of sheaf-theoretic obstructions.
+Schmid~\cite{schmid2025sheaf} provides a prospectus for sheaf-theoretic
+methods in multi-agent systems, independently proposing cellular sheaves
+as the natural framework for heterogeneous agent
+communication---validating the sheaf-cohomological interpretation of our
+invariant hierarchy.
 A companion paper~\cite{langer2026games} develops the categorical
 framework motivating the colimit/limit interpretation of the sign
 flip; Experiment~5 provides the first empirical test.
@@ -1224,6 +1241,16 @@ Zhang, Q., Hu, C., Upasani, S., Ma, B., Hong, F., Kamanuru, V., Rainton, J., Wu,
 Agentic context engineering: Evolving contexts for self-improving language models.
 In: Proc.\ ICLR (2026).
 arXiv:2510.04618
+
+\bibitem{schmid2025sheaf}
+Schmid, L.:
+Sheaf theory for multi-agent systems: A prospectus.
+arXiv:2504.17700 (2025)
+
+\bibitem{ribeiro2026directed}
+Ribeiro, P., Bodnar, C., Barbosa, H., Bronstein, M.:
+Directed sheaf neural networks.
+In: Proc.\ ICLR (2026)
 
 \end{thebibliography}
 
