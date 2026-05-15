@@ -81,6 +81,39 @@ variable; current systems are tuning it blindly.
 \label{sec:intro}
 %% ===================================================================
 
+Consider two topologies, both with $\beta_1 = 2$ and $|E| = 13$ on
+twelve nodes. One arranges its two independent cycles as \emph{overlapping
+rings}---sharing a common edge so that the two cycles interfere at their
+junction. The other places them as \emph{satellites}---two disjoint cycles
+linked by a bridge, funnelling diversity through a shared hub. By every
+standard metric (cycle rank, edge density, algebraic connectivity) these
+graphs are nearly identical. Yet across 540 independent runs on rugged NK
+landscapes ($K = 4$), the satellite topology F1c maintains substantially
+less behavioral diversity (mean~$= 0.112$) than the overlapping-cycle
+topology F1e (mean~$= 0.163$)---a 37\% gap---while their sheaf Laplacian
+eigenvalues diverge by a factor of~18 ($\lambda_F = 0.036$ versus
+$\lambda_F = 0.002$, Section~\ref{sec:exp3}).
+
+The divergence has a clean explanation. In F1e, migration flows that enter
+one cycle exit through the shared edge into the other; by symmetry, both
+cycles generate equal and opposite flows at the junction, which cancel,
+leaving each half nearly isolated despite their physical connection. The
+low $\lambda_F$ signals that global migration is self-defeating. F1c's
+bridge structure creates no such cancellation: hub routing is efficient,
+but every island sees every other island's output simultaneously. The
+relevant quantity is not \emph{how many} cycles a topology contains---it
+is \emph{how those cycles' restriction maps compose}, captured by the
+sheaf cohomology $H^1(G;\,\mathcal{F})$ with coefficients in the
+population-dynamics sheaf~$\mathcal{F}$.
+
+This matters because practitioners choosing topologies for multi-agent
+systems are operating two levels of abstraction below the relevant
+quantity. They compare ring to star without controlling for cycle rank;
+when they do invoke cycles, they count $\beta_1$ without considering
+arrangement. Our experiments reveal the controlled structure beneath these
+informal intuitions and point toward the sheaf-theoretic framework that
+explains the opening paradox.
+
 Every multi-agent system embeds a communication topology. AutoGen uses
 round-robin group chat. LangGraph builds DAG pipelines. CrewAI deploys
 manager hubs. These are not neutral infrastructure choices---they
@@ -105,7 +138,7 @@ $K$-regular graphs maximize coordination ($\beta_{\min} \sim 1/K$,
 where $\beta_{\min}$ is the minimum algebraic connectivity threshold
 for consensus).
 
-But \emph{what, exactly}, is topology doing? Comparing a chain
+\emph{What, exactly, is topology doing?} Comparing a chain
 ($\beta_1 = 0$) to a complete graph simultaneously varies cycle rank,
 density, diameter, and spectral gap. At least nine published
 systems---spanning ICML, AAAI, WWW, NeurIPS, and AAMAS---have chosen
@@ -216,8 +249,10 @@ We provide the first controlled answer, bridging from a model system
   \item \textbf{Invariant hierarchy} (\S\ref{sec:discussion}):
     three invariants---$\kappa$, $\beta_1$, $\lambda_2$---operating at
     different timescales provide a principled topology selection
-    framework. Nine recent systems lack the controlled comparisons our
-    theorem demands.
+    framework. Our opening paradox shows this hierarchy is a scalar
+    approximation to $H^1(G;\mathcal{F})$; Section~\ref{sec:exp3} gives
+    the first experimental probe of the gap. Nine recent systems lack
+    the controlled comparisons our theorem demands.
 \end{enumerate}
 
 %% ===================================================================
@@ -595,6 +630,35 @@ generation~100) is small relative to cross-$\beta_1$ effects
 ($\eta^2 = 0.17$--$0.69$). \textbf{Cycle rank is the primary
 invariant}; degree distribution is secondary.
 
+\paragraph{Beyond degree distribution: cycle arrangement within a $\beta_1$ class.}
+The ring-vs-augmented-star comparison holds $\beta_1$ and $|E|$ fixed
+while varying degree distribution. A sharper probe varies \emph{cycle
+arrangement} at identical $\beta_1$, $|E|$, and (approximately) $\lambda_2$.
+We compare two $n = 12$, $\beta_1 = 2$, $|E| = 13$ topologies on NK landscapes
+($K = 4$, 30~seeds per topology, 540~runs total):
+\textbf{F1e}~(overlapping cycles): two 6-cycles sharing one edge; and
+\textbf{F1c}~(satellite): two 6-cycles connected by a bridge subgraph.
+
+Both topologies have $\beta_1 = 2$ and $|E| = 13$, but their sheaf
+Laplacian eigenvalues differ by a factor of~18:
+$\lambda_F^{\mathrm{F1e}} = 0.002$ versus
+$\lambda_F^{\mathrm{F1c}} = 0.036$.
+F1e maintains mean diversity~$0.163$; F1c maintains mean
+diversity~$0.112$ (37\% lower). This is the opening paradox of this
+paper: same cycle rank, same edge count, qualitatively different
+behavior.
+
+The mechanism: in F1e, equal and opposite migration flows cancel at the
+shared edge, making global migration nearly self-defeating despite the
+physical connection. In F1c, bridge routing is efficient but exposes
+every island to every other island's prior. The standard graph
+invariants ($\kappa$, $\beta_1$, $\lambda_2$) cannot distinguish these
+cases; the sheaf Laplacian spectrum $\mathrm{spec}(L_{\mathcal{F}})$
+can. \textbf{The invariant hierarchy ($\kappa \to \beta_1 \to \lambda_2$)
+is a scalar approximation to $H^1(G;\,\mathcal{F})$; our three controlled
+experiments reveal the scalar structure, but the correct invariant is the
+sheaf cohomology.}
+
 %% ===================================================================
 \section{Experiment 4: Bridge --- $\beta_1$ vs $\lambda_2$ Decomposition}
 \label{sec:exp4}
@@ -902,6 +966,20 @@ or operate independently is open. The bridge experiment shows
 $\beta_1$ and $\lambda_2$ produce independent effects (low
 cross-correlation), suggesting parallel operation.
 
+The three-invariant hierarchy is a scalar approximation to a deeper
+object: the sheaf cohomology $H^1(G;\,\mathcal{F})$, where
+$\mathcal{F}$ is the population-dynamics sheaf induced by the fitness
+landscape. For constant sheaves (landscape-independent migration),
+$\dim H^1 = \beta_1$ recovers the standard count. For non-constant
+sheaves---as in Experiment~3's F1e/F1c comparison, where the same
+$\beta_1$ and $|E|$ produce a factor-of-18 difference in sheaf
+Laplacian eigenvalue and a 37\% diversity gap---the scalar hierarchy
+fails. The relevant question is no longer \emph{how many} independent
+cycles the topology contains, but \emph{how those cycles' restriction
+maps compose under the fitness landscape}. Reading $\mathcal{F}$ off
+the landscape without running experiments is the principal open
+question this work leaves for future investigation.
+
 \subsection{Coupling Sign and Agent Design}
 
 The sign-flip has three direct implications: (1)~merging coupling
@@ -1057,7 +1135,14 @@ For safe multi-agent deployment, topology must be selected
 deliberately, its coupling direction understood, and its effects
 monitored through diversity metrics. The three-invariant hierarchy
 ($\kappa \to \beta_1 \to \lambda_2$) provides a principled framework
-for this selection. Current systems are tuning their most powerful
+for this selection, though as Experiment~3 shows, the correct invariant
+is the sheaf cohomology $H^1(G;\,\mathcal{F})$ of which our scalar
+hierarchy is an approximation. This obstruction-theoretic structure
+appears independently in predictive coding
+networks~\cite{peters2025neureps}, where $H^1$ characterises prediction
+errors that inference cannot resolve, suggesting the sheaf-cohomological
+framework captures a domain-general principle rather than an
+EA-specific phenomenon. Current systems are tuning their most powerful
 design variable blindly.
 
 \smallskip
@@ -1074,6 +1159,11 @@ design variable blindly.
 Capucci, M., Myers, D.J.:
 Feedback in categorical multi-agent systems.
 arXiv:2604.03017 (2026)
+
+\bibitem{peters2025neureps}
+Peters, B., et al.:
+Signed laxator parallel in predictive coding networks.
+NeurReps Workshop (2025), arXiv:2511.11092
 
 \bibitem{dochkina2026}
 Dochkina, V.:
