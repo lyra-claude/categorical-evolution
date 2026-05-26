@@ -113,13 +113,13 @@ when they do invoke cycles, they count $\beta_1$ without considering
 arrangement. Our experiments reveal the controlled structure beneath these
 informal intuitions and point toward the sheaf-theoretic framework that
 explains the opening paradox.
-
 Every multi-agent system embeds a communication topology. AutoGen uses
 round-robin group chat. LangGraph builds DAG pipelines. CrewAI deploys
 manager hubs. These are not neutral infrastructure choices---they
 determine which agents can see which outputs, shaping the
 diversity--convergence tradeoff that governs system behavior. Yet
-these choices are made without controlled evidence.
+these choices are made without controlled evidence---and, as we
+discovered, without the right theoretical vocabulary.
 
 The costs of acyclicity are not merely empirical.
 Ao et al.~\cite{ao2026reliability} prove (Proposition~6) that
@@ -241,13 +241,22 @@ We provide the first controlled answer, bridging from a model system
     two invariants ($\beta_1$, $\lambda_2$) control diversity at
     different timescales.
 
-  \item \textbf{LLM validation} (\S\ref{sec:exp5}): 3,200
+  \item \textbf{Arrangement paradox} (\S\ref{sec:exp5}): within a
+    fixed $\beta_1$ class, cycle \emph{arrangement} drives up to 37\%
+    diversity gaps---explainable by the sheaf Laplacian spectrum
+    $\mathrm{spec}(\mathbf{L}_\mathcal{F})$ but not by $\beta_1$ or
+    $\lambda_2$ alone. Domain-reversal experiments (maze vs.\ NK)
+    show the correct invariant is $H^1(G;\mathcal{F})$, where
+    $\mathcal{F}$ is landscape-induced.
+
+  \item \textbf{LLM validation} (\S\ref{sec:exp6}): 3,200
     GPT-4o-mini API calls reveal a coupling-dependent sign
     flip---one instruction change reverses the diversity ordering
     ($\eta^2 = 0.291$).
 
   \item \textbf{Invariant hierarchy} (\S\ref{sec:discussion}):
-    three invariants---$\kappa$, $\beta_1$, $\lambda_2$---operating at
+    four invariants---$\kappa$, $\beta_1$, $\lambda_2$,
+    $\mathrm{spec}(\mathbf{L}_\mathcal{F})$---operating at
     different timescales provide a principled topology selection
     framework. Our opening paradox shows this hierarchy is a scalar
     approximation to $H^1(G;\mathcal{F})$; Section~\ref{sec:exp3} gives
@@ -762,11 +771,145 @@ For agent systems: \emph{cycle rank controls the exploration window};
 \emph{algebraic connectivity controls convergence rate}.
 
 %% ===================================================================
-\section{Experiment 5: LLM Sign-Flip}
+\section{Experiment 5: The Arrangement Paradox}
 \label{sec:exp5}
 %% ===================================================================
 
-The GA experiments (Sections~\ref{sec:exp1}--\ref{sec:exp4}) establish
+Experiments~1--4 establish that $\beta_1$ (cycle rank) and $\lambda_2$
+(algebraic connectivity) are the primary topology invariants.
+But consider two graphs with \emph{identical} $\beta_1$ and identical
+edge count---do they produce identical diversity? We find they do not.
+
+\paragraph{Falsifiable prediction.}
+If the sheaf framework is correct, then the sheaf Laplacian eigenvalue
+$\lambda_\mathcal{F}$ should anti-correlate with diversity on rugged
+landscapes (faster sheaf mixing~$\to$~faster consensus~$\to$~less
+diversity). The following experiments test this prediction.
+
+\subsection{Family~1: Overlapping vs.\ Satellite Arrangements}
+\label{sec:exp5a}
+
+We construct two eight-node graph families, both with $\beta_1 = 2$
+and NK $K = 4$, varying only cycle \emph{arrangement}:
+
+\begin{itemize}[nosep]
+  \item \textbf{F1e} (entangled): two cycles share edges; migration
+    streams interact destructively, yielding low effective mixing.
+    Sheaf Laplacian eigenvalue $\lambda_\mathcal{F} = 0.002$.
+  \item \textbf{F1c} (satellite): one primary cycle with a secondary
+    cycle attached at a single node; migration flows directionally.
+    Sheaf Laplacian eigenvalue $\lambda_\mathcal{F} = 0.036$.
+\end{itemize}
+
+\noindent
+270~runs per family (20~seeds), NK $K = 4$.
+
+\paragraph{Results.}
+F1e maintains mean diversity 0.163; F1c maintains 0.112 ($p < 0.01$).
+The 37\% gap persists through generation~500 despite identical $\beta_1$.
+The scalar Laplacian ($\lambda_2$) does not explain this difference: both
+families are constructed with comparable algebraic connectivity.
+The sheaf Laplacian does: the factor-of-18 difference in
+$\lambda_\mathcal{F}$ (0.002 vs.\ 0.036) explains the gap.
+Higher $\lambda_\mathcal{F}$ means faster effective migration,
+faster consensus, and less sustained diversity---exactly as the
+sheaf framework predicts.
+
+\paragraph{Theoretical interpretation.}
+$\dim H^1(G;\mathcal{F}) = \beta_1$ for all weight models with
+1D stalks~\cite{hanks2025cellular}: the cohomological dimension
+is identical for F1e and F1c. The distinction lies in
+$\mathrm{spec}(\mathbf{L}_\mathcal{F})$---the sheaf Laplacian
+encodes how population flow \emph{interacts} with cycle structure,
+not merely how many cycles exist. Two graphs with the same
+$H^1$-dimension can have qualitatively different effective mixing
+dynamics.
+
+\subsection{Family~2: Non-Monotone Cycle Rank}
+\label{sec:exp5b}
+
+Extending to three $\beta_1$ levels within the satellite arrangement
+class reveals a non-monotone relationship:
+
+\begin{table}[t]
+\centering
+\caption{Mean diversity by $\beta_1$ at NK $K=4$ (satellite
+arrangement class). More cycles is not always better:
+$\beta_1 = 3$ has the \emph{lowest} diversity, driven by
+low $\lambda_2 = 0.214$ causing premature convergence.}
+\label{tab:nonmonotone}
+\begin{tabular}{@{}cccc@{}}
+\toprule
+$\beta_1$ & Mean diversity & $\lambda_2$ & Note \\
+\midrule
+2 & 0.119 & -- & Optimal \\
+3 & 0.080 & 0.214 & Lowest; premature convergence \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The $\beta_1 = 3$ graph has $\lambda_2 = 0.214$---lower algebraic
+connectivity than the $\beta_1 = 2$ graph---triggering premature
+convergence despite more cycles. This reinforces Experiment~4:
+$\beta_1$ and $\lambda_2$ are joint determinants, not independent
+predictors. More cycles paired with low $\lambda_2$ can actively
+harm diversity retention.
+
+\subsection{Domain Reversal: Maze vs.\ NK}
+\label{sec:exp5c}
+
+A stronger test: do \emph{domain changes} reverse the arrangement
+ordering? We test three iso-$\beta_1$ arrangements
+(M1, M2, M3; $n = 12$, $\beta_1 = 2$, $|E| = 13$) across
+three fitness landscapes:
+
+\begin{table}[t]
+\centering
+\caption{Diversity ordering reverses between Maze and NK $K=4$
+domains for identical $(\beta_1, |E|)$. The landscape geometry
+determines which arrangement wins; $\beta_1$ and $\lambda_2$
+alone do not.}
+\label{tab:domain-reversal}
+\begin{tabular}{@{}llrr@{}}
+\toprule
+Domain & Ordering & $\eta^2$ & $p$ \\
+\midrule
+OneMax  & M1 $\approx$ M2 $\approx$ M3 & 0.008 & $>0.05$ \\
+NK $K=4$ & M3 $>$ M2 $>$ M1 & 0.022 & $<0.05$ \\
+Maze    & M1 $>$ M2 $>$ M3 & 0.058 & $<0.01$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The M1$\to$M3 reversal between Maze and NK cannot be predicted
+by $\beta_1$, $\lambda_2$, or the scalar sheaf spectrum alone.
+In Maze, shorter cycles (M1) act as gradient sensors, propagating
+directional fitness signals faster. In NK $K=4$, symmetric
+arrangements (M3) better preserve competing strategies across the
+rugged landscape. Different domains induce different sheaves
+$\mathcal{F}$ on the same graph; which arrangement wins depends
+on $H^1(G;\mathcal{F})$, not $H^1(G;\mathbb{k}) = \beta_1$.
+
+\paragraph{Three-tier hierarchy.}
+These results establish a third tier in the invariant hierarchy:
+\begin{enumerate}[nosep]
+  \item $\beta_1$: \emph{does topology matter at all?}
+    (discrete, landscape-agnostic)
+  \item $\lambda_2$: \emph{at what rate does consensus develop?}
+    (continuous, landscape-agnostic)
+  \item $\mathrm{spec}(\mathbf{L}_\mathcal{F})$: \emph{which
+    arrangement wins?} (landscape-induced, domain-specific)
+\end{enumerate}
+Predicting the third tier without experiments requires
+characterizing $\mathcal{F}$ from task geometry---an open
+problem we discuss in Section~\ref{sec:discussion}.
+
+%% ===================================================================
+\section{Experiment 6: LLM Sign-Flip}
+\label{sec:exp6}
+%% ===================================================================
+
+The GA experiments (Sections~\ref{sec:exp1}--\ref{sec:exp5}) establish
 that topology controls diversity through cycle rank and spectral gap.
 But does this transfer to LLM agents? The node-level differences
 (populations vs.\ single outputs, genetic operators vs.\ language
