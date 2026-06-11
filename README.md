@@ -16,25 +16,56 @@ holds with perfect rank correlation (Kendall's W = 1.0, p = 0.00008). Topology e
 
 A spectral bridge connecting algebraic connectivity λ₂ to the diversity ordering makes a further falsifiable prediction: at n ≥ 7 islands, ring preserves more diversity than star (reversing their n=5 relationship). Confirmed with p < 0.0001.
 
-## Repository Structure
+## Repository Map
 
 ```
-paper/                  The paper (LaTeX source + compiled PDF)
+gecco2026/              GECCO 2026 camera-ready paper and supplementary materials
+  ├── paper-camera-ready-gecco-v1.pdf   ← THE CAMERA-READY PAPER (start here)
+  ├── paper-camera-ready-gecco-v1.tex   LaTeX source
+  ├── supplementary-camera-ready.tar.gz Supplementary archive (submitted)
+  ├── submitted-gecco2026-aaboh/        Original submission (pre-camera-ready)
+  └── README.md                         Full guide to GECCO materials
+
+slides/                 GECCO 2026 talk slides and video script
+  ├── gecco-talk.pdf / gecco-talk.tex   Beamer slide deck (9 slides)
+  ├── gecco-video-outline.md            Video outline
+  └── gecco-video-script.md             Full talk script
+
 experiments/            Python experimental suite (6 domains, 30 seeds each)
-  ├── *_domain.py       Domain implementations
-  ├── multi_domain_analysis.py   Cross-domain statistical analysis
-  ├── experiment_e_*.csv         Raw data
-  └── plots/            Publication figures
-haskell/                Proof-of-concept categorical framework
-  └── src/Evolution/    GA operators as Kleisli morphisms in Haskell
-docs/                   Guides and explanations
-archive/                Earlier drafts
+  ├── README.md                         Catalogue of all scripts and outputs
+  ├── *_domain.py                       Domain implementations
+  ├── multi_domain_analysis.py          Cross-domain statistical analysis
+  ├── experiment_e_*.csv                Raw data (all six domains)
+  └── plots/                            Publication figures
+
+haskell/                Categorical framework (GA operators as Kleisli morphisms)
+  └── src/Evolution/    Core library modules
+
+act/                    ACT 2026 work — SEPARATE from GECCO
+  └── README.md         Points to the ACT branches (feat/act2026-paper, etc.)
+
+paper/                  Working paper source (pre-camera-ready drafts and variants)
+  ├── paper.tex / paper.pdf             Working paper source
+  ├── references.bib                    Bibliography
+  ├── talk-proposal.tex/pdf             ACT 2026 talk proposal
+  └── submitted/                        Submission snapshots
+
+useful_information/     Reference material and plain-language explanations
+  ├── README.md                         Index of what's here
+  ├── GUIDE.md                          Developer guide to the repo
+  ├── medium-article.md                 Accessible explanation draft
+  └── strict-lax-plain-language.md      Plain-language functor explanation
+
+archive/                Earlier drafts (gecco2026 and act2026 rough drafts)
+haskell/                Haskell categorical framework
+cais2026/               CAIS 2026 related materials (graph families, lit review)
+grant/                  Grant application materials
 ```
 
 ## Quick Start
 
-**Read the paper:**
-[`paper/paper.pdf`](paper/paper.pdf)
+**Read the camera-ready GECCO paper:**
+[`gecco2026/paper-camera-ready-gecco-v1.pdf`](gecco2026/paper-camera-ready-gecco-v1.pdf)
 
 **Reproduce the main figure:**
 ```bash
@@ -50,27 +81,19 @@ cabal build
 cabal run categorical-evolution -- --demo maze-migration-sweep
 ```
 
-## Submitted Papers
-
-| Venue | Paper | Source |
-|-------|-------|--------|
-| ACT 2026 | [`paper/submitted/act2026/paper-submitted.pdf`](paper/submitted/act2026/paper-submitted.pdf) | [`paper/paper.tex`](paper/paper.tex) |
-| GECCO 2026 AABOH | [`paper/submitted/gecco2026-aaboh/paper-submitted.pdf`](paper/submitted/gecco2026-aaboh/paper-submitted.pdf) | [`paper/submitted/gecco2026-aaboh/paper.tex`](paper/submitted/gecco2026-aaboh/paper.tex) |
-
-**Supplementary material** (submitted with GECCO paper): [`paper/submitted/gecco2026-aaboh/supplementary.tar.gz`](paper/submitted/gecco2026-aaboh/supplementary.tar.gz) — contains Haskell framework source and Python experiment code.
-
-## Key Files
+## Key Files at a Glance
 
 | What | Where |
 |------|-------|
-| ACT 2026 paper | [`paper/submitted/act2026/paper-submitted.pdf`](paper/submitted/act2026/paper-submitted.pdf) |
-| GECCO 2026 paper | [`paper/submitted/gecco2026-aaboh/paper-submitted.pdf`](paper/submitted/gecco2026-aaboh/paper-submitted.pdf) |
+| **GECCO camera-ready PDF** | [`gecco2026/paper-camera-ready-gecco-v1.pdf`](gecco2026/paper-camera-ready-gecco-v1.pdf) |
+| GECCO camera-ready LaTeX | [`gecco2026/paper-camera-ready-gecco-v1.tex`](gecco2026/paper-camera-ready-gecco-v1.tex) |
+| GECCO talk slides | [`slides/gecco-talk.pdf`](slides/gecco-talk.pdf) |
+| ACT 2026 submitted PDF | [`paper/submitted/act2026-submitted/paper-submitted.pdf`](paper/submitted/act2026-submitted/paper-submitted.pdf) |
+| ACT 2026 branches | see [`act/README.md`](act/README.md) |
 | Main result figure | [`experiments/plots/multi_domain_topology_ordering.pdf`](experiments/plots/multi_domain_topology_ordering.pdf) |
-| Six-domain analysis | [`experiments/multi_domain_analysis.py`](experiments/multi_domain_analysis.py) |
-| Strategy fingerprints | [`experiments/strategy_fingerprints.py`](experiments/strategy_fingerprints.py) |
+| Experiments guide | [`experiments/README.md`](experiments/README.md) |
 | Categorical framework | [`haskell/src/Evolution/`](haskell/src/Evolution/) |
-| Island functor + laxator | [`haskell/src/Evolution/Island.hs`](haskell/src/Evolution/Island.hs) |
 
 ## License
 
-BSD-3-Clause
+MIT
