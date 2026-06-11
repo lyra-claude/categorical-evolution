@@ -1,0 +1,42 @@
+\begin{remark}[The laxator and the spectral bridge]
+\label{rem:laxator}
+The Dichotomy admits a precise categorical formulation.
+Let $\mathcal{I}_G$ denote the island functor for migration graph~$G$,
+lifting a single-population strategy $\sigma : P \to M\,P$ to the
+$n$-island system $\mathcal{I}_G(\sigma) : P^n \to M\,P^n$.
+The \emph{laxator} is the natural transformation
+\[
+  \varphi_G \;:\;
+  \mathcal{I}_G(\sigma_1) \circ \mathcal{I}_G(\sigma_2)
+  \;\Longrightarrow\;
+  \mathcal{I}_G(\sigma_1 \circ \sigma_2),
+\]
+measuring the discrepancy between composing lifted strategies and
+lifting a composed strategy.  When $G$ has no edges,
+$\varphi_G = \mathrm{id}$ and composition is strict; any connected
+$G$ forces $\varphi_G \neq \mathrm{id}$.
+
+The magnitude of $\varphi_G$ is governed by the algebraic
+connectivity $\lambda_2(G)$, the smallest nonzero eigenvalue of the
+graph Laplacian.  For the ring $C_n$,
+$\lambda_2 = 2(1 - \cos(2\pi/n)) \approx 4\pi^2/n^2$; for the star
+$K_{1,n-1}$, $\lambda_2 = 1$; for the complete graph $K_n$,
+$\lambda_2 = n$.  Larger $\lambda_2$ means faster mixing, stronger
+migration coupling, and a larger laxator---hence greater diversity
+erosion.  The predicted ordering (ring most diverse, FC least) matches
+all five domains in Section~4.2.
+
+For fixed topologies, composition factors cleanly over time:
+$\lambda_2$ of the cumulative adjacency equals $T \cdot \lambda_2$
+of a single snapshot.  For the time-varying random topology
+(resampled each migration event), this factoring fails: the
+time-averaged effective $\lambda_2 = 39.74$, a $110\times$ inflation
+over the snapshot mean of~$0.36$.  This inflation is the laxator's
+numerical signature---the quantitative gap between strict and lax
+composition.
+
+The explicit construction of $\varphi_G$ and verification of its
+coherence conditions remain open; the present paper identifies the
+laxator as the governing quantity and confirms its spectral proxy
+empirically.
+\end{remark}
