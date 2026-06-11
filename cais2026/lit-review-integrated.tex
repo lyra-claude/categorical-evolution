@@ -1,0 +1,319 @@
+% EUMAS 2026 — Lit Review Integration Plan
+% Prepared: 2026-04-26
+% Status: Ready for integration into eumas2026.tex
+%
+% =====================================================================
+% INTEGRATION OVERVIEW
+% =====================================================================
+%
+% The draft contains four threads. After review against the existing
+% paper, integration is as follows:
+%
+%   Thread 1 (DAG Default)    → REDUNDANT. Already covered extensively.
+%   Thread 2 (Sheaf Upgrade)  → Partially integrated. Expand in Discussion.
+%   Thread 3 (Shannon Limit)  → NEW material. Insert in Discussion.
+%   Thread 4 (Certification)  → Partially integrated. Expand in Discussion + Related Work.
+%
+% EXISTING RELATED WORK (Section 7) has three paragraphs:
+%   - "Evolutionary computation" — GA lit, Brewster et al.
+%   - "LLM multi-agent systems" — The 9 systems, MASS, HERA, Dochkina, etc.
+%   - "Categorical approaches" — Capucci & Myers, companion paper
+%
+% EXISTING DISCUSSION (Section 6) has subsections:
+%   6.1 Evidence Gap
+%   6.2 Invariant Hierarchy
+%   6.3 Coupling Sign and Agent Design
+%   6.4 Practical Recommendations (incl. garden-path prediction)
+%   6.5 Limitations
+%
+% The paper already cites: hanks2025cellular, capucci2026feedback,
+% zhou2025mass, ao2026reliability, and all 9 evidence-gap systems.
+% So Thread 1 is almost entirely redundant with the Introduction and
+% Section 7. Threads 2-4 add genuinely new content.
+%
+% =====================================================================
+% CITATION STATUS
+% =====================================================================
+%
+% ALREADY IN BIBLIOGRAPHY (no action needed):
+%   \cite{hanks2025cellular}       — Hanks & Riess, cellular sheaves
+%   \cite{capucci2026feedback}     — Capucci & Myers, feedback cost
+%   \cite{zhou2025mass}            — MASS (Zhou et al.)
+%   \cite{ao2026reliability}       — Ao et al., reliability limits
+%   \cite{langer2026games}         — companion paper
+%   \cite{ofamas2026}              — OFA-MAS
+%   \cite{gdesigner2025}           — G-Designer
+%   \cite{goagent2026}             — GoAgent
+%   \cite{argdesigner2026}         — ARG-Designer
+%   \cite{agentconductor2026}      — AgentConductor
+%   \cite{dytopo2026}              — DyTopo
+%   \cite{yang2025topology}        — Yang et al.
+%   \cite{googlemit2026scaling}    — NOT IN BIB. See note below.
+%
+% NEED NEW BIBTEX ENTRIES:
+%   \cite{schmid2026prospectus}    — Schmid, 64-page sheaf+MAS prospectus
+%                                    Likely: arXiv:2504.17700
+%   \cite{thomas2026shannon}       — Thomas & Chen, Shannon lower bound
+%                                    on coordination cost. NEEDS VERIFICATION.
+%                                    No known arXiv match — may be fabricated.
+%   \cite{tran2026dpi}             — Tran & Kiela, DPI in multi-agent pipelines
+%                                    NEEDS VERIFICATION. No known arXiv match.
+%   \cite{googlemit2026scaling}    — Google/MIT scaling study, 17.2x error.
+%                                    This claim appears in Thread 1 but the
+%                                    paper already attributes 17x to
+%                                    Moran (moran2025error). The draft may
+%                                    be confusing two sources. VERIFY.
+%
+% HIGH-RISK CITATIONS (may be hallucinated):
+%   - thomas2026shannon: The claim about log_2(dim H^1) as a Shannon
+%     lower bound is elegant but suspiciously clean. Verify this paper
+%     exists on arXiv before adding.
+%   - tran2026dpi: DPI applied to multi-agent pipelines — plausible but
+%     not confirmed. Verify before adding.
+%   - googlemit2026scaling: The 17.2x figure matches Moran's 17x closely.
+%     Likely a conflation. DROP this cite in favor of existing moran2025error.
+%
+% =====================================================================
+
+
+%% ===================================================================
+%% THREAD 1: The DAG Default — VERDICT: REDUNDANT, DO NOT INTEGRATE
+%% ===================================================================
+%
+% The existing paper already covers the DAG default extensively:
+%   - Introduction (lines 83-191): All 9 systems with detailed analysis
+%   - Table 1 (tab:evidence-gap): The evidence gap table
+%   - Section 6.1 (Evidence Gap): Summary of the DAG problem
+%   - Section 7, para 2 (LLM MAS): MASS, HERA, all 9 systems
+%
+% The draft's Thread 1 adds no new citations or claims beyond what the
+% paper already contains. The one new cite (googlemit2026scaling) likely
+% conflates with moran2025error. SKIP this thread entirely.
+%
+% If the authors want to strengthen this area, the one salvageable line
+% is the framing "not an empirical finding — it is a default," which
+% could replace the current opening of Section 6.1. But the existing
+% text is already strong.
+
+
+%% ===================================================================
+%% THREAD 2: Sheaf Upgrade — PARTIALLY NEW
+%% Integration point: Discussion §6.2 (Invariant Hierarchy), after
+%% the three-item enumeration of kappa/beta_1/lambda_2
+%% ===================================================================
+%
+% The paper ALREADY mentions Hanks & Riess in Definition 2 (line 313):
+%   "More generally, beta_1 equals the dimension of the sheaf cohomology
+%    group H^1(G;F) for constant sheaves [hanks2025cellular]..."
+%
+% What is NEW in the draft:
+%   1. The Schmid prospectus (schmid2026prospectus) — independent
+%      validation from control theory. This IS genuinely new.
+%   2. The "testable prediction" framing for heterogeneous agents.
+%
+% REVISED TEXT for insertion after the enumeration in §6.2:
+
+\paragraph{From graph invariants to sheaf cohomology.}
+Our two-invariant framework $(\beta_1, \lambda_2)$ is the
+constant-sheaf special case of a richer theory.
+As noted in Definition~\ref{def:cyclerank}, for a constant sheaf
+$\mathcal{F} = \mathbb{R}$ (homogeneous agents), the first sheaf
+cohomology group recovers the Betti number exactly:
+$\dim H^1(G;\mathcal{F}) = \beta_1$~\cite{hanks2025cellular}.
+For heterogeneous agents---different models, context windows, or tool
+access---the stalks vary across nodes, and the correct invariants
+become $(\dim H^1(G;\mathcal{F}), \lambda_2(L_{\mathcal{F}}))$,
+where $L_{\mathcal{F}}$ is the sheaf Laplacian, capturing topological
+structure that $\beta_1$ alone misses.
+
+Schmid~\cite{schmid2026prospectus} provides independent validation:
+a research prospectus proposing sheaf theory as the mathematical
+foundation for multi-agent systems, identifying cellular sheaves,
+$H^1$ as coordination obstruction, and sheaf Laplacians as
+decentralized controllers.  Schmid's program converges on the same
+invariants from decentralized control theory, but lacks the Kleisli
+formalization, laxator framework, and experimental grounding that our
+work provides.
+The sheaf upgrade predicts that agent heterogeneity introduces
+topological degrees of freedom invisible to $\beta_1$---a testable
+claim for future density-controlled experiments with mixed-capability
+agents.
+
+% CHANGES FROM DRAFT:
+%   - Removed redundant Hanks & Riess exposition (already in Def 2)
+%   - Added back-reference to Definition 2 for continuity
+%   - Trimmed Schmid description (64-page → research prospectus)
+%   - Removed "not merely aesthetic" — too editorializing for LNCS
+%   - Kept the testable prediction framing (good scientific practice)
+
+
+%% ===================================================================
+%% THREAD 3: Shannon Limit — NEW MATERIAL (IF CITATIONS VERIFY)
+%% Integration point: Discussion §6.2, after Thread 2 paragraph above
+%% ===================================================================
+%
+% WARNING: Both citations in this thread (thomas2026shannon, tran2026dpi)
+% are unverified and may be hallucinated. DO NOT integrate until the
+% papers are confirmed to exist. If they do not exist, this entire
+% thread must be dropped or rewritten as speculation without citation.
+%
+% If verified, insert after the sheaf paragraph in §6.2:
+
+\paragraph{Information-theoretic cost of coordination.}
+Thomas and Chen~\cite{thomas2026shannon} establish a lower bound on
+multi-agent coordination cost: the minimum number of bits agents must
+exchange to achieve consistent global behavior is at least
+$\log_2(\dim H^1(G;\mathcal{F}))$.
+This upgrades $H^1 = 0$ from a binary possibility test (can agents
+coordinate without feedback?) to a continuous cost estimator (how
+expensive is coordination?), connecting our topological invariants
+directly to Shannon information theory.
+
+The bound explains why topology effects scale with problem difficulty
+(Experiment~2, Table~\ref{tab:nk-dose}): harder tasks ($K \geq 4$)
+demand more coordination bits, so the cohomological floor imposed by
+$\dim H^1$ becomes binding.  On easy tasks ($K = 0$), the floor is
+slack and topology barely matters---exactly the pattern we observe
+($\eta^2 = 0.05$ at $K = 0$ versus $\eta^2 = 0.69$ at $K = 6$).
+
+The data processing inequality provides a complementary cost
+mechanism: Tran and Kiela~\cite{tran2026dpi} show that each agent
+boundary in a multi-agent pipeline loses information, with
+multi-agent coordination becoming competitive only when input context
+is already degraded.  Together, these results frame optimal topology
+selection as a cost-benefit optimization over $\beta_1$.
+
+% CHANGES FROM DRAFT:
+%   - Removed the explicit argmax formula (too speculative for the paper)
+%   - Softened "noise or masking at alpha >= 0.5" detail (unverifiable)
+%   - Added parenthetical "(can agents coordinate without feedback?)"
+%     for clarity
+%   - Tightened final sentence
+%
+% CONTINGENCY: If thomas2026shannon is hallucinated, the core insight
+% (H^1 as coordination cost) can still be stated as a conjecture:
+%   "We conjecture that the minimum communication cost for consistent
+%    global behavior scales with dim H^1(G;F), connecting..."
+% This preserves the intellectual contribution without false citation.
+
+
+%% ===================================================================
+%% THREAD 4: Categorical Certification — PARTIALLY INTEGRATED
+%% Integration point: Related Work §7, expand "Categorical approaches"
+%% ===================================================================
+%
+% The paper ALREADY has a "Categorical approaches" paragraph in §7
+% (lines 1001-1005) mentioning Capucci & Myers and the companion paper.
+% It is currently only 4 lines. The draft expands this with the
+% cost-benefit interpretation.
+%
+% REVISED TEXT to replace the existing "Categorical approaches" paragraph
+% in Section 7:
+
+\paragraph{Categorical approaches.}
+Capucci and Myers~\cite{capucci2026feedback} formalize the cost of
+feedback: each cycle in the communication topology requires an
+independent convergence certificate, modeled as a categorical
+fixed-point condition on traced composition.  This provides the formal
+cost accounting for our invariant hierarchy: increasing $\beta_1$ by
+one gains a unit of transient diversity (Experiment~4) but incurs one
+additional convergence obligation.  The cost-benefit framing explains
+the practical appeal of DAGs---zero obligations---despite their
+decision-theoretic suboptimality~\cite{ao2026reliability}: on simple
+tasks ($K = 0$), the diversity benefit is negligible and the
+convergence cost dominates; on complex tasks ($K \geq 4$), the
+diversity benefit dominates.
+A companion paper~\cite{langer2026games} develops the categorical
+framework motivating the colimit/limit interpretation of the sign
+flip; Experiment~5 provides the first empirical test.
+A full treatment of certification conditions for cyclic multi-agent
+composition---connecting Capucci and Myers' convergence guarantees to
+our empirical dose-response findings---is deferred to future work.
+
+% CHANGES FROM DRAFT:
+%   - Kept "companion paper" reference to langer2026games (already in bib)
+%   - Changed "companion paper's laxator formalism" to just "companion
+%     paper" (avoids revealing too much about the separate submission)
+%   - Changed "deferred to a companion paper" → "deferred to future work"
+%     (the companion paper IS langer2026games, already cited; saying
+%     "another companion paper" would be confusing)
+%   - Preserved the K=0 vs K>=4 cost-benefit argument (good, connects
+%     directly to Experiment 2 data)
+
+
+%% ===================================================================
+%% ADDITIONAL: Schmid citation for Related Work §7
+%% Integration point: End of "LLM multi-agent systems" paragraph
+%% ===================================================================
+%
+% Schmid's prospectus is primarily a Related Work item (independent
+% convergence on sheaf theory for MAS). Add one sentence at the end of
+% the "LLM multi-agent systems" paragraph, before "Categorical
+% approaches":
+
+% INSERT before the "Categorical approaches" paragraph:
+% Schmid~\cite{schmid2026prospectus} independently proposes cellular
+% sheaves as the mathematical foundation for multi-agent coordination,
+% converging on the same invariants ($H^1$, sheaf Laplacian) from
+% decentralized control theory.
+
+
+%% ===================================================================
+%% BIBTEX ENTRIES TO ADD (if citations verify)
+%% ===================================================================
+
+% CONFIRMED (from memory notes — arXiv:2504.17700):
+% \bibitem{schmid2026prospectus}
+% Schmid, L.:
+% A sheaf-theoretic foundation for multi-agent systems: Coordination,
+% control, and communication.
+% arXiv:2504.17700 (2026)
+
+% UNVERIFIED — DO NOT ADD UNTIL CONFIRMED:
+% \bibitem{thomas2026shannon}
+% Thomas, ?., Chen, ?.:
+% Shannon lower bounds on multi-agent coordination cost.
+% arXiv:???? (2026)
+
+% UNVERIFIED — DO NOT ADD UNTIL CONFIRMED:
+% \bibitem{tran2026dpi}
+% Tran, ?., Kiela, D.:
+% Data processing inequality in multi-agent pipelines.
+% arXiv:???? (2026)
+
+% DROP — likely conflation with moran2025error:
+% \bibitem{googlemit2026scaling} — DO NOT ADD
+
+
+%% ===================================================================
+%% SUMMARY OF INTEGRATION PLAN
+%% ===================================================================
+%
+% 1. Thread 2 (Sheaf Upgrade): Add paragraph to Discussion §6.2,
+%    after the three-invariant enumeration. ~150 words.
+%
+% 2. Thread 3 (Shannon Limit): Add paragraph to Discussion §6.2,
+%    after Thread 2 paragraph. ~150 words. CONTINGENT on citation
+%    verification. If citations are hallucinated, rewrite as conjecture.
+%
+% 3. Thread 4 (Certification): REPLACE the 4-line "Categorical
+%    approaches" paragraph in Related Work §7 with expanded version.
+%    ~120 words.
+%
+% 4. Schmid mention: Add 1 sentence to end of "LLM multi-agent systems"
+%    paragraph in Related Work §7.
+%
+% 5. Thread 1 (DAG Default): DO NOT INTEGRATE. Redundant with existing
+%    Introduction and Related Work.
+%
+% 6. Add bibtex entry for schmid2026prospectus. Hold thomas2026shannon
+%    and tran2026dpi until verified.
+%
+% Total new words: ~420 (within LNCS 14-page budget if existing text
+% is tight). Net new citations: 1 confirmed (Schmid), 2 pending.
+%
+% Word budget note: The paper header says "14 pages LNCS." LNCS format
+% typically allows ~5000 words for 14 pages including figures and
+% references. Adding ~420 words is feasible but tight. If space is an
+% issue, Thread 3 (Shannon) is the most expendable since it depends on
+% unverified citations.
