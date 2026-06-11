@@ -23,3 +23,8 @@ onemax-demo
 *.lot
 *.pag
 __pycache__/
+.venv/
+._*
+
+# LaTeX editor temporaries
+*.cut

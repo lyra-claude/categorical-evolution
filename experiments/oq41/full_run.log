@@ -1,0 +1,84 @@
+  wrote graph metadata -> /home/lyra/projects/categorical-evolution/experiments/oq41/oq41_graph_meta.csv
+[arm A] F2-β1 (β₁=1, λ₂=0.0907) × onemax -> oq41_A_F2b1_onemax.csv
+  Experiment E: 10/30 runs complete
+  Experiment E: 20/30 runs complete
+  Experiment E: 30/30 runs complete
+[arm A] F2-β1 (β₁=1, λ₂=0.0907) × maze -> oq41_A_F2b1_maze.csv
+  Experiment E: 10/30 runs complete
+  Experiment E: 20/30 runs complete
+  Experiment E: 30/30 runs complete
+[arm A] F2-β1 (β₁=1, λ₂=0.0907) × graph_coloring -> oq41_A_F2b1_graph_coloring.csv
+  Experiment E: 10/30 runs complete
+  Experiment E: 20/30 runs complete
+  Experiment E: 30/30 runs complete
+[arm A] F2-β1 (β₁=1, λ₂=0.0907) × knapsack -> oq41_A_F2b1_knapsack.csv
+  Experiment E: 10/30 runs complete
+  Experiment E: 20/30 runs complete
+  Experiment E: 30/30 runs complete
+[arm A] F2-β2 (β₁=2, λ₂=0.1100) × onemax -> oq41_A_F2b2_onemax.csv
+  Experiment E: 10/30 runs complete
+  Experiment E: 20/30 runs complete
+  Experiment E: 30/30 runs complete
+[arm A] F2-β2 (β₁=2, λ₂=0.1100) × maze -> oq41_A_F2b2_maze.csv
+  Experiment E: 10/30 runs complete
+  Experiment E: 20/30 runs complete
+  Experiment E: 30/30 runs complete
+[arm A] F2-β2 (β₁=2, λ₂=0.1100) × graph_coloring -> oq41_A_F2b2_graph_coloring.csv
+  Experiment E: 10/30 runs complete
+  Experiment E: 20/30 runs complete
+  Experiment E: 30/30 runs complete
+[arm A] F2-β2 (β₁=2, λ₂=0.1100) × knapsack -> oq41_A_F2b2_knapsack.csv
+  Experiment E: 10/30 runs complete
+  Experiment E: 20/30 runs complete
+  Experiment E: 30/30 runs complete
+[arm A] F2-β3 (β₁=3, λ₂=0.2137) × onemax -> oq41_A_F2b3_onemax.csv
+  Experiment E: 10/30 runs complete
+  Experiment E: 20/30 runs complete
+  Experiment E: 30/30 runs complete
+[arm A] F2-β3 (β₁=3, λ₂=0.2137) × maze -> oq41_A_F2b3_maze.csv
+  Experiment E: 10/30 runs complete
+  Experiment E: 20/30 runs complete
+  Experiment E: 30/30 runs complete
+[arm A] F2-β3 (β₁=3, λ₂=0.2137) × graph_coloring -> oq41_A_F2b3_graph_coloring.csv
+  Experiment E: 10/30 runs complete
+  Experiment E: 20/30 runs complete
+  Experiment E: 30/30 runs complete
+[arm A] F2-β3 (β₁=3, λ₂=0.2137) × knapsack -> oq41_A_F2b3_knapsack.csv
+  Experiment E: 10/30 runs complete
+  Experiment E: 20/30 runs complete
+  Experiment E: 30/30 runs complete
+[arm A] F2-β4 (β₁=4, λ₂=0.1501) × onemax -> oq41_A_F2b4_onemax.csv
+  Experiment E: 10/30 runs complete
+  Experiment E: 20/30 runs complete
+  Experiment E: 30/30 runs complete
+[arm A] F2-β4 (β₁=4, λ₂=0.1501) × maze -> oq41_A_F2b4_maze.csv
+  Experiment E: 10/30 runs complete
+  Experiment E: 20/30 runs complete
+  Experiment E: 30/30 runs complete
+[arm A] F2-β4 (β₁=4, λ₂=0.1501) × graph_coloring -> oq41_A_F2b4_graph_coloring.csv
+  Experiment E: 10/30 runs complete
+  Experiment E: 20/30 runs complete
+  Experiment E: 30/30 runs complete
+[arm A] F2-β4 (β₁=4, λ₂=0.1501) × knapsack -> oq41_A_F2b4_knapsack.csv
+  Experiment E: 10/30 runs complete
+  Experiment E: 20/30 runs complete
+  Experiment E: 30/30 runs complete
+[arm B] F1a (β₁=2, λ₂=0.1100) × onemax -> oq41_B_F1a_onemax.csv
+  Experiment E: 10/30 runs complete
+  Experiment E: 20/30 runs complete
+  Experiment E: 30/30 runs complete
+[arm B] F1a (β₁=2, λ₂=0.1100) × maze -> oq41_B_F1a_maze.csv
+  Experiment E: 10/30 runs complete
+  Experiment E: 20/30 runs complete
+  Experiment E: 30/30 runs complete
+[arm B] F1a (β₁=2, λ₂=0.1100) × graph_coloring -> oq41_B_F1a_graph_coloring.csv
+  Experiment E: 10/30 runs complete
+  Experiment E: 20/30 runs complete
+  Experiment E: 30/30 runs complete
+[arm B] F1a (β₁=2, λ₂=0.1100) × knapsack -> oq41_B_F1a_knapsack.csv
+  Experiment E: 10/30 runs complete
+  Experiment E: 20/30 runs complete
+  Experiment E: 30/30 runs complete
+[arm B] F1b (β₁=2, λ₂=0.1078) × onemax -> oq41_B_F1b_onemax.csv
+  Experiment E: 10/30 runs complete
+  Experiment E: 20/30 runs complete
