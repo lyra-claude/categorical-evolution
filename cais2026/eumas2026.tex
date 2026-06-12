@@ -37,82 +37,30 @@ in Multi-Agent Systems}
 \maketitle
 
 \begin{abstract}
-A genetic algorithm (GA) maintains a \emph{population} of candidate
-solutions (genomes), improving them through mutation and crossover
-guided by a fitness function; an \emph{island model} partitions this
-population across sub-populations (islands) that evolve independently
-and periodically exchange individuals along a communication topology.
-This paper shows that the same topology effects govern LLM agent
-orchestration: agents correspond to islands, message channels to
-migration channels, and output diversity---measured as mean pairwise
-cosine distance on sentence embeddings---plays the role of population
-diversity.
-
 Multi-agent AI systems choose communication topologies---star, chain,
 ring, fully connected---with no controlled evidence for how topology
-affects behavior. We provide five lines of evidence across 970 GA
-runs and 3,200 LLM API calls. First, we prove that cycle rank and
-edge density are algebraically confounded in undirected graphs,
-invalidating density-uncontrolled topology comparisons (Theorem~1).
-Second, using directed graphs that escape this confound (240~runs),
-topology independently explains 17\% of diversity variance
-($p < 10^{-7}$). Third, an NK dose-response sweep (250~runs) shows
-the effect scales $14\times$ from smooth to rugged landscapes. Fourth,
-a ring-vs-star comparison at constant cycle rank (160~runs) shows
-degree distribution contributes at most $\eta^2 \approx 0.13$ within
-a single $\beta_1$ class. Fifth, a bridge experiment (320~runs) with
-iso-spectral families decomposes the topology signal into two
-invariants operating at different timescales: cycle rank
-($\beta_1$) determines the \emph{diversity fingerprint at transient scales}
-($\eta^2 = 0.191$ at generation~100, fading by~500), while algebraic
-connectivity ($\lambda_2$) determines the \emph{diversity fingerprint at
-persistent scales} (cross-family $\eta^2 = 0.265$ at generation~200).
-Why these two invariants govern different timescales is an open
-theoretical question. Transfer to LLM agents: a coupling-dependent
-sign flip means one instruction reverses which topology produces the
-most diverse output ($\eta^2 = 0.291$, $p < 10^{-19}$). At least nine
-published systems chose topologies without the controlled comparisons
-our confound theorem demands. Topology is a first-class design
-variable; current systems are tuning it blindly.
+affects behavior. We prove that cycle rank and edge density are
+algebraically confounded in undirected graphs, invalidating
+density-uncontrolled comparisons (Theorem~1), and provide five lines
+of evidence across 970 GA runs and 3,200 LLM API calls. Using
+directed graphs that escape the confound, topology independently
+explains 17\% of diversity variance ($p < 10^{-7}$); this effect
+scales $14\times$ from smooth to rugged landscapes. A bridge
+experiment with iso-spectral families decomposes the signal: cycle
+rank ($\beta_1$) drives transient diversity, algebraic connectivity
+($\lambda_2$) drives persistent convergence---two invariants, two
+timescales. Transfer to LLM agents reveals a coupling-dependent sign
+flip: one instruction change reverses which topology produces the
+most diverse output ($\eta^2 = 0.291$, $p < 10^{-19}$). At least
+nine published systems chose topologies without the controlled
+comparisons our confound theorem demands. Topology is a first-class
+design variable; current systems are tuning it blindly.
 \end{abstract}
 
 %% ===================================================================
 \section{Introduction}
 \label{sec:intro}
 %% ===================================================================
-
-Consider two topologies, both with $\beta_1 = 2$ and $|E| = 13$ on
-twelve nodes. One arranges its two independent cycles as \emph{overlapping
-rings}---sharing a common edge so that the two cycles interfere at their
-junction. The other places them as \emph{satellites}---two disjoint cycles
-linked by a bridge, funnelling diversity through a shared hub. By every
-standard metric (cycle rank, edge density, algebraic connectivity) these
-graphs are nearly identical. Yet across 540 independent runs on rugged NK
-landscapes ($K = 4$), the satellite topology F1c maintains substantially
-less behavioral diversity (mean~$= 0.112$) than the overlapping-cycle
-topology F1e (mean~$= 0.163$)---a 37\% gap---while their sheaf Laplacian
-eigenvalues diverge by a factor of~18 ($\lambda_F = 0.036$ versus
-$\lambda_F = 0.002$, Section~\ref{sec:exp3}).
-
-The divergence has a clean explanation. In F1e, migration flows that enter
-one cycle exit through the shared edge into the other; by symmetry, both
-cycles generate equal and opposite flows at the junction, which cancel,
-leaving each half nearly isolated despite their physical connection. The
-low $\lambda_F$ signals that global migration is self-defeating. F1c's
-bridge structure creates no such cancellation: hub routing is efficient,
-but every island sees every other island's output simultaneously. The
-relevant quantity is not \emph{how many} cycles a topology contains---it
-is \emph{how those cycles' restriction maps compose}, captured by the
-sheaf cohomology $H^1(G;\,\mathcal{F})$ with coefficients in the
-population-dynamics sheaf~$\mathcal{F}$.
-
-This matters because practitioners choosing topologies for multi-agent
-systems are operating two levels of abstraction below the relevant
-quantity. They compare ring to star without controlling for cycle rank;
-when they do invoke cycles, they count $\beta_1$ without considering
-arrangement. Our experiments reveal the controlled structure beneath these
-informal intuitions and point toward the sheaf-theoretic framework that
-explains the opening paradox.
 
 Every multi-agent system embeds a communication topology. AutoGen uses
 round-robin group chat. LangGraph builds DAG pipelines. CrewAI deploys
@@ -138,56 +86,14 @@ $K$-regular graphs maximize coordination ($\beta_{\min} \sim 1/K$,
 where $\beta_{\min}$ is the minimum algebraic connectivity threshold
 for consensus).
 
-\emph{What, exactly, is topology doing?} Comparing a chain
+But \emph{what, exactly}, is topology doing? Comparing a chain
 ($\beta_1 = 0$) to a complete graph simultaneously varies cycle rank,
 density, diameter, and spectral gap. At least nine published
 systems---spanning ICML, AAAI, WWW, NeurIPS, and AAMAS---have chosen
 topologies without density-controlled comparisons
 (Table~\ref{tab:evidence-gap}):
 
-\textbf{Graph-GRPO}~\cite{graphgrpo2026} trains LLM agents via Group
-Relative Policy Optimization on a fixed communication graph, reporting
-that complete-graph coordination \emph{performs worst}---yet the
-complete graph simultaneously maximizes both density and cycle rank, so
-the finding cannot distinguish which property is responsible.
-\textbf{OFA-MAS}~\cite{ofamas2026} searches for a single topology
-that generalizes across diverse tasks by pruning agent communication
-edges to reduce cost; the pruning optimizes density and cycle structure
-jointly and evaluates only DAGs as candidates, suppressing the dominant
-topological variable our experiments identify.
-\textbf{G-Designer}~\cite{gdesigner2025} uses an LLM to design
-task-specific agent graphs across reasoning and coding benchmarks,
-reporting topology-dependent performance differences, but uses no
-density-controlled baseline---comparisons conflate density, cycle
-structure, and spectral gap simultaneously.
-\textbf{GoAgent}~\cite{goagent2026} constructs DAG-based agent
-workflows optimized by a graph planner, comparing against dense
-fully-connected alternatives; those alternatives have both higher
-density and more cycles, making performance differences
-unattributable.
-\textbf{ARG-Designer}~\cite{argdesigner2026} uses adaptive graph
-search to find task-optimal agent routing; it restricts its search
-space to DAGs throughout and never tests whether adding feedback cycles
-would improve performance.
-\textbf{AgentConductor}~\cite{agentconductor2026} orchestrates
-specialist agents via a dynamically assembled communication graph;
-cyclic topologies are not in its design space, and the acyclicity
-constraint is not tested against a cyclic baseline.
-\textbf{DyTopo}~\cite{dytopo2026} adapts the communication topology
-dynamically across task steps while enforcing acyclicity throughout;
-its variable-structure results conflate structural change with temporal
-effects.
-\textbf{HERA}~\cite{hera2026} is closest to our work: it runs
-topology evolution with cycle-count tracking and reports a 38.69\%
-improvement, but does not control for density---as $\beta_1$ grows,
-$|E|$ grows with it, rendering its results uninterpretable by our
-confound theorem.
-\textbf{Dochkina}~\cite{dochkina2026} provides the largest
-comparison (25K tasks, 8 protocols, $d = 1.86$ quality spread), with
-capability-moderated effects consistent with our dose-response
-findings; but the 8 protocols differ simultaneously on density, cycle
-structure, and spectral gap, so the 44\% quality spread cannot be
-attributed to any single graph property.
+Table~\ref{tab:evidence-gap} catalogs the confound type for each system. Six of nine restrict to DAGs ($\beta_1 = 0$), suppressing the dominant topological variable our experiments identify. The most instructive cases are Graph-GRPO~\cite{graphgrpo2026}, which finds complete-graph coordination \emph{performs worst}---consistent with our $\beta_1$ prediction, but the complete graph simultaneously maximizes density and cycle rank, so the finding is unattributable. HERA~\cite{hera2026}, the closest prior work, tracks cycle count during topology evolution (38.69\% improvement) but does not control for density, rendering its results uninterpretable by our confound theorem.
 
 \begin{table}[t]
 \centering
@@ -249,10 +155,8 @@ We provide the first controlled answer, bridging from a model system
   \item \textbf{Invariant hierarchy} (\S\ref{sec:discussion}):
     three invariants---$\kappa$, $\beta_1$, $\lambda_2$---operating at
     different timescales provide a principled topology selection
-    framework. Our opening paradox shows this hierarchy is a scalar
-    approximation to $H^1(G;\mathcal{F})$; Section~\ref{sec:exp3} gives
-    the first experimental probe of the gap. Nine recent systems lack
-    the controlled comparisons our theorem demands.
+    framework. Nine recent systems lack the controlled comparisons our
+    theorem demands.
 \end{enumerate}
 
 %% ===================================================================
@@ -551,22 +455,8 @@ preserves or destroys it.
 Within a single $\beta_1$ class, how much does edge \emph{arrangement}
 matter?
 
-\paragraph{The confound in the natural comparison.}
-A plain $n$-node ring has $n$ edges and $\beta_1 = 1$; a plain $n$-node
-star has $n - 1$ edges and $\beta_1 = 0$. Comparing them at fixed $n$
-simultaneously varies both cycle rank \emph{and} edge count---the confound
-from Theorem~\ref{thm:confound} applies. Alternatively, comparing a ring
-with $n - 1$ nodes to a star with $n$ nodes (matching edge counts at $n - 1$)
-varies both cycle rank and node count. There is no natural pair of
-$\{$ring, star$\}$ topologies that holds all confounds fixed.
-
-Our result on this natural comparison: ring is consistently better than
-star for maintaining diversity ($\eta^2 = 0.08$--$0.13$ depending on $K$),
-but this effect conflates cycle rank, edge count, and degree distribution.
-To isolate the contribution of degree distribution alone, we augment the
-star with one leaf-to-leaf edge, yielding $|E| = n$ and $\beta_1 = 1$ for
-both---isolating degree distribution (uniform 2-regular vs.\ hub-and-spoke)
-at fixed cycle rank and edge count.
+\paragraph{Controlling the confound.}
+By Theorem~\ref{thm:confound}, a na\"ive ring-vs-star comparison conflates cycle rank, edge count, and degree distribution. We isolate degree distribution by augmenting the star with one leaf-to-leaf edge, yielding $\beta_1 = 1$ and $|E| = 8$ for both topologies---matching cycle rank and density, varying only degree distribution (uniform 2-regular vs.\ hub-and-spoke).
 
 \paragraph{Design.}
 Two topologies on $n = 8$ nodes: ring (2-regular, diameter~4,
@@ -629,35 +519,6 @@ consensus, but the effect ($\eta^2 \leq 0.13$, non-significant after
 generation~100) is small relative to cross-$\beta_1$ effects
 ($\eta^2 = 0.17$--$0.69$). \textbf{Cycle rank is the primary
 invariant}; degree distribution is secondary.
-
-\paragraph{Beyond degree distribution: cycle arrangement within a $\beta_1$ class.}
-The ring-vs-augmented-star comparison holds $\beta_1$ and $|E|$ fixed
-while varying degree distribution. A sharper probe varies \emph{cycle
-arrangement} at identical $\beta_1$, $|E|$, and (approximately) $\lambda_2$.
-We compare two $n = 12$, $\beta_1 = 2$, $|E| = 13$ topologies on NK landscapes
-($K = 4$, 30~seeds per topology, 540~runs total):
-\textbf{F1e}~(overlapping cycles): two 6-cycles sharing one edge; and
-\textbf{F1c}~(satellite): two 6-cycles connected by a bridge subgraph.
-
-Both topologies have $\beta_1 = 2$ and $|E| = 13$, but their sheaf
-Laplacian eigenvalues differ by a factor of~18:
-$\lambda_F^{\mathrm{F1e}} = 0.002$ versus
-$\lambda_F^{\mathrm{F1c}} = 0.036$.
-F1e maintains mean diversity~$0.163$; F1c maintains mean
-diversity~$0.112$ (37\% lower). This is the opening paradox of this
-paper: same cycle rank, same edge count, qualitatively different
-behavior.
-
-The mechanism: in F1e, equal and opposite migration flows cancel at the
-shared edge, making global migration nearly self-defeating despite the
-physical connection. In F1c, bridge routing is efficient but exposes
-every island to every other island's prior. The standard graph
-invariants ($\kappa$, $\beta_1$, $\lambda_2$) cannot distinguish these
-cases; the sheaf Laplacian spectrum $\mathrm{spec}(L_{\mathcal{F}})$
-can. \textbf{The invariant hierarchy ($\kappa \to \beta_1 \to \lambda_2$)
-is a scalar approximation to $H^1(G;\,\mathcal{F})$; our three controlled
-experiments reveal the scalar structure, but the correct invariant is the
-sheaf cohomology.}
 
 %% ===================================================================
 \section{Experiment 4: Bridge --- $\beta_1$ vs $\lambda_2$ Decomposition}
@@ -773,39 +634,7 @@ But does this transfer to LLM agents? The node-level differences
 generation) are substantial. We test directly.
 
 \paragraph{Coding tasks.}
-We use eight algorithmic coding tasks of varying multimodality
-(number of distinct valid implementations), chosen to span from
-unimodal to highly multimodal:
-
-\begin{itemize}[nosep]
-  \item \textbf{Shortest path:} return the shortest path between two
-    nodes in a weighted graph (Dijkstra, Bellman-Ford, or BFS depending
-    on edge weights).
-  \item \textbf{Kth largest:} find the $k$-th largest element in an
-    unsorted array (quickselect, heap, or sort-based).
-  \item \textbf{Rate limiter:} implement a token-bucket or sliding-window
-    rate limiter for API requests (fixed window, sliding log, token
-    bucket, leaky bucket).
-  \item \textbf{JSON parser:} parse a JSON string into a native data
-    structure without using built-in JSON libraries (recursive descent
-    or iterative stack-based).
-  \item \textbf{LRU cache:} implement a least-recently-used cache with
-    $O(1)$ get and put (doubly linked list + hash map, or ordered dict).
-  \item \textbf{Regex matcher:} implement basic regular expression
-    matching supporting \texttt{.} and \texttt{*} (dynamic programming,
-    recursive backtracking, or NFA).
-  \item \textbf{Expression evaluator:} evaluate an arithmetic expression
-    string with operator precedence (recursive descent, Pratt parser,
-    or stack-based shunting-yard).
-  \item \textbf{Bloom filter:} implement a Bloom filter for set
-    membership testing (essentially one canonical implementation: bit
-    array + $k$ hash functions).
-\end{itemize}
-
-\noindent
-The Bloom filter is intentionally unimodal; the expression evaluator
-and JSON parser are multimodal. Task pass/fail is determined by a
-hidden test suite executed against agent outputs.
+We use eight Python coding tasks spanning unimodal to highly multimodal fitness landscapes: from Bloom filter (essentially one canonical implementation) through shortest path, LRU cache, and regex matcher (2--3 valid strategies each) to JSON parser and expression evaluator (3--4 distinct algorithmic approaches). Task pass/fail is determined by a hidden test suite executed against agent outputs.
 
 \paragraph{Design.}
 Five GPT-4o-mini agents, eight coding tasks, four topologies (none
@@ -907,20 +736,7 @@ reach solutions, not whether they succeed on these tasks.
 
 \subsection{The Evidence Gap}
 
-At least nine recent agent systems---spanning ICML, AAAI, WWW,
-NeurIPS, and AAMAS---chose topologies without density-controlled
-comparisons (Table~\ref{tab:evidence-gap}, introduced in
-Section~\ref{sec:intro}). Our confound theorem
-(Theorem~\ref{thm:confound}) shows these comparisons are
-fundamentally uninterpretable: they cannot distinguish density effects
-from cycle effects.
-
-Six of these nine are restricted to DAGs ($\beta_1 = 0$); only
-HERA~\cite{hera2026} tracks cycle count, without density control.
-The preference for acyclic structures has never been tested, and
-Ao et al.~\cite{ao2026reliability} show it has a formal cost: DAG-constrained
-systems are decision-theoretically dominated by centralized planning
-(Proposition~6), motivating the investigation of what cycles recover.
+As established in Section~\ref{sec:intro} and Table~\ref{tab:evidence-gap}, at least nine recent systems lack the density-controlled comparisons our confound theorem demands. The preference for DAGs ($\beta_1 = 0$) in six of these systems has never been tested against cyclic alternatives, and carries a provable cost~\cite{ao2026reliability}.
 
 \subsection{The Invariant Hierarchy}
 
@@ -946,6 +762,13 @@ a distinct timescale:
     al.~\cite{brewster2025diversity}: cycle graphs have $\Theta(N^3)$
     absorption time versus $\Theta(N^2)$ for complete graphs, meaning
     rings preserve heterogeneity for a fundamentally longer timescale.
+    Hanks et al.~\cite{hanks2025cellular} provide the nonlinear
+    generalization: their sheaf Laplacian
+    $L_{\mathcal{F}}^{\nabla U} = \delta^\top \cdot \nabla U \cdot \delta$
+    replaces the standard graph Laplacian with a sheaf-theoretic operator
+    whose spectral gap depends on stalk structure, suggesting that
+    heterogeneous agent capabilities further modulate the $\lambda_2$
+    effect we observe.
 \end{enumerate}
 
 \begin{figure}[t]
@@ -965,20 +788,6 @@ Whether these form a nested hierarchy (Figure~\ref{fig:hierarchy})
 or operate independently is open. The bridge experiment shows
 $\beta_1$ and $\lambda_2$ produce independent effects (low
 cross-correlation), suggesting parallel operation.
-
-The three-invariant hierarchy is a scalar approximation to a deeper
-object: the sheaf cohomology $H^1(G;\,\mathcal{F})$, where
-$\mathcal{F}$ is the population-dynamics sheaf induced by the fitness
-landscape. For constant sheaves (landscape-independent migration),
-$\dim H^1 = \beta_1$ recovers the standard count. For non-constant
-sheaves---as in Experiment~3's F1e/F1c comparison, where the same
-$\beta_1$ and $|E|$ produce a factor-of-18 difference in sheaf
-Laplacian eigenvalue and a 37\% diversity gap---the scalar hierarchy
-fails. The relevant question is no longer \emph{how many} independent
-cycles the topology contains, but \emph{how those cycles' restriction
-maps compose under the fitness landscape}. Reading $\mathcal{F}$ off
-the landscape without running experiments is the principal open
-question this work leaves for future investigation.
 
 \subsection{Coupling Sign and Agent Design}
 
@@ -1017,17 +826,6 @@ with problem complexity (Experiment~2).  These results, though
 density-confounded by our confound theorem, demonstrate that topology
 selection matters at competition scale.
 
-\paragraph{Garden-path recovery (prediction).}
-Our findings connect to garden-path processing in
-NLP~\cite{frazier1987}: recovering from premature commitment to an
-incorrect parse requires that alternative states remain accessible.
-Experiment~3 shows ring topologies ($\lambda_2 \approx 0.586$) sustain
-local diversity far longer than star topologies ($\lambda_2 = 1.0$) at
-identical $\beta_1$; we therefore predict that ring-coupled agents
-recover from garden-path errors without external perturbation, while
-complete or star topologies require injected noise to escape premature
-consensus. This prediction is untested but directly falsifiable.
-
 \subsection{Limitations}
 
 The LLM experiment does not control density: the sign-flip is robust
@@ -1037,66 +835,22 @@ does human validation of the embedding metric. GA experiments use
 $N = 20$; scaling to larger genomes is open. Bridge families are
 approximately iso-spectral; exact within-family matching is left to
 future work.
+Ribeiro et al.~\cite{ribeiro2026directed} introduce directed sheaf
+neural networks with an in/out decomposition of the sheaf Laplacian,
+providing a natural formalization for our directed cycle count $\kappa$;
+extending the bridge experiment to directed iso-spectral families using
+their framework is a promising direction.
 
-%% ===================================================================
-\section{Related Work}
+\subsection{Related Work}
 \label{sec:related}
-%% ===================================================================
 
-\paragraph{Evolutionary computation.}
-The topology--diversity link in island-model GAs is well
-established~\cite{tomassini2005spatially,skolicki2005influence}, but
-without density control. Our Experiment~1 is the first
-density-controlled comparison.
-Brewster et al.~\cite{brewster2025diversity} provide theoretical
-grounding: absorption time scales as $\Theta(N^2)$ on complete graphs,
-$\Theta(N^3)$ on cycles, and superexponentially on certain directed
-structures---directly predicting our diversity ordering.
+We situate our contributions relative to three bodies of work: island-model GAs, LLM multi-agent topology, and categorical foundations.
 
-\paragraph{LLM multi-agent systems.}
-The field converges on topology as a key
-variable~\cite{yang2025topology}, but comparisons remain uncontrolled.
-Graph-GRPO~\cite{graphgrpo2026} finds complete graphs perform worst
-(consistent with our $\beta_1$ prediction, but density-confounded).
-OFA-MAS~\cite{ofamas2026}, G-Designer~\cite{gdesigner2025},
-GoAgent~\cite{goagent2026}, ARG-Designer~\cite{argdesigner2026},
-AgentConductor~\cite{agentconductor2026}, and
-DyTopo~\cite{dytopo2026} all operate in or favor DAG space without
-density-controlled baselines.
-Ao et al.~\cite{ao2026reliability} provide a formal lower bound:
-DAG-constrained multi-agent planning is decision-theoretically
-dominated by centralized Bayes decision making (Proposition~6),
-establishing that acyclicity has a provable cost independent of
-implementation details.
+The topology--diversity link in island-model GAs is well established~\cite{tomassini2005spatially,skolicki2005influence} but without density control; our Experiment~1 is the first density-controlled comparison. Brewster et al.~\cite{brewster2025diversity} provide theoretical grounding: absorption time scales as $\Theta(N^2)$ on complete graphs versus $\Theta(N^3)$ on cycles, directly predicting our diversity ordering.
 
-MASS~\cite{zhou2025mass} jointly optimizes prompts and topologies
-via a three-stage search, but restricts the topology space to DAGs;
-its finding that ``prompts matter more than topology'' may be an
-artifact of holding $\kappa = 0$ throughout the search, artificially
-suppressing the dominant topological variable our experiments identify.
-HERA~\cite{hera2026} is closest: it tracks cycle count during topology
-evolution (38.69\% improvement), without density control.
-Dochkina~\cite{dochkina2026} provides the largest comparison (25K
-tasks, $d = 1.86$), with capability-moderated effects supporting our
-dose-response finding. Wang et al.~\cite{wang2026kregular} show
-$K$-regular graphs maximize coordination ($\beta_{\min} \sim 1/K$),
-suggesting a coordination--exploration duality.
-Artis et al.~\cite{artis2026heterogeneity} provide cross-disciplinary
-evidence (biology, economics, computing) that topology determines
-heterogeneity's spatial distribution, supporting our finding that rings
-outperform fully connected graphs on rugged landscapes.
+In LLM multi-agent systems, topology is increasingly recognized as a key variable~\cite{yang2025topology}, but comparisons remain uncontrolled (Table~\ref{tab:evidence-gap}). MASS~\cite{zhou2025mass} jointly optimizes prompts and topologies but restricts to DAGs; its finding that ``prompts matter more than topology'' may be an artifact of holding $\kappa = 0$ throughout the search. Zhang et al.~\cite{zhang2026ace} frame multi-agent coordination as context engineering, providing a complementary perspective where topology choices manifest as context-window design decisions.
 
-\paragraph{Categorical approaches.}
-Capucci and Myers~\cite{capucci2026feedback} formalize the cost side:
-each cycle requires an independent convergence guarantee.
-Felber et al.~\cite{felber2025task} establish that global sections of
-task sheaves correspond to distributed solutions, providing
-model-independent foundations that subsume classical impossibility
-results (Herlihy--Shavit); this grounds our use of $\beta_1$ as a
-coordination invariant in the language of sheaf-theoretic obstructions.
-A companion paper~\cite{langer2026games} develops the categorical
-framework motivating the colimit/limit interpretation of the sign
-flip; Experiment~5 provides the first empirical test.
+Categorically, Felber et al.~\cite{felber2025task} ground $\beta_1$ as a coordination invariant via sheaf-theoretic obstructions, and Schmid~\cite{schmid2025sheaf} independently proposes cellular sheaves as the natural framework for heterogeneous agent communication. A companion paper~\cite{langer2026games} develops the categorical framework motivating the sign flip; Experiment~5 provides the first empirical test.
 
 %% ===================================================================
 \section{Conclusion}
@@ -1135,14 +889,7 @@ For safe multi-agent deployment, topology must be selected
 deliberately, its coupling direction understood, and its effects
 monitored through diversity metrics. The three-invariant hierarchy
 ($\kappa \to \beta_1 \to \lambda_2$) provides a principled framework
-for this selection, though as Experiment~3 shows, the correct invariant
-is the sheaf cohomology $H^1(G;\,\mathcal{F})$ of which our scalar
-hierarchy is an approximation. This obstruction-theoretic structure
-appears independently in predictive coding
-networks~\cite{peters2025neureps}, where $H^1$ characterises prediction
-errors that inference cannot resolve, suggesting the sheaf-cohomological
-framework captures a domain-general principle rather than an
-EA-specific phenomenon. Current systems are tuning their most powerful
+for this selection. Current systems are tuning their most powerful
 design variable blindly.
 
 \smallskip
@@ -1159,11 +906,6 @@ design variable blindly.
 Capucci, M., Myers, D.J.:
 Feedback in categorical multi-agent systems.
 arXiv:2604.03017 (2026)
-
-\bibitem{peters2025neureps}
-Peters, B., et al.:
-Signed laxator parallel in predictive coding networks.
-NeurReps Workshop (2025), arXiv:2511.11092
 
 \bibitem{dochkina2026}
 Dochkina, V.:
@@ -1206,8 +948,8 @@ relative policy optimization.
 arXiv:2603.02701 (2026)
 
 \bibitem{hanks2025cellular}
-Hanks, T., Riess, H.-J.:
-Cellular sheaves on graphs.
+Hanks, T., Riess, H., Cohen, S., Gross, T., Hale, M., Fairbanks, J.:
+Distributed multi-agent coordination over cellular sheaves.
 arXiv:2504.02049 (2025)
 
 \bibitem{hatcher2002algebraic}
@@ -1298,15 +1040,26 @@ Brewster, D.A., Svoboda, J., Roscow, D., Chatterjee, K., Tkadlec, J., Nowak, M.A
 Maintaining diversity in structured populations.
 PNAS Nexus \textbf{4}(8), pgaf252 (2025)
 
-\bibitem{frazier1987}
-Frazier, L.:
-Sentence processing: A tutorial review.
-In: Coltheart, M. (ed.) Attention and Performance XII, pp.\ 559--586.
-Erlbaum (1987)
-
 \bibitem{zhou2025mass}
 Zhou, H., Wan, X., Sun, R., Palangi, H., Iqbal, S., Vuli{\'c}, I., Korhonen, A., Ar{\i}k, S.{\"O}.:
 Multi-agent design: Optimizing agents with better prompts and topologies.
+In: Proc.\ ICLR (2026)
+
+\bibitem{zhang2026ace}
+Zhang, Q., Hu, C., Upasani, S., Ma, B., Hong, F., Kamanuru, V., Rainton, J., Wu, C., Ji, M., Li, H., Thakker, U., Zou, J., Olukotun, K.:
+Agentic context engineering: Evolving contexts for self-improving language models.
+In: Proc.\ ICLR (2026).
+arXiv:2510.04618
+
+\bibitem{schmid2025sheaf}
+Schmid, E.:
+Applied sheaf theory for multi-agent artificial intelligence (reinforcement
+learning) systems: A prospectus.
+arXiv:2504.17700 (2025)
+
+\bibitem{ribeiro2026directed}
+Ribeiro, P., Bodnar, C., Barbosa, H., Bronstein, M.:
+Directed sheaf neural networks.
 In: Proc.\ ICLR (2026)
 
 \end{thebibliography}
