@@ -24,3 +24,8 @@ onemax-demo
 *.pag
 __pycache__/
 .DS_Store
+.venv/
+._*
+
+# LaTeX editor temporaries
+*.cut

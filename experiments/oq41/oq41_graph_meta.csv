@@ -1,0 +1,10 @@
+arm,graph,desc,n,edges,beta1,lambda2
+A,F2-β1,C6 + path (single cycle),12,12,1,0.0906943036085067
+A,F2-β2,C3+C5 sharing node + path (two cycles),12,13,2,0.11002347737587442
+A,F2-β3,3×C4 chain + path (three cycles),12,14,3,0.2136608831388145
+A,F2-β4,4×C3 chain + path (four cycles),12,15,4,0.15006515881515115
+B,F1a,"C3+C5 sharing node + path (short cycles, close)",12,13,2,0.11002347737587442
+B,F1b,"C4+C4 sharing node + path (equal cycles, close)",12,13,2,0.10778843918559217
+B,F1c,"C9 + bridge + C3 satellite (big+small, bridged)",12,13,2,0.19072003758843578
+B,F1d,"Two C4 at distance 3 + pendant (equal cycles, far)",12,13,2,0.0906743776631118
+B,F1e,C6+chord + pendant chain (overlapping cycles),12,13,2,0.09128340319448552

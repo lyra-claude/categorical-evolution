@@ -43,7 +43,11 @@ class GAConfig:
     max_generations: int = 40
     migration_freq: int = 5
     migration_rate: float = 0.05  # fraction of pop to migrate (gives 1 migrant per island of 20)
-    topology: str = "ring"  # "ring", "star", "fully_connected", "random", "none"
+    topology: str = "ring"  # "ring", "star", "fully_connected", "random", "none", "custom"
+    # OQ41 additions: adjacency-matrix-driven migration ("custom" topology).
+    adjacency: Optional[np.ndarray] = None  # n×n adjacency for topology="custom"
+    volume_mode: str = 'per_event'  # 'per_event' (volume-normalised) or 'per_edge'
+    lean: bool = False  # if True, log only the 3 headline metrics (no per-island/pairwise cols)
 
 
 # ---------------------------------------------------------------------------
@@ -314,9 +318,68 @@ def no_migrate(rng: np.random.Generator, islands: List[np.ndarray],
     return [isl.copy() for isl in islands]
 
 
+def generic_migrate(rng: np.random.Generator, islands: List[np.ndarray],
+                    A: np.ndarray, migration_rate: float,
+                    volume_mode: str = 'per_event') -> List[np.ndarray]:
+    """Adjacency-matrix-driven migration (OQ41).
+
+    Mirrors fully_connected_migrate but only exchanges individuals across edges
+    (i, j) with A[i, j] != 0. Volume control (fence #4 of the OQ41 design):
+
+      - volume_mode='per_event' (HEADLINE, volume-normalised across graphs):
+            num_migrants = max(1, round(rate * pop_per_island / num_edges))
+        The total per-event migrant flow is held roughly constant across graphs
+        with different |E| (more edges -> fewer migrants per edge).
+      - volume_mode='per_edge' (flow co-varies with |E|, like the existing ops):
+            num_migrants = max(1, round(rate * island_size)) per edge.
+
+    Args:
+        A: n×n adjacency matrix, n == len(islands). Upper triangle defines edges.
+    """
+    n = len(islands)
+    if n <= 1 or A is None:
+        return [isl.copy() for isl in islands]
+
+    result = [isl.copy() for isl in islands]
+
+    # Collect undirected edges from the upper triangle.
+    edges = [(i, j) for i in range(n) for j in range(i + 1, n) if A[i, j] != 0]
+    num_edges = len(edges)
+    if num_edges == 0:
+        return result
+
+    # pop_per_island used for per_event normalisation (assumes balanced islands).
+    pop_per_island = sum(len(isl) for isl in result) / n
+
+    for (i, j) in edges:
+        pop_size_i = len(result[i])
+        pop_size_j = len(result[j])
+        if volume_mode == 'per_event':
+            num_migrants = max(1, round(migration_rate * pop_per_island / num_edges))
+        else:  # 'per_edge'
+            num_migrants = max(1, round(migration_rate * min(pop_size_i, pop_size_j)))
+        # Cannot exchange more than either island holds.
+        num_migrants = min(num_migrants, pop_size_i, pop_size_j)
+        if num_migrants <= 0:
+            continue
+
+        idx_i = rng.choice(pop_size_i, size=num_migrants, replace=False)
+        idx_j = rng.choice(pop_size_j, size=num_migrants, replace=False)
+
+        migrants_i = result[i][idx_i].copy()
+        migrants_j = result[j][idx_j].copy()
+        result[i][idx_i] = migrants_j
+        result[j][idx_j] = migrants_i
+
+    return result
+
+
 def migrate(rng: np.random.Generator, islands: List[np.ndarray],
             config: GAConfig) -> List[np.ndarray]:
     """Dispatch to the appropriate migration function based on config.topology."""
+    if config.topology == "custom":
+        return generic_migrate(rng, islands, config.adjacency,
+                               config.migration_rate, config.volume_mode)
     _dispatch = {
         "ring": ring_migrate,
         "star": star_migrate,
@@ -327,7 +390,7 @@ def migrate(rng: np.random.Generator, islands: List[np.ndarray],
     fn = _dispatch.get(config.topology)
     if fn is None:
         raise ValueError(f"Unknown topology: {config.topology!r}. "
-                         f"Valid: {list(_dispatch.keys())}")
+                         f"Valid: {list(_dispatch.keys()) + ['custom']}")
     return fn(rng, islands, config.migration_rate)
 
 
@@ -835,6 +898,9 @@ def run_experiment_e_single(seed: int, config: GAConfig,
         migration_freq=config.migration_freq,
         migration_rate=config.migration_rate,
         topology=topology,
+        adjacency=config.adjacency,
+        volume_mode=config.volume_mode,
+        lean=config.lean,
     )
 
     rng = np.random.default_rng(seed)
@@ -876,12 +942,6 @@ def run_experiment_e_single(seed: int, config: GAConfig,
             pop_div = 0.0
             divs = []
 
-        # Per-island diversity
-        island_diversities = [diversity_fn(isl) for isl in islands]
-
-        # Per-island best fitness
-        island_fitnesses = [float(np.max(evaluate_fn(isl))) for isl in islands]
-
         # Build row with base metrics
         row = {
             'topology': topology,
@@ -892,17 +952,20 @@ def run_experiment_e_single(seed: int, config: GAConfig,
             'best_fitness': best_fit,
         }
 
-        # Per-island diversity and fitness columns
-        for k in range(n_isl):
-            row[f'island_{k}_diversity'] = island_diversities[k]
-            row[f'island_{k}_fitness'] = island_fitnesses[k]
+        if not cfg.lean:
+            # Per-island diversity and fitness columns
+            island_diversities = [diversity_fn(isl) for isl in islands]
+            island_fitnesses = [float(np.max(evaluate_fn(isl))) for isl in islands]
+            for k in range(n_isl):
+                row[f'island_{k}_diversity'] = island_diversities[k]
+                row[f'island_{k}_fitness'] = island_fitnesses[k]
 
-        # Full pairwise divergence matrix (upper triangle)
-        div_idx = 0
-        for i in range(n_isl):
-            for j in range(i + 1, n_isl):
-                row[f'div_{i}_{j}'] = divs[div_idx] if divs else 0.0
-                div_idx += 1
+            # Full pairwise divergence matrix (upper triangle)
+            div_idx = 0
+            for i in range(n_isl):
+                for j in range(i + 1, n_isl):
+                    row[f'div_{i}_{j}'] = divs[div_idx] if divs else 0.0
+                    div_idx += 1
 
         rows.append(row)
 

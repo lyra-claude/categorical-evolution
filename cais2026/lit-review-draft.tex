@@ -1,0 +1,141 @@
+% EUMAS 2026 — Lit Review Expansion Draft
+% Four threads for integration into the restructured paper
+% Drafted: 2026-04-26 by research agent
+% Placeholder \cite{} keys — fill in real bibtex keys before compiling
+
+%% ===================================================================
+%% THREAD 1: Prior Art — The DAG Default
+%% (For Discussion / Evidence Gap subsection, or new Related Work paragraph)
+%% Target: ~200 words
+%% ===================================================================
+
+\paragraph{The DAG default.}
+The preference for acyclic communication topologies in multi-agent
+systems is not an empirical finding---it is a default.
+Table~\ref{tab:evidence-gap} documents at least nine major systems
+that enforce or favor DAGs ($\beta_1 = 0$) without controlled
+evidence that cycles would degrade performance.
+Six of the nine---OFA-MAS~\cite{ofamas2026},
+G-Designer~\cite{gdesigner2025}, GoAgent~\cite{goagent2026},
+ARG-Designer~\cite{argdesigner2026},
+AgentConductor~\cite{agentconductor2026}, and
+DyTopo~\cite{dytopo2026}---never include cycles in their design
+space at all.
+MASS~\cite{zhou2025mass} jointly optimizes prompts and topologies but
+restricts search to DAGs, then reports that ``prompts matter more than
+topology''---a claim that may be an artifact of holding $\kappa = 0$
+throughout the search, artificially suppressing the dominant
+topological variable our experiments identify.
+The Google/MIT scaling study~\cite{googlemit2026scaling} finds 17.2$\times$
+error amplification in unstructured communication and a 45\% capability
+threshold below which multi-agent coordination degrades performance,
+yet frames the solution as ``use fewer agents'' rather than ``choose
+better topology.''
+Yang et al.~\cite{yang2025topology} explicitly call topology
+\emph{the} underexplored dimension of MAS research.
+Our confound theorem (Theorem~\ref{thm:confound}) shows why the gap
+persists: without density-controlled comparisons, the field cannot
+distinguish whether DAGs succeed because acyclicity is beneficial or
+because the alternative comparisons are confounded.
+
+
+%% ===================================================================
+%% THREAD 2: Sheaf Upgrade — From beta_1 to H^1(G;F)
+%% (For Discussion / Invariant Hierarchy, and Related Work)
+%% Target: ~200 words
+%% ===================================================================
+
+\paragraph{From graph invariants to sheaf cohomology.}
+Our two-invariant framework $(\beta_1, \lambda_2)$ is the
+constant-sheaf special case of a richer theory.
+Hanks and Riess~\cite{hanks2025cellular} develop cellular sheaves on
+graphs, in which each vertex carries a \emph{stalk} (a vector space
+representing local agent state) and each edge carries a
+\emph{restriction map} encoding how adjacent agents compare information.
+For a constant sheaf $\mathcal{F} = \mathbb{R}$ (homogeneous agents),
+the first sheaf cohomology group recovers the Betti number exactly:
+$\dim H^1(G;\mathcal{F}) = \beta_1$, and the sheaf Laplacian
+$L_{\mathcal{F}}$ reduces to the graph Laplacian.
+For heterogeneous agents---different models, context windows, or tool
+access---the stalks vary across nodes, and the correct invariants
+become $(\dim H^1(G;\mathcal{F}), \lambda_2(L_{\mathcal{F}}))$,
+capturing topological structure that $\beta_1$ alone misses.
+
+Schmid~\cite{schmid2026prospectus} provides striking independent
+validation: a 64-page research prospectus proposing sheaf theory as the
+mathematical foundation for multi-agent systems, identifying cellular
+sheaves, $H^1$ as coordination obstruction, and sheaf Laplacians as
+decentralized controllers.
+Schmid's program and ours converge on the same invariants from opposite
+directions---decentralized control theory versus compositional
+semantics---but Schmid's prospectus lacks the Kleisli formalization,
+laxator framework, and experimental grounding that our work provides.
+The sheaf upgrade is not merely aesthetic: it predicts that agent
+heterogeneity introduces topological degrees of freedom invisible to
+$\beta_1$, a testable claim for future density-controlled experiments
+with mixed-capability agents.
+
+
+%% ===================================================================
+%% THREAD 3: Information-Theoretic Cost — The Shannon Limit
+%% (For Discussion / Invariant Hierarchy, or new subsection)
+%% Target: ~200 words
+%% ===================================================================
+
+\paragraph{Information-theoretic cost of coordination.}
+Thomas and Chen~\cite{thomas2026shannon} establish a lower bound on
+multi-agent coordination cost: the minimum number of bits agents must
+exchange to achieve consistent global behavior is at least
+$\log_2(\dim H^1(G;\mathcal{F}))$.
+This upgrades $H^1 = 0$ from a binary possibility test (can agents
+coordinate?) to a continuous cost estimator (how expensive is
+coordination?), connecting our topological invariants directly to
+Shannon information theory.
+
+The bound explains why topology effects scale with problem difficulty
+(Experiment~2, Table~\ref{tab:nk-dose}): harder tasks ($K \geq 4$)
+demand more coordination, which requires more communication bits,
+which means the cohomological floor imposed by $\dim H^1$ becomes
+binding. On easy tasks ($K = 0$), the floor is slack and topology
+barely matters---exactly what we observe ($\eta^2 = 0.05$ at $K = 0$
+versus $\eta^2 = 0.69$ at $K = 6$).
+
+The data processing inequality (DPI) provides a complementary cost
+mechanism: Tran and Kiela~\cite{tran2026dpi} show that each agent
+boundary in a multi-agent pipeline loses information, with
+multi-agent coordination becoming competitive only when input
+context is already degraded (noise or masking at $\alpha \geq 0.5$).
+Together, these results frame optimal topology selection as
+$\beta_1^* = \arg\max[\text{Diversity}(\beta_1) -
+\text{Cost}(\beta_1)]$, where the cost combines Shannon capacity
+limits and DPI losses.
+
+
+%% ===================================================================
+%% THREAD 4: Certification and Future Directions
+%% (For Related Work / Categorical approaches, or Discussion)
+%% Target: ~150 words
+%% ===================================================================
+
+\paragraph{Categorical certification.}
+Capucci and Myers~\cite{capucci2026feedback} formalize a structural
+cost of feedback: each cycle in the communication topology requires an
+independent convergence certificate, modeled as a categorical
+fixed-point condition on traced composition.
+This provides the formal cost accounting for our invariant hierarchy:
+increasing $\beta_1$ by one gains a unit of transient diversity
+(Experiment~4) but incurs one additional convergence obligation.
+The cost-benefit framing explains the practical appeal of DAGs---zero
+obligations---despite their decision-theoretic suboptimality
+\cite{ao2026reliability}: on simple tasks ($K = 0$), the diversity
+benefit is negligible and the convergence cost dominates; on complex
+tasks ($K \geq 4$), the diversity benefit dominates.
+Combined with the companion paper's laxator
+formalism~\cite{langer2026games}, this yields the outline of a
+complete categorical framework: laxators govern how agents compose
+along edges, while the trace governs how composition closes around
+cycles.
+A full treatment of certification conditions for cyclic multi-agent
+composition---connecting Capucci and Myers' convergence guarantees to
+our empirical dose-response findings---is deferred to a companion
+paper.
