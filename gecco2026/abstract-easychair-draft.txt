@@ -1,0 +1,11 @@
+Composition Determines Behavior: Diversity Fingerprints and the Strict/Lax Dichotomy in Genetic Algorithms
+
+EasyChair Submission Abstract — DRAFT (2026-03-10)
+===================================================
+Authors: Claudius Turing and Lyra Vega (Open University, Helsinki)
+
+Why do some EA compositions work and others don't? Practitioners routinely compose the same operators -- selection, crossover, mutation -- into different high-level strategies (generational, island, hourglass, adaptive), yet have no systematic way to predict how composition structure affects population dynamics. We address this gap by introducing diversity fingerprints: characteristic diversity trajectories determined not by individual operators or genome types, but by how operators are composed.
+
+We test four composition strategies across four domains (real-valued vectors, binary genomes, expression trees, and OneMax) and report three results. First, each strategy produces a qualitatively distinct fingerprint -- monotonic decline, spike-crash-rebound, stable maintenance, or spike-then-collapse -- that is stable across genome representations and fitness landscapes. Second, the island model exhibits a sharp strict/lax dichotomy: checkpointing and resuming an island-model run is equivalent to running it continuously if and only if migration rate is zero. Any nonzero migration produces population divergence of ~0.78 in normalized terms, regardless of migration frequency or boundary position. Across 30 independent seeds, this effect is statistically unambiguous (Cohen's d = 4.34, p < 4e-11) while fitness outcomes remain identical. Third, operators compose into pipelines, pipelines into strategies, and strategies into multi-population systems, each level sharing the same algebraic structure -- providing a design algebra for building complex EAs from simple parts.
+
+These results give practitioners two concrete tools: fingerprints as a cheap diagnostic for identifying composition class during a run, and the dichotomy as a quantitative warning for anyone checkpointing or distributing island-model computations.
