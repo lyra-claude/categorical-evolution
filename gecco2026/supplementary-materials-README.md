@@ -1,6 +1,6 @@
 # Supplementary Materials
 
-> Data, code, and reproduction instructions for "From Games to Graphs: A Category-Theoretic Framework for Evolutionary Computation."
+> Data, code, and reproduction instructions for "Composition Determines Diversity: Categorical Fingerprints of Genetic Algorithms."
 
 ## Contents
 
