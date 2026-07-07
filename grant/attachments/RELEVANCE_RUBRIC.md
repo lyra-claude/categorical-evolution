@@ -16,7 +16,7 @@ What the panel scores, what we say.
 
 **Leave out:** Clio + Lean (unfinished), umbral calculus as containers (wrong audience), Ethereum/Lisp/tax details (off-topic), GA theory (cite GECCO, don't explain).
 
-**Neil Ghani** is the theoretical backbone.
+**<stub>** is the theoretical backbone.
 
 **Theory for non-experts:** Skip formalism. "Every intermediate result carries its full derivation context. Container theory guarantees (1) provenance is correct at every nesting depth, and (2) verify-then-trace = trace-then-verify. Mathematical guarantees, not testing artefacts."
 

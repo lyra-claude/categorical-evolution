@@ -102,7 +102,7 @@ The project is essentially a high-quality data pipeline: expert mathematicians r
 
 2. **Concrete deliverables over vision.** Nearly every project promises a specific tool, dataset, or platform — not just a theoretical framework. Gowers' "motivated proofs database," Buzzard's "dataset of formalized theorems," the Polymath platform. The panel wants things people can *use*.
 
-3. **Star power matters.** Two Fields Medalists (Gowers, Viazovska), plus luminaries like Kevin Buzzard, Clark Barrett, Toniann Pitassi, Dawn Song. Your team needs to be credible — Neil Ghani's container theory work is a strong card here.
+3. **Star power matters.** Two Fields Medalists (Gowers, Viazovska), plus luminaries like Kevin Buzzard, Clark Barrett, Toniann Pitassi, Dawn Song. Your team needs to be credible — <stub>'s container theory work is a strong card here.
 
 4. **"AI for Math" means AI that does math, not math about AI.** Most projects use AI to prove theorems, search for proofs, or formalize mathematics. Only project #23 (Lio/Vicary) uses category theory to understand AI itself — and even that frames it as "foundations for proof-construction tools."
 

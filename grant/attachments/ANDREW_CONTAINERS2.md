@@ -1,6 +1,6 @@
 # Containers, Lisp, Ethereum, Agents, and Aiko Services
 
-## 1. Containers (Neil Ghani)
+## 1. Containers (<stub>)
 
 A "container" is a pair (S, P) — shapes and positions. S is the structure, P(s) is the slots where data can go for each shape. The extension is: given any type X, you get "a shape with values from X at each position." It's a way to describe data types as "structure + slots."
 

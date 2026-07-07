@@ -1,4 +1,4 @@
-# Neil Ghani — Calculus of Containers: What We Know
+# <stub> — Calculus of Containers: What We Know
 
 ## Neil's Profile
 

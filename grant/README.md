@@ -7,7 +7,7 @@ Application to the XTX AI4Math Fund for research on categorical foundations for 
 ## Collaboration
 
 - **Robin Langer** (PI) -- independent researcher
-- **Neil Ghani** (Co-PI) -- University of Strathclyde / kodamai
+- **<stub>** (Co-PI) -- University of Strathclyde / <stub>
 
 ## Thesis
 
