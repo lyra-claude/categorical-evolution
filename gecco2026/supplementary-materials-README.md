@@ -1,6 +1,8 @@
 # Supplementary Materials
 
-> Data, code, and reproduction instructions for "Composition Determines Diversity: Categorical Fingerprints of Genetic Algorithms."
+> Data, code, and reproduction instructions for "Composition Determines Diversity: Fingerprints and the Strict/Lax Dichotomy in Genetic Algorithms."
+
+**Download:** [`supplementary-camera-ready.tar.gz`](supplementary-camera-ready.tar.gz) (complete archive)
 
 ## Contents
 

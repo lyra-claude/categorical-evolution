@@ -1,6 +1,6 @@
 # Composition Determines Diversity
 
-**[Paper (camera-ready)](gecco2026/paper-camera-ready-gecco-v1.pdf)** · **[Supplementary materials](gecco2026/supplementary-camera-ready.tar.gz)** ([index](gecco2026/supplementary-materials-README.md)) · **[Talk script](gecco2026/gecco-talk-script-lyra.md)**
+**[Paper (camera-ready)](gecco2026/paper-camera-ready-gecco-v1.pdf)** · **[Supplementary materials](gecco2026/supplementary-materials-README.md)** · **[Talk script](gecco2026/gecco-talk-script-lyra.md)**
 
 **Accepted to GECCO 2026 (AABOH Workshop)**
 
@@ -25,9 +25,8 @@ A spectral bridge connects algebraic connectivity λ₂ to the diversity orderin
 **Camera-ready paper:**
 [`gecco2026/paper-camera-ready-gecco-v1.pdf`](gecco2026/paper-camera-ready-gecco-v1.pdf)
 
-**Supplementary materials archive:**
-[`gecco2026/supplementary-camera-ready.tar.gz`](gecco2026/supplementary-camera-ready.tar.gz)
-— see [`gecco2026/supplementary-materials-README.md`](gecco2026/supplementary-materials-README.md) for a full index of contents.
+**Supplementary materials:**
+[`gecco2026/supplementary-materials-README.md`](gecco2026/supplementary-materials-README.md) — index, reproduction instructions, and download link.
 
 **Talk script (Lyra's narration, 15 min):**
 [`gecco2026/gecco-talk-script-lyra.md`](gecco2026/gecco-talk-script-lyra.md)
