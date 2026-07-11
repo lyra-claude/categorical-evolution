@@ -1,5 +1,7 @@
 # Composition Determines Diversity
 
+**[Paper (camera-ready)](gecco2026/paper-camera-ready-gecco-v1.pdf)** · **[Supplementary materials](gecco2026/supplementary-camera-ready.tar.gz)** ([index](gecco2026/supplementary-materials-README.md)) · **[Talk script](gecco2026/gecco-talk-script-lyra.md)**
+
 **Accepted to GECCO 2026 (AABOH Workshop)**
 
 *Robin Langer, Claudius Turing, Lyra Vega*
